@@ -1,0 +1,61 @@
+{
+  "generatedAt": "2026-04-19T21:55:30.261Z",
+  "sources": [
+    {
+      "source": "codex",
+      "sampleCount": 3441,
+      "contextTokens": {
+        "mean": 118077.81691368789,
+        "p50": 112169,
+        "p95": 215302,
+        "p99": 347219,
+        "max": 398089
+      },
+      "totalTokens": {
+        "mean": 118740.78087765185,
+        "p50": 112886,
+        "p95": 215817,
+        "p99": 348150,
+        "max": 398397
+      },
+      "observedContextWindows": [
+        258400
+      ],
+      "modelsSeen": []
+    },
+    {
+      "source": "claude",
+      "sampleCount": 3844,
+      "contextTokens": {
+        "mean": 439680.4458896982,
+        "p50": 457091,
+        "p95": 880614,
+        "p99": 947762,
+        "max": 967878
+      },
+      "totalTokens": {
+        "mean": 440461.2161810614,
+        "p50": 457400,
+        "p95": 882400,
+        "p99": 947771,
+        "max": 968838
+      },
+      "observedContextWindows": [],
+      "modelsSeen": [
+        "claude-haiku-4-5-20251001",
+        "claude-opus-4-6",
+        "claude-opus-4-7",
+        "claude-sonnet-4-6",
+        "qwen3.5:27b-q4_K_M"
+      ]
+    }
+  ],
+  "combined": {
+    "mean": 287774.52326698694,
+    "p50": 159192,
+    "p95": 829832,
+    "p99": 926366,
+    "max": 967878,
+    "sampleCount": 7285
+  }
+}

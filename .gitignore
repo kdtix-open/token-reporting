@@ -1,0 +1,9 @@
+node_modules/
+dist/
+coverage/
+.env
+.env.local
+.DS_Store
+.playwright-mcp/
+*.tsbuildinfo
+public/data/github-copilot/raw/
