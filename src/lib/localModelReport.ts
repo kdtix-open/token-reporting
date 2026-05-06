@@ -110,13 +110,15 @@ const CATALOGUE: Omit<LocalModelProfile, "contextFits" | "throughputFits">[] = [
     parameterCount: "8B",
     quantization: "Q4_K_M",
     vramGbMin: 8,
-    gpuClass: "RTX 4060 Ti 16GB or better",
-    tokensPerSecEstimate: 80,
+    // RTX 4060 Ti 16GB: 288 GB/s ÷ 4.92 GB model ≈ 58 tok/s theoretical → ~50 tok/s real.
+    // For ~80 tok/s you need ≥ 672 GB/s bandwidth (RTX 3090 / 4070 Ti Super).
+    gpuClass: "RTX 4060 Ti 16GB (~50 tok/s) — or RTX 3090 / 4070 Ti Super 16GB (~80 tok/s)",
+    tokensPerSecEstimate: 50,
     license: "Meta Llama 3.1 Community",
     codeCapability: "good",
     toolUseSupport: true,
     commercialSafe: true,
-    note: "Best low-VRAM entry point. 128K context handles most workloads. Commercial use permitted for orgs with < 700M MAU."
+    note: "Best low-VRAM entry point. 128K context handles most workloads. Commercial use permitted for orgs with < 700M MAU. Throughput on a 4060 Ti 16GB: ~50 tok/s; upgrade to a 3090/4070 Ti Super for ~80 tok/s."
   },
   {
     tier: "recommended",
@@ -125,14 +127,16 @@ const CATALOGUE: Omit<LocalModelProfile, "contextFits" | "throughputFits">[] = [
     contextWindow: 131_072,
     parameterCount: "14B",
     quantization: "Q4_K_M",
-    vramGbMin: 10,
-    gpuClass: "RTX 4090 24GB or A10G 24GB",
+    // Q4_K_M weights ≈ 8.5 GB. Minimum 12 GB supports ~8K context;
+    // full 128K context needs ~19 GB KV cache → 24 GB GPU required.
+    vramGbMin: 12,
+    gpuClass: "RTX 4070 Ti Super 16GB (≤32K ctx) — RTX 4090 / A10G 24GB (full 128K ctx)",
     tokensPerSecEstimate: 55,
     license: "Apache 2.0",
     codeCapability: "excellent",
     toolUseSupport: true,
     commercialSafe: true,
-    note: "Code-specialized fine-tune; Apache 2.0 licence; strong completions, chat, and function-calling. Best quality/cost balance for developer tooling."
+    note: "Code-specialized fine-tune; Apache 2.0 licence; strong completions, chat, and function-calling. Best quality/cost balance for developer tooling. A 12 GB card handles short contexts; full 128K context requires a 24 GB GPU."
   },
   {
     tier: "enterprise",
@@ -142,13 +146,15 @@ const CATALOGUE: Omit<LocalModelProfile, "contextFits" | "throughputFits">[] = [
     parameterCount: "72B",
     quantization: "Q4_K_M",
     vramGbMin: 40,
-    gpuClass: "2× A100 80GB or 4× RTX 4090",
-    tokensPerSecEstimate: 15,
+    // 4× RTX 4090 over PCIe: all-reduce overhead limits to ~15-20 tok/s.
+    // 2× A100 80GB with NVLink: ~30-40 tok/s realistic.
+    gpuClass: "2× A100 80GB NVLink (~35 tok/s) — or 4× RTX 4090 PCIe (~20 tok/s)",
+    tokensPerSecEstimate: 20,
     license: "Apache 2.0",
     codeCapability: "excellent",
     toolUseSupport: true,
     commercialSafe: true,
-    note: "GPT-4o-class quality. Requires GPU cluster. Apache 2.0 — no usage restrictions. Use when Codex/Claude quality parity is required."
+    note: "GPT-4o-class quality. Requires GPU cluster. Apache 2.0 — no usage restrictions. Use when Codex/Claude quality parity is required. Throughput on 4× RTX 4090 via PCIe: ~20 tok/s; 2× A100 80GB NVLink: ~35 tok/s."
   },
   {
     tier: "enterprise",
