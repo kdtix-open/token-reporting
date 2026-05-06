@@ -15,6 +15,10 @@ import type { CodexReportSummary } from "./providers/codex/types";
 import type { CursorReportSummary } from "./providers/cursor/types";
 import type { GitHubCopilotReportSummary } from "./providers/githubCopilot/types";
 import type { ProviderReportSummary } from "./lib/types";
+import {
+  loadLocalSessionDistribution,
+  type LocalSessionDistribution,
+} from "./lib/localSessionDistribution";
 import { providerRegistry } from "./providers/registry";
 import "./App.css";
 
@@ -66,6 +70,7 @@ export default function App() {
   );
   const [loading, setLoading] = useState(false);
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
+  const [distribution, setDistribution] = useState<LocalSessionDistribution | null>(null);
   // Counter guards against stale responses from concurrent or Strict Mode loads
   const loadCounterRef = useRef(0);
 
@@ -74,24 +79,27 @@ export default function App() {
     const myCount = ++loadCounterRef.current;
 
     try {
-      const results = await Promise.all(
-        providerRegistry.map(async (adapter) => {
-          try {
-            const url = cacheBust
-              ? `/data/${adapter.dataPath}?t=${Date.now()}`
-              : `/data/${adapter.dataPath}`;
-            const response = await fetch(url);
-            if (!response.ok) return adapter.seedSummary;
-            const raw = await response.json();
-            return adapter.transformSnapshot(raw);
-          } catch {
-            return adapter.seedSummary;
-          }
-        })
-      );
+      const qs = cacheBust ? `?t=${Date.now()}` : "";
+      const [results, dist] = await Promise.all([
+        Promise.all(
+          providerRegistry.map(async (adapter) => {
+            try {
+              const url = `/data/${adapter.dataPath}${qs}`;
+              const response = await fetch(url);
+              if (!response.ok) return adapter.seedSummary;
+              const raw = await response.json();
+              return adapter.transformSnapshot(raw);
+            } catch {
+              return adapter.seedSummary;
+            }
+          })
+        ),
+        loadLocalSessionDistribution(),
+      ]);
 
       if (myCount === loadCounterRef.current) {
         setSummaries(results);
+        setDistribution(dist);
         setLastRefreshed(new Date());
       }
     } finally {
@@ -132,7 +140,7 @@ export default function App() {
       </section>
       <ProviderComparisonSection summaries={summaries} />
       <SpendProjectionPanel summaries={summaries} />
-      <LocalModelMigrationPanel summaries={summaries} />
+      <LocalModelMigrationPanel summaries={summaries} distribution={distribution} />
       <AzureQuotaPanel summaries={summaries} />
       <div className="report-cards">
         {summaries.map(renderProviderCard)}

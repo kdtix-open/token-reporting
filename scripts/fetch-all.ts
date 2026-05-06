@@ -16,11 +16,12 @@ interface Script {
 }
 
 const SCRIPTS: Script[] = [
-  { name: "Claude (Anthropic)",  cmd: "tsx scripts/fetch-claude.ts",        requiredEnv: "ANTHROPIC_ADMIN_API_KEY" },
-  { name: "Claude Code",         cmd: "tsx scripts/fetch-claude-code.ts",   requiredEnv: null },
-  { name: "GitHub Copilot",      cmd: "tsx scripts/fetch-github-copilot.ts", requiredEnv: "GITHUB_ADMIN_TOKEN" },
-  { name: "Cursor",              cmd: "tsx scripts/fetch-cursor.ts",        requiredEnv: "CURSOR_ADMIN_API_KEY" },
-  { name: "OpenAI Codex",        cmd: "tsx scripts/fetch-codex.ts",         requiredEnv: "OPENAI_ADMIN_API_KEY" },
+  { name: "Claude (Anthropic)",  cmd: "tsx scripts/fetch-claude.ts",           requiredEnv: "ANTHROPIC_ADMIN_API_KEY" },
+  { name: "Claude Code",         cmd: "tsx scripts/fetch-claude-code.ts",      requiredEnv: null },
+  { name: "GitHub Copilot",      cmd: "tsx scripts/fetch-github-copilot.ts",   requiredEnv: "GITHUB_ADMIN_TOKEN" },
+  { name: "Cursor",              cmd: "tsx scripts/fetch-cursor.ts",           requiredEnv: "CURSOR_ADMIN_API_KEY" },
+  { name: "OpenAI Codex",        cmd: "tsx scripts/fetch-codex.ts",            requiredEnv: "OPENAI_ADMIN_API_KEY" },
+  { name: "Local Sessions",      cmd: "tsx scripts/analyze-local-sessions.ts", requiredEnv: null },
 ];
 
 interface ScriptResult {

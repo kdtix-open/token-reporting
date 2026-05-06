@@ -1,9 +1,6 @@
-import { useEffect, useState } from "react";
-
 import { buildLocalModelReport } from "../lib/localModelReport";
 import type { LocalModelProfile } from "../lib/localModelReport";
 import {
-  loadLocalSessionDistribution,
   type LocalSessionDistribution
 } from "../lib/localSessionDistribution";
 import type { ProviderReportSummary } from "../lib/types";
@@ -106,21 +103,11 @@ function ModelCard({ profile }: { profile: LocalModelProfile }) {
 
 interface LocalModelMigrationPanelProps {
   summaries: ProviderReportSummary[];
+  /** Pre-fetched local session distribution; re-passed on every parent refresh. */
+  distribution: LocalSessionDistribution | null;
 }
 
-export function LocalModelMigrationPanel({ summaries }: LocalModelMigrationPanelProps) {
-  const [distribution, setDistribution] = useState<LocalSessionDistribution | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    loadLocalSessionDistribution().then((d) => {
-      if (!cancelled) setDistribution(d);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
+export function LocalModelMigrationPanel({ summaries, distribution }: LocalModelMigrationPanelProps) {
   const report = buildLocalModelReport(summaries, distribution);
 
   if (report.tokenObservedProviders.length === 0 && report.requestOnlyProviders.length === 0) {
