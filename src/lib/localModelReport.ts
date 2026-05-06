@@ -98,8 +98,11 @@ export interface LocalModelMigrationReport {
 }
 
 // ── HuggingFace model catalogue ─────────────────────────────────────────────
-// Sources: HuggingFace model cards + VRAM/speed benchmarks (2025-04)
-// All estimates assume Q4_K_M quantization via llama.cpp/Ollama at concurrency=1.
+// Architecture (layers/kv_heads/head_dim) verified from config.json on HuggingFace.
+// GGUF file sizes from bartowski's GGUF pages (bartowski/...-GGUF).
+// Throughput derived from llama.cpp Vulkan Scoreboard (discussion #10879) scaled
+// by model-size ratio and ×1.08 CUDA factor; flagged as estimates, not direct measurements.
+// All estimates assume Q4_K_M quantization via llama.cpp at concurrency=1 unless noted.
 
 const CATALOGUE: Omit<LocalModelProfile, "contextFits" | "throughputFits">[] = [
   {
@@ -109,16 +112,21 @@ const CATALOGUE: Omit<LocalModelProfile, "contextFits" | "throughputFits">[] = [
     contextWindow: 131_072,
     parameterCount: "8B",
     quantization: "Q4_K_M",
-    vramGbMin: 8,
-    // RTX 4060 Ti 16GB: 288 GB/s ÷ 4.92 GB model ≈ 58 tok/s theoretical → ~50 tok/s real.
-    // For ~80 tok/s you need ≥ 672 GB/s bandwidth (RTX 3090 / 4070 Ti Super).
-    gpuClass: "RTX 4060 Ti 16GB (~50 tok/s) — or RTX 3090 / 4070 Ti Super 16GB (~80 tok/s)",
+    // KV math (verified from config.json): 32 layers × 8 KV heads × 128 head_dim.
+    // fp16 KV: 128 KB/token → at 128K ctx: 16.0 GB; Q8 KV: 64 KB/token → 8.0 GB.
+    // Weights Q4_K_M: 4.92 GiB (bartowski GGUF, confirmed).
+    // 8 GB VRAM: loads weights but only ~25K ctx (fp16 KV) / ~49K ctx (Q8 KV).
+    // 16 GB minimum for full 128K context: 4.92 + 8.0 GB Q8 KV = 12.9 GB → fits in 16 GB ✓.
+    vramGbMin: 16,
+    // RTX 4060 Ti 16GB: 288 GB/s ÷ 4.92 GB ≈ 58 tok/s theoretical → ~50 tok/s real (CUDA).
+    // RTX 4070 Ti Super 16GB (672 GB/s): ~85 tok/s | RTX 3090 24GB (936 GB/s): ~120 tok/s.
+    gpuClass: "RTX 4060 Ti 16GB (~50 tok/s) — RTX 4070 Ti Super 16GB (~85 tok/s) — RTX 3090 24GB (~120 tok/s)",
     tokensPerSecEstimate: 50,
     license: "Meta Llama 3.1 Community",
     codeCapability: "good",
     toolUseSupport: true,
     commercialSafe: true,
-    note: "Best low-VRAM entry point. 128K context handles most workloads. Commercial use permitted for orgs with < 700M MAU. Throughput on a 4060 Ti 16GB: ~50 tok/s; upgrade to a 3090/4070 Ti Super for ~80 tok/s."
+    note: "Best entry point for full 128K context. 16 GB is the minimum for the full window (Q8 KV + 4.92 GB weights = ~13 GB); an 8 GB card can load the model but caps context at ~49K tokens (Q8 KV). Commercial use permitted for orgs with < 700 M MAU. Throughput on a 4060 Ti 16GB: ~50 tok/s; upgrade to a 3090/4070 Ti Super for 85–120 tok/s."
   },
   {
     tier: "recommended",
@@ -127,16 +135,23 @@ const CATALOGUE: Omit<LocalModelProfile, "contextFits" | "throughputFits">[] = [
     contextWindow: 131_072,
     parameterCount: "14B",
     quantization: "Q4_K_M",
-    // Q4_K_M weights ≈ 8.5 GB. Minimum 12 GB supports ~8K context;
-    // full 128K context needs ~19 GB KV cache → 24 GB GPU required.
+    // KV math (verified from config.json): 48 layers × 8 KV heads × 128 head_dim.
+    // fp16 KV: 192 KB/token; Q8 KV: 96 KB/token.
+    // Weights Q4_K_M: 8.99 GiB (bartowski GGUF, confirmed).
+    // 12 GB: loads model (~9.7 GB) + ~2.3 GB KV → ~13K ctx (fp16) / ~26K ctx (Q8 KV).
+    // 16 GB: ~34K ctx (fp16 KV) / ~68K ctx (Q8 KV).
+    // 24 GB: full 128K with Q8 KV (12 GB KV + 9.7 GB weights = 21.7 GB → fits ✓).
+    //        fp16 KV at 128K = 24 GB → total 33.7 GB → needs 40+ GB.
     vramGbMin: 12,
-    gpuClass: "RTX 4070 Ti Super 16GB (≤32K ctx) — RTX 4090 / A10G 24GB (full 128K ctx)",
+    // RTX 4070 Ti Super 16GB (672 GB/s) ÷ 9.7 GB model → ~55 tok/s (CUDA est.).
+    // RTX 4090 24GB (1008 GB/s) → ~80 tok/s.
+    gpuClass: "RTX 4070 Ti Super 16GB (~55 tok/s, ≤32K ctx) — RTX 4090 / A10G 24GB (~80 tok/s, full 128K Q8 KV)",
     tokensPerSecEstimate: 55,
     license: "Apache 2.0",
     codeCapability: "excellent",
     toolUseSupport: true,
     commercialSafe: true,
-    note: "Code-specialized fine-tune; Apache 2.0 licence; strong completions, chat, and function-calling. Best quality/cost balance for developer tooling. A 12 GB card handles short contexts; full 128K context requires a 24 GB GPU."
+    note: "Code-specialized fine-tune; Apache 2.0 licence; strong completions, chat, and function-calling. Best quality/cost balance for developer tooling. A 12 GB card handles up to ~26K context (Q8 KV); full 128K context requires a 24 GB GPU (Q8 KV: weights 9.7 GB + KV 12 GB = 21.7 GB total). Throughput: ~55 tok/s on RTX 4070 Ti Super; ~80 tok/s on RTX 4090."
   },
   {
     tier: "enterprise",
@@ -145,16 +160,24 @@ const CATALOGUE: Omit<LocalModelProfile, "contextFits" | "throughputFits">[] = [
     contextWindow: 131_072,
     parameterCount: "72B",
     quantization: "Q4_K_M",
-    vramGbMin: 40,
-    // 4× RTX 4090 over PCIe: all-reduce overhead limits to ~15-20 tok/s.
-    // 2× A100 80GB with NVLink: ~30-40 tok/s realistic.
-    gpuClass: "2× A100 80GB NVLink (~35 tok/s) — or 4× RTX 4090 PCIe (~20 tok/s)",
+    // KV math (verified from config.json): 80 layers × 8 KV heads × 128 head_dim.
+    // fp16 KV: 320 KB/token → at 128K ctx: 40.0 GB; Q8 KV: 20.0 GB.
+    // Weights Q4_K_M: 47.42 GiB = ~50.9 GB (bartowski GGUF, confirmed).
+    // Minimum cluster VRAM: 80 GB (e.g. 2× A100 40GB NVLink); model fits with 29 GB for KV.
+    // 4× RTX 4090 PCIe (96 GB total): model (51 GB) + Q8 KV at 128K (20 GB) = 71 GB → fits ✓.
+    //   fp16 KV at 128K (40 GB): 51 + 40 = 91 GB → very tight on 96 GB cluster.
+    // 2× A100 80GB NVLink (160 GB total): ample room for full context at any KV precision.
+    // vramGbMin is TOTAL cluster VRAM (not per-GPU).
+    vramGbMin: 80,
+    // 4× RTX 4090 over PCIe: all-reduce latency limits to ~20 tok/s (llama.cpp TP).
+    // 2× A100 80GB with NVLink (600 GB/s bidirectional): ~35 tok/s (llama.cpp); ~50 tok/s with vLLM.
+    gpuClass: "2× A100 80GB NVLink (~35 tok/s, 160 GB total) — or 4× RTX 4090 PCIe (~20 tok/s, 96 GB total)",
     tokensPerSecEstimate: 20,
     license: "Apache 2.0",
     codeCapability: "excellent",
     toolUseSupport: true,
     commercialSafe: true,
-    note: "GPT-4o-class quality. Requires GPU cluster. Apache 2.0 — no usage restrictions. Use when Codex/Claude quality parity is required. Throughput on 4× RTX 4090 via PCIe: ~20 tok/s; 2× A100 80GB NVLink: ~35 tok/s."
+    note: "GPT-4o-class quality. Requires a GPU cluster: model weights alone are ~51 GB (Q4_K_M), so minimum cluster VRAM is 80 GB (e.g. 2× A100 40GB). Apache 2.0 — no usage restrictions. Use when Codex/Claude quality parity is required. Throughput: ~20 tok/s on 4× RTX 4090 via PCIe (interconnect-limited); ~35 tok/s on 2× A100 80GB NVLink."
   },
   {
     tier: "enterprise",
@@ -164,18 +187,28 @@ const CATALOGUE: Omit<LocalModelProfile, "contextFits" | "throughputFits">[] = [
     parameterCount: "7B",
     quantization: "Q8_0",
     vramGbMin: 24,
-    // 7B Q8_0 weights ≈ 8 GB; the remaining ~16 GB holds a hot KV window.
-    // The full 1M-token KV cache (~57 GB fp16 / ~29 GB Q8) spills to system
-    // RAM via llama.cpp CPU offload.  An A100 80GB can keep everything in
-    // VRAM and avoid the CPU-offload penalty entirely.
-    systemRamGbMin: 80,
-    gpuClass: "RTX 4090 24GB + ≥80 GB system RAM (CPU KV-cache offload) — or A100 80 GB (full in-VRAM, no offload)",
-    tokensPerSecEstimate: 35,
+    // KV math (verified from config.json): 28 layers × 4 KV heads × 128 head_dim.
+    // fp16 KV: 56 KB/token; Q8 KV: 28 KB/token.
+    // Weights Q8_0: 8.10 GiB = ~8.7 GB (bartowski GGUF, confirmed).
+    // With 24 GB VRAM: 24 - 8.7 = 15.3 GB for KV → Q8 KV: ~558K tokens hot in VRAM.
+    // At 1M context: ~452K tokens offloaded to system RAM (Q8 KV ≈ 12.2 GB).
+    // System RAM min (Q8 KV): 12.2 GB offloaded + ~16 GB OS headroom = ~29 GB → 32 GB minimum.
+    // System RAM min (fp16 KV): ~39 GB offloaded + 16 GB headroom = ~55 GB → 64 GB minimum.
+    // A100 80 GB: full 1M Q8 KV (28 GB) + weights (8.7 GB) = 36.7 GB → fits with no offload ✓.
+    // ⚠ Speed at true 1M context with CPU KV offload is RAM-bandwidth-limited:
+    //   DDR5-6000 (96 GB/s) with Q8 KV (28 GB to read per token) → ~3.4 tok/s theoretical max.
+    //   Community data: 1-5 tok/s at 100K+ context; sub-1 tok/s at full 1M (CPU offload).
+    //   Usable speeds (>5 tok/s) require an A100-class GPU with full in-VRAM KV.
+    systemRamGbMin: 32,
+    gpuClass: "RTX 4090 24GB + ≥32 GB system RAM (Q8 KV offload, ~558K tokens hot) — or A100 80 GB (full in-VRAM, no offload)",
+    // tokensPerSecEstimate reflects true 1M context performance (CPU offload path).
+    // For contexts < 558K tokens (all in VRAM), expect ~80 tok/s on RTX 4090.
+    tokensPerSecEstimate: 5,
     license: "Apache 2.0",
     codeCapability: "good",
     toolUseSupport: true,
     commercialSafe: true,
-    note: "Million-token context window for long-prompt / cached-context workloads (e.g. Claude Code with system-prompt cache). With a 24 GB GPU the model weights run in VRAM while the KV cache is offloaded to system RAM — bring ≥80 GB RAM. An A100 80 GB eliminates the offload. Trades raw capability for unmatched window depth — pair with Qwen2.5-Coder 14B for short-context coding tasks."
+    note: "Million-token context window for long-prompt / cached-context workloads (e.g. Claude Code with system-prompt cache). On a 24 GB GPU, weights (~8.7 GB) run in VRAM and ~558K KV tokens stay hot; remaining tokens spill to system RAM — bring ≥32 GB (Q8 KV) or ≥64 GB (fp16 KV). At full 1M context generation speed is RAM-bandwidth-limited: ~1–5 tok/s via CPU offload. An A100 80 GB eliminates the offload entirely (~80 tok/s). Pair with Qwen2.5-Coder 14B for short-context coding tasks."
   }
 ];
 
