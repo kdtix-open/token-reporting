@@ -63,9 +63,15 @@ function ModelCard({ profile }: { profile: LocalModelProfile }) {
           <dd>{profile.quantization}</dd>
         </div>
         <div>
-          <dt>VRAM (min)</dt>
+          <dt>GPU VRAM (min)</dt>
           <dd>{profile.vramGbMin} GB</dd>
         </div>
+        {profile.systemRamGbMin !== undefined && (
+          <div>
+            <dt>System RAM (KV cache)</dt>
+            <dd>≥{profile.systemRamGbMin} GB</dd>
+          </div>
+        )}
         <div>
           <dt>GPU class</dt>
           <dd>{profile.gpuClass}</dd>

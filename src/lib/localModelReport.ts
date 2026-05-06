@@ -16,6 +16,12 @@ export interface LocalModelProfile {
   /** Quantization used for VRAM and speed estimates */
   quantization: string;
   vramGbMin: number;
+  /**
+   * System RAM needed for KV-cache CPU offload when the context window is
+   * too large to fit the KV cache in VRAM. Omitted for models where the KV
+   * cache fits comfortably in VRAM at the stated context window.
+   */
+  systemRamGbMin?: number;
   gpuClass: string;
   /** Tokens/sec at concurrency=1 under the stated quantization */
   tokensPerSecEstimate: number;
@@ -152,13 +158,18 @@ const CATALOGUE: Omit<LocalModelProfile, "contextFits" | "throughputFits">[] = [
     parameterCount: "7B",
     quantization: "Q8_0",
     vramGbMin: 24,
-    gpuClass: "RTX 4090 24GB or A10G + 80GB system RAM for KV cache",
+    // 7B Q8_0 weights ≈ 8 GB; the remaining ~16 GB holds a hot KV window.
+    // The full 1M-token KV cache (~57 GB fp16 / ~29 GB Q8) spills to system
+    // RAM via llama.cpp CPU offload.  An A100 80GB can keep everything in
+    // VRAM and avoid the CPU-offload penalty entirely.
+    systemRamGbMin: 80,
+    gpuClass: "RTX 4090 24GB + ≥80 GB system RAM (CPU KV-cache offload) — or A100 80 GB (full in-VRAM, no offload)",
     tokensPerSecEstimate: 35,
     license: "Apache 2.0",
     codeCapability: "good",
     toolUseSupport: true,
     commercialSafe: true,
-    note: "Million-token context window for long-prompt / cached-context workloads (e.g. Claude Code with system-prompt cache). Trades raw capability for unmatched window depth — pair with Qwen2.5-Coder 14B for short-context coding tasks."
+    note: "Million-token context window for long-prompt / cached-context workloads (e.g. Claude Code with system-prompt cache). With a 24 GB GPU the model weights run in VRAM while the KV cache is offloaded to system RAM — bring ≥80 GB RAM. An A100 80 GB eliminates the offload. Trades raw capability for unmatched window depth — pair with Qwen2.5-Coder 14B for short-context coding tasks."
   }
 ];
 
