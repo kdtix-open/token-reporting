@@ -611,3 +611,287 @@
   color: #475569;
   line-height: 1.5;
 }
+
+/* ── Hero actions (Refresh Report button) ───────────────────────────────── */
+
+.hero__actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.hero__refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1.1rem;
+  border: 1.5px solid rgba(248, 250, 252, 0.55);
+  border-radius: 999px;
+  background: rgba(248, 250, 252, 0.12);
+  color: #f8fafc;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.hero__refresh-btn:hover:not(:disabled) {
+  background: rgba(248, 250, 252, 0.22);
+}
+
+.hero__refresh-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.hero__refresh-meta {
+  font-size: 0.8rem;
+  color: rgba(248, 250, 252, 0.7);
+}
+
+/* ── Azure Quota Panel ──────────────────────────────────────────────────── */
+
+.quota-panel {
+  margin: 1.5rem 0;
+  padding: 1.75rem;
+  border-radius: 1.25rem;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+}
+
+.quota-panel__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+.quota-panel__eyebrow {
+  margin: 0 0 0.3rem;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: #4338ca;
+  font-weight: 600;
+}
+
+.quota-panel__title {
+  margin: 0 0 0.2rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.quota-panel__subtitle {
+  margin: 0;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.quota-panel__cta {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  background: #4338ca;
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.15s ease;
+  flex-shrink: 0;
+}
+
+.quota-panel__cta:hover {
+  background: #3730a3;
+}
+
+.quota-panel__section-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin: 1.5rem 0 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.quota-panel__ratio-badge {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: #ede9fe;
+  color: #4c1d95;
+  letter-spacing: 0.04em;
+}
+
+.quota-panel__tally {
+  margin: 0.6rem 0 0;
+  font-size: 0.875rem;
+  color: #334155;
+}
+
+.quota-panel__note {
+  margin: 0.5rem 0 0;
+  font-size: 0.78rem;
+  color: #64748b;
+  line-height: 1.55;
+}
+
+.quota-panel__note a {
+  color: #4f46e5;
+  text-decoration: none;
+}
+
+.quota-panel__note a:hover {
+  text-decoration: underline;
+}
+
+/* ── Quota tables ───────────────────────────────────────────────────────── */
+
+.quota-table-wrapper {
+  overflow-x: auto;
+  margin-top: 0.25rem;
+}
+
+.quota-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.855rem;
+}
+
+.quota-table th {
+  padding: 0.45rem 0.75rem;
+  text-align: right;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #475569;
+  border-bottom: 2px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+.quota-table th:first-child {
+  text-align: left;
+}
+
+.quota-table td {
+  padding: 0.55rem 0.75rem;
+  text-align: right;
+  border-bottom: 1px solid #f1f5f9;
+  color: #0f172a;
+  white-space: nowrap;
+}
+
+.quota-table td:first-child {
+  text-align: left;
+}
+
+.quota-table__model {
+  font-weight: 600;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.quota-table__replaces {
+  font-size: 0.78rem;
+  color: #475569;
+  text-align: left !important;
+}
+
+.quota-table__requested {
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.quota-table__ratio {
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+.quota-table__units {
+  text-align: right;
+}
+
+.quota-table__units--value {
+  font-weight: 700;
+  font-size: 1rem;
+  color: #4338ca;
+}
+
+.quota-note {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+/* ── Category badges ────────────────────────────────────────────────────── */
+
+.quota-badge {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.quota-badge--anthropic {
+  background: #ede9fe;
+  color: #5b21b6;
+}
+
+.quota-badge--openai {
+  background: #dcfce7;
+  color: #166534;
+}
+
+/* ── Region recommendation cards ───────────────────────────────────────── */
+
+.quota-regions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 0.25rem;
+}
+
+.quota-region-card {
+  padding: 1rem;
+  border-radius: 0.875rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.quota-region-card__priority {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #4338ca;
+}
+
+.quota-region-card__name {
+  font-size: 1rem;
+  color: #0f172a;
+}
+
+.quota-region-card__reason {
+  margin: 0.2rem 0 0;
+  font-size: 0.78rem;
+  color: #64748b;
+  line-height: 1.5;
+}

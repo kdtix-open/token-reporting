@@ -3,6 +3,7 @@ dist/
 coverage/
 .env
 .env.local
+.env.admin.credentials
 .DS_Store
 .playwright-mcp/
 *.tsbuildinfo

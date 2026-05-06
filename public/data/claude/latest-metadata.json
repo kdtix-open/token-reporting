@@ -2,86 +2,6 @@
   "usage": {
     "data": [
       {
-        "starting_at": "2026-03-22T00:00:00Z",
-        "ending_at": "2026-03-23T00:00:00Z",
-        "results": []
-      },
-      {
-        "starting_at": "2026-03-23T00:00:00Z",
-        "ending_at": "2026-03-24T00:00:00Z",
-        "results": []
-      },
-      {
-        "starting_at": "2026-03-24T00:00:00Z",
-        "ending_at": "2026-03-25T00:00:00Z",
-        "results": []
-      },
-      {
-        "starting_at": "2026-03-25T00:00:00Z",
-        "ending_at": "2026-03-26T00:00:00Z",
-        "results": []
-      },
-      {
-        "starting_at": "2026-03-26T00:00:00Z",
-        "ending_at": "2026-03-27T00:00:00Z",
-        "results": []
-      },
-      {
-        "starting_at": "2026-03-27T00:00:00Z",
-        "ending_at": "2026-03-28T00:00:00Z",
-        "results": []
-      },
-      {
-        "starting_at": "2026-03-28T00:00:00Z",
-        "ending_at": "2026-03-29T00:00:00Z",
-        "results": []
-      },
-      {
-        "starting_at": "2026-03-29T00:00:00Z",
-        "ending_at": "2026-03-30T00:00:00Z",
-        "results": []
-      },
-      {
-        "starting_at": "2026-03-30T00:00:00Z",
-        "ending_at": "2026-03-31T00:00:00Z",
-        "results": []
-      },
-      {
-        "starting_at": "2026-03-31T00:00:00Z",
-        "ending_at": "2026-04-01T00:00:00Z",
-        "results": []
-      },
-      {
-        "starting_at": "2026-04-01T00:00:00Z",
-        "ending_at": "2026-04-02T00:00:00Z",
-        "results": []
-      },
-      {
-        "starting_at": "2026-04-02T00:00:00Z",
-        "ending_at": "2026-04-03T00:00:00Z",
-        "results": []
-      },
-      {
-        "starting_at": "2026-04-03T00:00:00Z",
-        "ending_at": "2026-04-04T00:00:00Z",
-        "results": []
-      },
-      {
-        "starting_at": "2026-04-04T00:00:00Z",
-        "ending_at": "2026-04-05T00:00:00Z",
-        "results": []
-      },
-      {
-        "starting_at": "2026-04-05T00:00:00Z",
-        "ending_at": "2026-04-06T00:00:00Z",
-        "results": []
-      },
-      {
-        "starting_at": "2026-04-06T00:00:00Z",
-        "ending_at": "2026-04-07T00:00:00Z",
-        "results": []
-      },
-      {
         "starting_at": "2026-04-07T00:00:00Z",
         "ending_at": "2026-04-08T00:00:00Z",
         "results": []
@@ -448,6 +368,291 @@
             "inference_geo": null
           }
         ]
+      },
+      {
+        "starting_at": "2026-04-19T00:00:00Z",
+        "ending_at": "2026-04-20T00:00:00Z",
+        "results": [
+          {
+            "uncached_input_tokens": 26,
+            "cache_creation": {
+              "ephemeral_1h_input_tokens": 0,
+              "ephemeral_5m_input_tokens": 37683
+            },
+            "cache_read_input_tokens": 0,
+            "output_tokens": 428,
+            "server_tool_use": {
+              "web_search_requests": 0
+            },
+            "api_key_id": null,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "account_id": null,
+            "service_account_id": null,
+            "model": "claude-haiku-4-5-20251001",
+            "service_tier": "standard",
+            "context_window": "0-200k",
+            "inference_geo": null
+          },
+          {
+            "uncached_input_tokens": 45,
+            "cache_creation": {
+              "ephemeral_1h_input_tokens": 0,
+              "ephemeral_5m_input_tokens": 102732
+            },
+            "cache_read_input_tokens": 51913,
+            "output_tokens": 2416,
+            "server_tool_use": {
+              "web_search_requests": 0
+            },
+            "api_key_id": null,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "account_id": null,
+            "service_account_id": null,
+            "model": "claude-sonnet-4-6",
+            "service_tier": "standard",
+            "context_window": "0-200k",
+            "inference_geo": null
+          }
+        ]
+      },
+      {
+        "starting_at": "2026-04-20T00:00:00Z",
+        "ending_at": "2026-04-21T00:00:00Z",
+        "results": [
+          {
+            "uncached_input_tokens": 62871,
+            "cache_creation": {
+              "ephemeral_1h_input_tokens": 0,
+              "ephemeral_5m_input_tokens": 2466542
+            },
+            "cache_read_input_tokens": 33259455,
+            "output_tokens": 258769,
+            "server_tool_use": {
+              "web_search_requests": 0
+            },
+            "api_key_id": null,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "account_id": null,
+            "service_account_id": null,
+            "model": "claude-haiku-4-5-20251001",
+            "service_tier": "standard",
+            "context_window": "0-200k",
+            "inference_geo": null
+          },
+          {
+            "uncached_input_tokens": 42190,
+            "cache_creation": {
+              "ephemeral_1h_input_tokens": 0,
+              "ephemeral_5m_input_tokens": 4647776
+            },
+            "cache_read_input_tokens": 145442482,
+            "output_tokens": 1323023,
+            "server_tool_use": {
+              "web_search_requests": 0
+            },
+            "api_key_id": null,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "account_id": null,
+            "service_account_id": null,
+            "model": "claude-sonnet-4-6",
+            "service_tier": "standard",
+            "context_window": "0-200k",
+            "inference_geo": null
+          }
+        ]
+      },
+      {
+        "starting_at": "2026-04-21T00:00:00Z",
+        "ending_at": "2026-04-22T00:00:00Z",
+        "results": [
+          {
+            "uncached_input_tokens": 23655,
+            "cache_creation": {
+              "ephemeral_1h_input_tokens": 0,
+              "ephemeral_5m_input_tokens": 1355368
+            },
+            "cache_read_input_tokens": 17751192,
+            "output_tokens": 137479,
+            "server_tool_use": {
+              "web_search_requests": 0
+            },
+            "api_key_id": null,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "account_id": null,
+            "service_account_id": null,
+            "model": "claude-haiku-4-5-20251001",
+            "service_tier": "standard",
+            "context_window": "0-200k",
+            "inference_geo": null
+          },
+          {
+            "uncached_input_tokens": 29248,
+            "cache_creation": {
+              "ephemeral_1h_input_tokens": 0,
+              "ephemeral_5m_input_tokens": 1685706
+            },
+            "cache_read_input_tokens": 40959213,
+            "output_tokens": 348445,
+            "server_tool_use": {
+              "web_search_requests": 0
+            },
+            "api_key_id": null,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "account_id": null,
+            "service_account_id": null,
+            "model": "claude-sonnet-4-6",
+            "service_tier": "standard",
+            "context_window": "0-200k",
+            "inference_geo": null
+          }
+        ]
+      },
+      {
+        "starting_at": "2026-04-22T00:00:00Z",
+        "ending_at": "2026-04-23T00:00:00Z",
+        "results": [
+          {
+            "uncached_input_tokens": 8254,
+            "cache_creation": {
+              "ephemeral_1h_input_tokens": 0,
+              "ephemeral_5m_input_tokens": 384445
+            },
+            "cache_read_input_tokens": 3268952,
+            "output_tokens": 28384,
+            "server_tool_use": {
+              "web_search_requests": 0
+            },
+            "api_key_id": null,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "account_id": null,
+            "service_account_id": null,
+            "model": "claude-haiku-4-5-20251001",
+            "service_tier": "standard",
+            "context_window": "0-200k",
+            "inference_geo": null
+          },
+          {
+            "uncached_input_tokens": 446,
+            "cache_creation": {
+              "ephemeral_1h_input_tokens": 0,
+              "ephemeral_5m_input_tokens": 726911
+            },
+            "cache_read_input_tokens": 11487907,
+            "output_tokens": 145885,
+            "server_tool_use": {
+              "web_search_requests": 0
+            },
+            "api_key_id": null,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "account_id": null,
+            "service_account_id": null,
+            "model": "claude-sonnet-4-6",
+            "service_tier": "standard",
+            "context_window": "0-200k",
+            "inference_geo": null
+          }
+        ]
+      },
+      {
+        "starting_at": "2026-04-23T00:00:00Z",
+        "ending_at": "2026-04-24T00:00:00Z",
+        "results": []
+      },
+      {
+        "starting_at": "2026-04-24T00:00:00Z",
+        "ending_at": "2026-04-25T00:00:00Z",
+        "results": [
+          {
+            "uncached_input_tokens": 109759,
+            "cache_creation": {
+              "ephemeral_1h_input_tokens": 0,
+              "ephemeral_5m_input_tokens": 2588507
+            },
+            "cache_read_input_tokens": 46929489,
+            "output_tokens": 330695,
+            "server_tool_use": {
+              "web_search_requests": 0
+            },
+            "api_key_id": null,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "account_id": null,
+            "service_account_id": null,
+            "model": "claude-haiku-4-5-20251001",
+            "service_tier": "standard",
+            "context_window": "0-200k",
+            "inference_geo": null
+          },
+          {
+            "uncached_input_tokens": 190842,
+            "cache_creation": {
+              "ephemeral_1h_input_tokens": 0,
+              "ephemeral_5m_input_tokens": 2560380
+            },
+            "cache_read_input_tokens": 90662611,
+            "output_tokens": 636724,
+            "server_tool_use": {
+              "web_search_requests": 0
+            },
+            "api_key_id": null,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "account_id": null,
+            "service_account_id": null,
+            "model": "claude-sonnet-4-6",
+            "service_tier": "standard",
+            "context_window": "0-200k",
+            "inference_geo": null
+          }
+        ]
+      },
+      {
+        "starting_at": "2026-04-25T00:00:00Z",
+        "ending_at": "2026-04-26T00:00:00Z",
+        "results": []
+      },
+      {
+        "starting_at": "2026-04-26T00:00:00Z",
+        "ending_at": "2026-04-27T00:00:00Z",
+        "results": []
+      },
+      {
+        "starting_at": "2026-04-27T00:00:00Z",
+        "ending_at": "2026-04-28T00:00:00Z",
+        "results": []
+      },
+      {
+        "starting_at": "2026-04-28T00:00:00Z",
+        "ending_at": "2026-04-29T00:00:00Z",
+        "results": []
+      },
+      {
+        "starting_at": "2026-04-29T00:00:00Z",
+        "ending_at": "2026-04-30T00:00:00Z",
+        "results": []
+      },
+      {
+        "starting_at": "2026-04-30T00:00:00Z",
+        "ending_at": "2026-05-01T00:00:00Z",
+        "results": []
+      },
+      {
+        "starting_at": "2026-05-01T00:00:00Z",
+        "ending_at": "2026-05-02T00:00:00Z",
+        "results": []
+      },
+      {
+        "starting_at": "2026-05-02T00:00:00Z",
+        "ending_at": "2026-05-03T00:00:00Z",
+        "results": []
+      },
+      {
+        "starting_at": "2026-05-03T00:00:00Z",
+        "ending_at": "2026-05-04T00:00:00Z",
+        "results": []
+      },
+      {
+        "starting_at": "2026-05-04T00:00:00Z",
+        "ending_at": "2026-05-05T00:00:00Z",
+        "results": []
       }
     ],
     "has_more": false,
@@ -455,86 +660,6 @@
   },
   "costs": {
     "data": [
-      {
-        "starting_at": "2026-03-22T00:00:00Z",
-        "ending_at": "2026-03-23T00:00:00Z",
-        "results": []
-      },
-      {
-        "starting_at": "2026-03-23T00:00:00Z",
-        "ending_at": "2026-03-24T00:00:00Z",
-        "results": []
-      },
-      {
-        "starting_at": "2026-03-24T00:00:00Z",
-        "ending_at": "2026-03-25T00:00:00Z",
-        "results": []
-      },
-      {
-        "starting_at": "2026-03-25T00:00:00Z",
-        "ending_at": "2026-03-26T00:00:00Z",
-        "results": []
-      },
-      {
-        "starting_at": "2026-03-26T00:00:00Z",
-        "ending_at": "2026-03-27T00:00:00Z",
-        "results": []
-      },
-      {
-        "starting_at": "2026-03-27T00:00:00Z",
-        "ending_at": "2026-03-28T00:00:00Z",
-        "results": []
-      },
-      {
-        "starting_at": "2026-03-28T00:00:00Z",
-        "ending_at": "2026-03-29T00:00:00Z",
-        "results": []
-      },
-      {
-        "starting_at": "2026-03-29T00:00:00Z",
-        "ending_at": "2026-03-30T00:00:00Z",
-        "results": []
-      },
-      {
-        "starting_at": "2026-03-30T00:00:00Z",
-        "ending_at": "2026-03-31T00:00:00Z",
-        "results": []
-      },
-      {
-        "starting_at": "2026-03-31T00:00:00Z",
-        "ending_at": "2026-04-01T00:00:00Z",
-        "results": []
-      },
-      {
-        "starting_at": "2026-04-01T00:00:00Z",
-        "ending_at": "2026-04-02T00:00:00Z",
-        "results": []
-      },
-      {
-        "starting_at": "2026-04-02T00:00:00Z",
-        "ending_at": "2026-04-03T00:00:00Z",
-        "results": []
-      },
-      {
-        "starting_at": "2026-04-03T00:00:00Z",
-        "ending_at": "2026-04-04T00:00:00Z",
-        "results": []
-      },
-      {
-        "starting_at": "2026-04-04T00:00:00Z",
-        "ending_at": "2026-04-05T00:00:00Z",
-        "results": []
-      },
-      {
-        "starting_at": "2026-04-05T00:00:00Z",
-        "ending_at": "2026-04-06T00:00:00Z",
-        "results": []
-      },
-      {
-        "starting_at": "2026-04-06T00:00:00Z",
-        "ending_at": "2026-04-07T00:00:00Z",
-        "results": []
-      },
       {
         "starting_at": "2026-04-07T00:00:00Z",
         "ending_at": "2026-04-08T00:00:00Z",
@@ -1286,6 +1411,559 @@
             "inference_geo": "global"
           }
         ]
+      },
+      {
+        "starting_at": "2026-04-19T00:00:00Z",
+        "ending_at": "2026-04-20T00:00:00Z",
+        "results": [
+          {
+            "currency": "USD",
+            "amount": 0.0026,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "description": "Claude Haiku 4.5 Usage - Input Tokens",
+            "cost_type": "tokens",
+            "context_window": "0-200k",
+            "model": "claude-haiku-4-5-20251001",
+            "service_tier": "standard",
+            "token_type": "uncached_input_tokens",
+            "inference_geo": "not_available"
+          },
+          {
+            "currency": "USD",
+            "amount": 4.710375,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "description": "Claude Haiku 4.5 Usage - Input Tokens, Cache Write",
+            "cost_type": "tokens",
+            "context_window": "0-200k",
+            "model": "claude-haiku-4-5-20251001",
+            "service_tier": "standard",
+            "token_type": "cache_creation.ephemeral_5m_input_tokens",
+            "inference_geo": "not_available"
+          },
+          {
+            "currency": "USD",
+            "amount": 0.214,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "description": "Claude Haiku 4.5 Usage - Output Tokens",
+            "cost_type": "tokens",
+            "context_window": "0-200k",
+            "model": "claude-haiku-4-5-20251001",
+            "service_tier": "standard",
+            "token_type": "output_tokens",
+            "inference_geo": "not_available"
+          },
+          {
+            "currency": "USD",
+            "amount": 0.0135,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "description": "Claude Sonnet 4.6 Usage - Input Tokens",
+            "cost_type": "tokens",
+            "context_window": "0-200k",
+            "model": "claude-sonnet-4-6",
+            "service_tier": "standard",
+            "token_type": "uncached_input_tokens",
+            "inference_geo": "global"
+          },
+          {
+            "currency": "USD",
+            "amount": 1.55739,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "description": "Claude Sonnet 4.6 Usage - Input Tokens, Cache Hit",
+            "cost_type": "tokens",
+            "context_window": "0-200k",
+            "model": "claude-sonnet-4-6",
+            "service_tier": "standard",
+            "token_type": "cache_read_input_tokens",
+            "inference_geo": "global"
+          },
+          {
+            "currency": "USD",
+            "amount": 38.5245,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "description": "Claude Sonnet 4.6 Usage - Input Tokens, Cache Write",
+            "cost_type": "tokens",
+            "context_window": "0-200k",
+            "model": "claude-sonnet-4-6",
+            "service_tier": "standard",
+            "token_type": "cache_creation.ephemeral_5m_input_tokens",
+            "inference_geo": "global"
+          },
+          {
+            "currency": "USD",
+            "amount": 3.624,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "description": "Claude Sonnet 4.6 Usage - Output Tokens",
+            "cost_type": "tokens",
+            "context_window": "0-200k",
+            "model": "claude-sonnet-4-6",
+            "service_tier": "standard",
+            "token_type": "output_tokens",
+            "inference_geo": "global"
+          }
+        ]
+      },
+      {
+        "starting_at": "2026-04-20T00:00:00Z",
+        "ending_at": "2026-04-21T00:00:00Z",
+        "results": [
+          {
+            "currency": "USD",
+            "amount": 6.2871,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "description": "Claude Haiku 4.5 Usage - Input Tokens",
+            "cost_type": "tokens",
+            "context_window": "0-200k",
+            "model": "claude-haiku-4-5-20251001",
+            "service_tier": "standard",
+            "token_type": "uncached_input_tokens",
+            "inference_geo": "not_available"
+          },
+          {
+            "currency": "USD",
+            "amount": 332.59455,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "description": "Claude Haiku 4.5 Usage - Input Tokens, Cache Hit",
+            "cost_type": "tokens",
+            "context_window": "0-200k",
+            "model": "claude-haiku-4-5-20251001",
+            "service_tier": "standard",
+            "token_type": "cache_read_input_tokens",
+            "inference_geo": "not_available"
+          },
+          {
+            "currency": "USD",
+            "amount": 308.31775,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "description": "Claude Haiku 4.5 Usage - Input Tokens, Cache Write",
+            "cost_type": "tokens",
+            "context_window": "0-200k",
+            "model": "claude-haiku-4-5-20251001",
+            "service_tier": "standard",
+            "token_type": "cache_creation.ephemeral_5m_input_tokens",
+            "inference_geo": "not_available"
+          },
+          {
+            "currency": "USD",
+            "amount": 129.3845,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "description": "Claude Haiku 4.5 Usage - Output Tokens",
+            "cost_type": "tokens",
+            "context_window": "0-200k",
+            "model": "claude-haiku-4-5-20251001",
+            "service_tier": "standard",
+            "token_type": "output_tokens",
+            "inference_geo": "not_available"
+          },
+          {
+            "currency": "USD",
+            "amount": 12.657,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "description": "Claude Sonnet 4.6 Usage - Input Tokens",
+            "cost_type": "tokens",
+            "context_window": "0-200k",
+            "model": "claude-sonnet-4-6",
+            "service_tier": "standard",
+            "token_type": "uncached_input_tokens",
+            "inference_geo": "global"
+          },
+          {
+            "currency": "USD",
+            "amount": 4363.27446,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "description": "Claude Sonnet 4.6 Usage - Input Tokens, Cache Hit",
+            "cost_type": "tokens",
+            "context_window": "0-200k",
+            "model": "claude-sonnet-4-6",
+            "service_tier": "standard",
+            "token_type": "cache_read_input_tokens",
+            "inference_geo": "global"
+          },
+          {
+            "currency": "USD",
+            "amount": 1742.916,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "description": "Claude Sonnet 4.6 Usage - Input Tokens, Cache Write",
+            "cost_type": "tokens",
+            "context_window": "0-200k",
+            "model": "claude-sonnet-4-6",
+            "service_tier": "standard",
+            "token_type": "cache_creation.ephemeral_5m_input_tokens",
+            "inference_geo": "global"
+          },
+          {
+            "currency": "USD",
+            "amount": 1984.5345,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "description": "Claude Sonnet 4.6 Usage - Output Tokens",
+            "cost_type": "tokens",
+            "context_window": "0-200k",
+            "model": "claude-sonnet-4-6",
+            "service_tier": "standard",
+            "token_type": "output_tokens",
+            "inference_geo": "global"
+          }
+        ]
+      },
+      {
+        "starting_at": "2026-04-21T00:00:00Z",
+        "ending_at": "2026-04-22T00:00:00Z",
+        "results": [
+          {
+            "currency": "USD",
+            "amount": 2.366,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "description": "Claude Haiku 4.5 Usage - Input Tokens",
+            "cost_type": "tokens",
+            "context_window": "0-200k",
+            "model": "claude-haiku-4-5-20251001",
+            "service_tier": "standard",
+            "token_type": "uncached_input_tokens",
+            "inference_geo": "not_available"
+          },
+          {
+            "currency": "USD",
+            "amount": 178.99833,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "description": "Claude Haiku 4.5 Usage - Input Tokens, Cache Hit",
+            "cost_type": "tokens",
+            "context_window": "0-200k",
+            "model": "claude-haiku-4-5-20251001",
+            "service_tier": "standard",
+            "token_type": "cache_read_input_tokens",
+            "inference_geo": "not_available"
+          },
+          {
+            "currency": "USD",
+            "amount": 170.458875,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "description": "Claude Haiku 4.5 Usage - Input Tokens, Cache Write",
+            "cost_type": "tokens",
+            "context_window": "0-200k",
+            "model": "claude-haiku-4-5-20251001",
+            "service_tier": "standard",
+            "token_type": "cache_creation.ephemeral_5m_input_tokens",
+            "inference_geo": "not_available"
+          },
+          {
+            "currency": "USD",
+            "amount": 68.9305,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "description": "Claude Haiku 4.5 Usage - Output Tokens",
+            "cost_type": "tokens",
+            "context_window": "0-200k",
+            "model": "claude-haiku-4-5-20251001",
+            "service_tier": "standard",
+            "token_type": "output_tokens",
+            "inference_geo": "not_available"
+          },
+          {
+            "currency": "USD",
+            "amount": 8.7759,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "description": "Claude Sonnet 4.6 Usage - Input Tokens",
+            "cost_type": "tokens",
+            "context_window": "0-200k",
+            "model": "claude-sonnet-4-6",
+            "service_tier": "standard",
+            "token_type": "uncached_input_tokens",
+            "inference_geo": "global"
+          },
+          {
+            "currency": "USD",
+            "amount": 1232.18373,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "description": "Claude Sonnet 4.6 Usage - Input Tokens, Cache Hit",
+            "cost_type": "tokens",
+            "context_window": "0-200k",
+            "model": "claude-sonnet-4-6",
+            "service_tier": "standard",
+            "token_type": "cache_read_input_tokens",
+            "inference_geo": "global"
+          },
+          {
+            "currency": "USD",
+            "amount": 633.683625,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "description": "Claude Sonnet 4.6 Usage - Input Tokens, Cache Write",
+            "cost_type": "tokens",
+            "context_window": "0-200k",
+            "model": "claude-sonnet-4-6",
+            "service_tier": "standard",
+            "token_type": "cache_creation.ephemeral_5m_input_tokens",
+            "inference_geo": "global"
+          },
+          {
+            "currency": "USD",
+            "amount": 527.067,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "description": "Claude Sonnet 4.6 Usage - Output Tokens",
+            "cost_type": "tokens",
+            "context_window": "0-200k",
+            "model": "claude-sonnet-4-6",
+            "service_tier": "standard",
+            "token_type": "output_tokens",
+            "inference_geo": "global"
+          }
+        ]
+      },
+      {
+        "starting_at": "2026-04-22T00:00:00Z",
+        "ending_at": "2026-04-23T00:00:00Z",
+        "results": [
+          {
+            "currency": "USD",
+            "amount": 0.8254,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "description": "Claude Haiku 4.5 Usage - Input Tokens",
+            "cost_type": "tokens",
+            "context_window": "0-200k",
+            "model": "claude-haiku-4-5-20251001",
+            "service_tier": "standard",
+            "token_type": "uncached_input_tokens",
+            "inference_geo": "not_available"
+          },
+          {
+            "currency": "USD",
+            "amount": 32.68952,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "description": "Claude Haiku 4.5 Usage - Input Tokens, Cache Hit",
+            "cost_type": "tokens",
+            "context_window": "0-200k",
+            "model": "claude-haiku-4-5-20251001",
+            "service_tier": "standard",
+            "token_type": "cache_read_input_tokens",
+            "inference_geo": "not_available"
+          },
+          {
+            "currency": "USD",
+            "amount": 48.055625,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "description": "Claude Haiku 4.5 Usage - Input Tokens, Cache Write",
+            "cost_type": "tokens",
+            "context_window": "0-200k",
+            "model": "claude-haiku-4-5-20251001",
+            "service_tier": "standard",
+            "token_type": "cache_creation.ephemeral_5m_input_tokens",
+            "inference_geo": "not_available"
+          },
+          {
+            "currency": "USD",
+            "amount": 14.192,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "description": "Claude Haiku 4.5 Usage - Output Tokens",
+            "cost_type": "tokens",
+            "context_window": "0-200k",
+            "model": "claude-haiku-4-5-20251001",
+            "service_tier": "standard",
+            "token_type": "output_tokens",
+            "inference_geo": "not_available"
+          },
+          {
+            "currency": "USD",
+            "amount": 0.1338,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "description": "Claude Sonnet 4.6 Usage - Input Tokens",
+            "cost_type": "tokens",
+            "context_window": "0-200k",
+            "model": "claude-sonnet-4-6",
+            "service_tier": "standard",
+            "token_type": "uncached_input_tokens",
+            "inference_geo": "global"
+          },
+          {
+            "currency": "USD",
+            "amount": 344.63721,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "description": "Claude Sonnet 4.6 Usage - Input Tokens, Cache Hit",
+            "cost_type": "tokens",
+            "context_window": "0-200k",
+            "model": "claude-sonnet-4-6",
+            "service_tier": "standard",
+            "token_type": "cache_read_input_tokens",
+            "inference_geo": "global"
+          },
+          {
+            "currency": "USD",
+            "amount": 272.591625,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "description": "Claude Sonnet 4.6 Usage - Input Tokens, Cache Write",
+            "cost_type": "tokens",
+            "context_window": "0-200k",
+            "model": "claude-sonnet-4-6",
+            "service_tier": "standard",
+            "token_type": "cache_creation.ephemeral_5m_input_tokens",
+            "inference_geo": "global"
+          },
+          {
+            "currency": "USD",
+            "amount": 218.8275,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "description": "Claude Sonnet 4.6 Usage - Output Tokens",
+            "cost_type": "tokens",
+            "context_window": "0-200k",
+            "model": "claude-sonnet-4-6",
+            "service_tier": "standard",
+            "token_type": "output_tokens",
+            "inference_geo": "global"
+          }
+        ]
+      },
+      {
+        "starting_at": "2026-04-23T00:00:00Z",
+        "ending_at": "2026-04-24T00:00:00Z",
+        "results": []
+      },
+      {
+        "starting_at": "2026-04-24T00:00:00Z",
+        "ending_at": "2026-04-25T00:00:00Z",
+        "results": [
+          {
+            "currency": "USD",
+            "amount": 10.9759,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "description": "Claude Haiku 4.5 Usage - Input Tokens",
+            "cost_type": "tokens",
+            "context_window": "0-200k",
+            "model": "claude-haiku-4-5-20251001",
+            "service_tier": "standard",
+            "token_type": "uncached_input_tokens",
+            "inference_geo": "not_available"
+          },
+          {
+            "currency": "USD",
+            "amount": 469.29489,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "description": "Claude Haiku 4.5 Usage - Input Tokens, Cache Hit",
+            "cost_type": "tokens",
+            "context_window": "0-200k",
+            "model": "claude-haiku-4-5-20251001",
+            "service_tier": "standard",
+            "token_type": "cache_read_input_tokens",
+            "inference_geo": "not_available"
+          },
+          {
+            "currency": "USD",
+            "amount": 323.563375,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "description": "Claude Haiku 4.5 Usage - Input Tokens, Cache Write",
+            "cost_type": "tokens",
+            "context_window": "0-200k",
+            "model": "claude-haiku-4-5-20251001",
+            "service_tier": "standard",
+            "token_type": "cache_creation.ephemeral_5m_input_tokens",
+            "inference_geo": "not_available"
+          },
+          {
+            "currency": "USD",
+            "amount": 165.3475,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "description": "Claude Haiku 4.5 Usage - Output Tokens",
+            "cost_type": "tokens",
+            "context_window": "0-200k",
+            "model": "claude-haiku-4-5-20251001",
+            "service_tier": "standard",
+            "token_type": "output_tokens",
+            "inference_geo": "not_available"
+          },
+          {
+            "currency": "USD",
+            "amount": 57.2526,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "description": "Claude Sonnet 4.6 Usage - Input Tokens",
+            "cost_type": "tokens",
+            "context_window": "0-200k",
+            "model": "claude-sonnet-4-6",
+            "service_tier": "standard",
+            "token_type": "uncached_input_tokens",
+            "inference_geo": "global"
+          },
+          {
+            "currency": "USD",
+            "amount": 2719.87833,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "description": "Claude Sonnet 4.6 Usage - Input Tokens, Cache Hit",
+            "cost_type": "tokens",
+            "context_window": "0-200k",
+            "model": "claude-sonnet-4-6",
+            "service_tier": "standard",
+            "token_type": "cache_read_input_tokens",
+            "inference_geo": "global"
+          },
+          {
+            "currency": "USD",
+            "amount": 960.1425,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "description": "Claude Sonnet 4.6 Usage - Input Tokens, Cache Write",
+            "cost_type": "tokens",
+            "context_window": "0-200k",
+            "model": "claude-sonnet-4-6",
+            "service_tier": "standard",
+            "token_type": "cache_creation.ephemeral_5m_input_tokens",
+            "inference_geo": "global"
+          },
+          {
+            "currency": "USD",
+            "amount": 955.086,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "description": "Claude Sonnet 4.6 Usage - Output Tokens",
+            "cost_type": "tokens",
+            "context_window": "0-200k",
+            "model": "claude-sonnet-4-6",
+            "service_tier": "standard",
+            "token_type": "output_tokens",
+            "inference_geo": "global"
+          }
+        ]
+      },
+      {
+        "starting_at": "2026-04-25T00:00:00Z",
+        "ending_at": "2026-04-26T00:00:00Z",
+        "results": []
+      },
+      {
+        "starting_at": "2026-04-26T00:00:00Z",
+        "ending_at": "2026-04-27T00:00:00Z",
+        "results": []
+      },
+      {
+        "starting_at": "2026-04-27T00:00:00Z",
+        "ending_at": "2026-04-28T00:00:00Z",
+        "results": []
+      },
+      {
+        "starting_at": "2026-04-28T00:00:00Z",
+        "ending_at": "2026-04-29T00:00:00Z",
+        "results": []
+      },
+      {
+        "starting_at": "2026-04-29T00:00:00Z",
+        "ending_at": "2026-04-30T00:00:00Z",
+        "results": []
+      },
+      {
+        "starting_at": "2026-04-30T00:00:00Z",
+        "ending_at": "2026-05-01T00:00:00Z",
+        "results": []
+      },
+      {
+        "starting_at": "2026-05-01T00:00:00Z",
+        "ending_at": "2026-05-02T00:00:00Z",
+        "results": []
+      },
+      {
+        "starting_at": "2026-05-02T00:00:00Z",
+        "ending_at": "2026-05-03T00:00:00Z",
+        "results": []
+      },
+      {
+        "starting_at": "2026-05-03T00:00:00Z",
+        "ending_at": "2026-05-04T00:00:00Z",
+        "results": []
+      },
+      {
+        "starting_at": "2026-05-04T00:00:00Z",
+        "ending_at": "2026-05-05T00:00:00Z",
+        "results": []
       }
     ],
     "has_more": false,
