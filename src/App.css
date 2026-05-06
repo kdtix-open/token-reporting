@@ -758,8 +758,29 @@
 /* ── Quota tables ───────────────────────────────────────────────────────── */
 
 .quota-table-wrapper {
-  overflow-x: auto;
+  overflow-x: scroll;
   margin-top: 0.25rem;
+  /* Always-visible scrollbar so users know the table is horizontally scrollable */
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+.quota-table-wrapper::-webkit-scrollbar {
+  height: 6px;
+}
+
+.quota-table-wrapper::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.quota-table-wrapper::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.quota-table-wrapper::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 .quota-table {
