@@ -1,5 +1,5 @@
 import { buildLocalModelReport } from "../lib/localModelReport";
-import type { LocalModelProfile } from "../lib/localModelReport";
+import type { ContextConfidence, LocalModelMigrationReport, LocalModelProfile } from "../lib/localModelReport";
 import {
   type LocalSessionDistribution
 } from "../lib/localSessionDistribution";
@@ -36,14 +36,38 @@ const CODE_BADGE: Record<string, string> = {
   fair: "lm-badge lm-badge--fair"
 };
 
-function ModelCard({ profile }: { profile: LocalModelProfile }) {
+type FitState = "ok" | "unknown" | "fail";
+
+function getFitStatus(
+  profile: LocalModelProfile,
+  contextConfidence: ContextConfidence
+): { state: FitState; text: string } {
+  if (!profile.contextFits && !profile.throughputFits) {
+    return { state: "fail", text: "✗ Context too small · throughput insufficient" };
+  }
+  if (!profile.contextFits) {
+    return { state: "fail", text: "✗ Context window too small for this workload" };
+  }
+  if (!profile.throughputFits) {
+    return { state: "fail", text: "✗ Throughput insufficient for this workload" };
+  }
+  if (contextConfidence === "insufficient_data") {
+    return { state: "unknown", text: "○ Context fit unknown — run report:local-sessions" };
+  }
+  return { state: "ok", text: "✓ Fits your workload" };
+}
+
+function ModelCard({ profile, contextConfidence }: {
+  profile: LocalModelProfile;
+  contextConfidence: ContextConfidence;
+}) {
   const hfUrl = `https://huggingface.co/${profile.hfRepoId}`;
-  const fitIssues: string[] = [];
-  if (!profile.contextFits) fitIssues.push("context window too small");
-  if (!profile.throughputFits) fitIssues.push("throughput insufficient");
+  const fit = getFitStatus(profile, contextConfidence);
+  const isUnfit = !profile.contextFits || !profile.throughputFits;
 
   return (
-    <div className={`lm-profile ${TIER_COLOR[profile.tier] ?? ""} ${fitIssues.length > 0 ? "lm-profile--unfit" : ""}`}>
+    <div className={`lm-profile ${TIER_COLOR[profile.tier] ?? ""} ${isUnfit ? "lm-profile--unfit" : ""}`}>
+      <div className={`lm-fit-status lm-fit-status--${fit.state}`}>{fit.text}</div>
       <div className="lm-profile__tier">{TIER_LABEL[profile.tier]}</div>
       <h3 className="lm-profile__name">
         <a href={hfUrl} target="_blank" rel="noreferrer" className="lm-profile__hf-link">
@@ -98,11 +122,60 @@ function ModelCard({ profile }: { profile: LocalModelProfile }) {
         )}
       </div>
 
-      {fitIssues.length > 0 && (
-        <p className="lm-profile__warn">⚠ {fitIssues.join("; ")}</p>
-      )}
-
       <p className="lm-profile__note">{profile.note}</p>
+    </div>
+  );
+}
+
+function WorkloadCallout({ report }: { report: LocalModelMigrationReport }) {
+  const { contextConfidence, recommendedProfile, workloadGap, estimatedContextWindowNeeded, requiredTokensPerSec } = report;
+
+  if (contextConfidence === "insufficient_data") {
+    return (
+      <div className="lm-workload-callout lm-workload-callout--unknown">
+        ○ <strong>Context fit unknown.</strong> Run{" "}
+        <code>npm run report:local-sessions</code> to measure your actual p99 context
+        window and enable workload-fit analysis.
+      </div>
+    );
+  }
+
+  if (recommendedProfile) {
+    return (
+      <div className="lm-workload-callout lm-workload-callout--ok">
+        ★ <strong>Lowest-cost on-prem fit:</strong>{" "}
+        <strong>{recommendedProfile.name}</strong> covers your{" "}
+        {estimatedContextWindowNeeded != null ? fmtCtx(estimatedContextWindowNeeded) : "—"}-token
+        context window at {requiredTokensPerSec.toFixed(1)} tok/s required.
+      </div>
+    );
+  }
+
+  // No profile fits — build a specific gap explanation
+  const parts: string[] = [];
+  if (workloadGap?.context && estimatedContextWindowNeeded != null) {
+    const best = [...report.profiles].sort((a, b) => b.contextWindow - a.contextWindow)[0];
+    parts.push(
+      `your context requirement (${fmtCtx(estimatedContextWindowNeeded)} tokens) exceeds all catalogue profiles` +
+      (best ? ` — largest is ${fmtCtx(best.contextWindow)} (${best.name})` : "")
+    );
+  }
+  if (workloadGap?.throughput) {
+    const best = [...report.profiles].sort((a, b) => b.tokensPerSecEstimate - a.tokensPerSecEstimate)[0];
+    parts.push(
+      `throughput requirement (${requiredTokensPerSec.toFixed(1)} tok/s) exceeds all catalogue estimates` +
+      (best ? ` — fastest is ~${best.tokensPerSecEstimate} tok/s (${best.name})` : "")
+    );
+  }
+  if (parts.length === 0) {
+    // Individual profiles miss on different axes — no single model covers both
+    parts.push("no single profile satisfies both context and throughput for this workload");
+  }
+
+  return (
+    <div className="lm-workload-callout lm-workload-callout--gap">
+      ⚠ <strong>No on-prem profile covers your full workload:</strong>{" "}
+      {parts.join("; ")}.
     </div>
   );
 }
@@ -260,10 +333,11 @@ export function LocalModelMigrationPanel({ summaries, distribution }: LocalModel
 
       {/* ── Model profiles ───────────────────────────────────────────── */}
       <div className="lm-section">
-        <h3 className="lm-section__heading">Recommended on-prem model profiles</h3>
+        <h3 className="lm-section__heading">On-prem model profiles</h3>
+        <WorkloadCallout report={report} />
         <div className="lm-profiles">
           {report.profiles.map((p) => (
-            <ModelCard key={p.hfRepoId} profile={p} />
+            <ModelCard key={p.hfRepoId} profile={p} contextConfidence={report.contextConfidence} />
           ))}
         </div>
         <p className="lm-footnote">

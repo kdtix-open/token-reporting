@@ -95,6 +95,24 @@ export interface LocalModelMigrationReport {
 
   // ── Model profiles ──────────────────────────────────────────────────────
   profiles: LocalModelProfile[];
+
+  /**
+   * The lowest-tier catalogue entry where contextFits AND throughputFits are
+   * both true for the current workload.
+   *
+   * Only populated when contextConfidence is "high" or "low" — not when it is
+   * "insufficient_data", because contextFits would be trivially true (no data
+   * means no context constraint) and surfacing a "best fit" would be a false
+   * positive.  Null when no profile satisfies both constraints.
+   */
+  recommendedProfile: LocalModelProfile | null;
+
+  /**
+   * Describes which requirements no profile in the catalogue can satisfy.
+   * Only set when contextConfidence is "high" or "low" AND recommendedProfile
+   * is null (i.e. something is genuinely unmet).
+   */
+  workloadGap: { context: boolean; throughput: boolean } | null;
 }
 
 // ── HuggingFace model catalogue ─────────────────────────────────────────────
@@ -369,6 +387,24 @@ export function buildLocalModelReport(
     throughputFits: m.tokensPerSecEstimate >= requiredTokensPerSec
   }));
 
+  // ── Workload recommendation ────────────────────────────────────────────────
+  // Only compute a recommendation when we have real context data — when
+  // contextConfidence is "insufficient_data" contextFits is trivially true for
+  // every profile (no constraint to check), which would produce false positives.
+  const hasRealContext = contextConfidence !== "insufficient_data";
+
+  const recommendedProfile: LocalModelProfile | null = hasRealContext
+    ? (profiles.find((p) => p.contextFits && p.throughputFits) ?? null)
+    : null;
+
+  const workloadGap =
+    hasRealContext && recommendedProfile === null
+      ? {
+          context: profiles.every((p) => !p.contextFits),
+          throughput: profiles.every((p) => !p.throughputFits)
+        }
+      : null;
+
   return {
     tokenObservedProviders,
     requestOnlyProviders,
@@ -385,6 +421,8 @@ export function buildLocalModelReport(
     windowDays,
     dailyAvgComputeTokens,
     requiredTokensPerSec,
-    profiles
+    profiles,
+    recommendedProfile,
+    workloadGap
   };
 }

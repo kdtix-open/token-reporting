@@ -200,4 +200,89 @@ describe("buildLocalModelReport", () => {
     expect(report.requiredTokensPerSec).toBeCloseTo(260_000 / 28 / 28_800, 3);
     expect(report.profiles.every((p) => p.throughputFits)).toBe(true);
   });
+
+  // ── recommendedProfile / workloadGap ─────────────────────────────────────
+
+  it("recommendedProfile is null when contextConfidence is insufficient_data", () => {
+    // cursorSummary + copilotSummary: no token data → insufficient_data
+    const report = buildLocalModelReport([cursorSummary, copilotSummary]);
+    expect(report.contextConfidence).toBe("insufficient_data");
+    expect(report.recommendedProfile).toBeNull();
+    expect(report.workloadGap).toBeNull();
+  });
+
+  it("recommendedProfile is the lowest-tier (first) catalogue entry when all profiles fit", () => {
+    // Codex: low token load → tiny context + tiny throughput → all 4 profiles fit
+    const report = buildLocalModelReport([codexSummary]);
+    expect(report.contextConfidence).toBe("low");
+    expect(report.profiles.every((p) => p.contextFits && p.throughputFits)).toBe(true);
+    // First in CATALOGUE order is Llama 3.1 8B (tier = "min")
+    expect(report.recommendedProfile).not.toBeNull();
+    expect(report.recommendedProfile!.tier).toBe("min");
+    expect(report.recommendedProfile!.name).toMatch(/Llama/i);
+    expect(report.workloadGap).toBeNull();
+  });
+
+  it("recommendedProfile is Qwen2.5-7B-1M when context need (500K) exceeds all 128K profiles", () => {
+    // Distribution p99=300K → ceilToStandardContext → 500_000
+    // Only Qwen2.5-7B-1M (contextWindow=1_010_000) fits context
+    // codexSummary throughput ≈ 0.032 tok/s → all models satisfy throughput
+    const highCtxDistribution = {
+      generatedAt: "2025-01-01T00:00:00.000Z",
+      sources: [],
+      combined: { sampleCount: 100, mean: 200_000, p50: 150_000, p95: 280_000, p99: 300_000, max: 400_000 }
+    };
+    const report = buildLocalModelReport([codexSummary], highCtxDistribution as never);
+    expect(report.contextConfidence).toBe("high");
+    expect(report.estimatedContextWindowNeeded).toBe(500_000);
+    // Three 128K profiles fail context; 7B-1M passes
+    expect(report.profiles.filter((p) => p.contextFits)).toHaveLength(1);
+    expect(report.recommendedProfile).not.toBeNull();
+    expect(report.recommendedProfile!.contextWindow).toBeGreaterThanOrEqual(500_000);
+    expect(report.recommendedProfile!.name).toMatch(/7B/i);
+  });
+
+  it("recommendedProfile is null and workloadGap.throughput=true when throughput exceeds all estimates", () => {
+    // High token volume + high request count keeps context need tiny
+    // Pure compute ≈ 60M tokens in 28 days → requiredTokensPerSec ≈ 74.4 tok/s > max(55)
+    const highThroughputSummary = {
+      ...codexSummary,
+      inputTokens: 40_000_000,
+      outputTokens: 20_000_000,
+      requestCount: 10_000_000 // avg = 6 tokens → context = 4_096 (all fit context)
+    } as unknown as typeof codexSummary;
+
+    const report = buildLocalModelReport([highThroughputSummary]);
+    expect(report.contextConfidence).toBe("low");
+    expect(report.profiles.every((p) => p.contextFits)).toBe(true);
+    expect(report.profiles.every((p) => !p.throughputFits)).toBe(true);
+    expect(report.recommendedProfile).toBeNull();
+    expect(report.workloadGap).toEqual({ context: false, throughput: true });
+  });
+
+  it("recommendedProfile is null and workloadGap has no universal blocker when axes split across profiles", () => {
+    // Context need = 500K (only 7B-1M fits context)
+    // Throughput need ≈ 11 tok/s (7B-1M at 5 tok/s fails, others at 50/55 tok/s pass)
+    // → No single model satisfies both; workloadGap reflects no universal blocker
+    const splitAxisDistribution = {
+      generatedAt: "2025-01-01T00:00:00.000Z",
+      sources: [],
+      combined: { sampleCount: 100, mean: 200_000, p50: 150_000, p95: 280_000, p99: 300_000, max: 400_000 }
+    };
+    // 9M tokens / 28 days / 28_800 ≈ 11.2 tok/s  → 7B-1M (5 tok/s) fails; others pass throughput
+    const splitAxisSummary = {
+      ...codexSummary,
+      inputTokens: 8_000_000,
+      outputTokens: 1_000_000,
+      requestCount: 10_000
+    } as unknown as typeof codexSummary;
+
+    const report = buildLocalModelReport([splitAxisSummary], splitAxisDistribution as never);
+    expect(report.estimatedContextWindowNeeded).toBe(500_000);
+    expect(report.requiredTokensPerSec).toBeGreaterThan(5);
+    expect(report.requiredTokensPerSec).toBeLessThan(50);
+    expect(report.recommendedProfile).toBeNull();
+    // No axis is a universal blocker — both context (7B-1M ok) and throughput (128K models ok) have partial fits
+    expect(report.workloadGap).toEqual({ context: false, throughput: false });
+  });
 });
