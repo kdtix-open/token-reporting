@@ -75,6 +75,7 @@ export type ClaudeCostsReport = z.infer<typeof claudeCostsReportSchema>;
 
 /** Combined snapshot shape persisted to public/data/claude/latest-metadata.json. */
 export const claudeSnapshotSchema = z.object({
+  generatedAt: z.string().optional(),
   usage: claudeUsageReportSchema,
   costs: claudeCostsReportSchema.optional()
 });

@@ -1,0 +1,633 @@
+import { describe, expect, it, vi } from "vitest";
+
+import {
+  createDynamicIntegrationContractHandler,
+  type DynamicProviderBudgetLimit
+} from "../integrationContractDynamic";
+import type { ProviderReportSummary, SpendProjection } from "../types";
+
+function spendProjection(totalUsd: number): SpendProjection {
+  return {
+    costSource: "actual",
+    dailyAvgUsd: totalUsd / 7,
+    dailyBreakdown: Array.from({ length: 7 }, (_, index) => ({
+      costUsd: totalUsd / 7,
+      date: `2026-06-0${index + 1}`
+    })),
+    projectedAnnualUsd: totalUsd * 52,
+    projectedMonthlyUsd: totalUsd * (30 / 7),
+    totalUsd,
+    trend: "flat",
+    trendedAnnualUsd: null,
+    trendedMonthlyUsd: null,
+    windowDays: 7
+  };
+}
+
+function summary(
+  providerId: string,
+  providerLabel: string,
+  metricValue: number,
+  totalUsd: number,
+  metricUnit: "requests" | "tokens" = "tokens"
+): ProviderReportSummary {
+  return {
+    comparisonMetric: {
+      label: metricUnit === "requests" ? "Total requests" : "Total tokens",
+      unit: metricUnit,
+      value: metricValue
+    },
+    providerId,
+    providerLabel,
+    reportAgeLabel: "fresh",
+    reportEndDay: "2026-06-07",
+    reportStartDay: "2026-06-01",
+    spendProjection: spendProjection(totalUsd)
+  };
+}
+
+const summaries = [
+  summary("claude", "Claude", 100_000, 25),
+  summary("codex", "OpenAI Codex", 950_000, 80),
+  summary("cursor", "Cursor", 1_000_000, 120)
+];
+
+const budgetLimits: Record<string, DynamicProviderBudgetLimit> = {
+  claude: {
+    budgetKind: "tokens_per_window",
+    limit: 1_000_000,
+    resetAt: "2026-06-08T00:00:00.000Z",
+    scopeId: "tenant:kdtix-open:workspace:claude",
+    scopeLabel: "kdtix-open Claude workspace"
+  },
+  codex: {
+    budgetKind: "tokens_per_window",
+    limit: 1_000_000,
+    resetAt: "2026-06-08T00:00:00.000Z",
+    scopeId: "tenant:kdtix-open:project:codex",
+    scopeLabel: "kdtix-open Codex project"
+  },
+  cursor: {
+    budgetKind: "tokens_per_window",
+    limit: 1_000_000,
+    resetAt: "2026-06-08T00:00:00.000Z",
+    scopeId: "tenant:kdtix-open:team:cursor",
+    scopeLabel: "kdtix-open Cursor team"
+  }
+};
+
+describe("integrationContractDynamic", () => {
+  it("createDynamicIntegrationContractHandler_ContractEndpoint_ReturnsDynamicContract", async () => {
+    const handler = createDynamicIntegrationContractHandler({
+      loadSummaries: async () => summaries
+    });
+    const response = await handler({
+      method: "GET",
+      path: "/api/integration/contract"
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      contractId: "kdtix.token-reporting.integration",
+      contractVersion: "sdlca-token-reporting-dynamic-v0.1",
+      mode: "dynamic",
+      serviceId: "kdtix.token-reporting"
+    });
+  });
+
+  it("createDynamicIntegrationContractHandler_UsageEndpoint_ReturnsLiveSummaryUsage", async () => {
+    const handler = createDynamicIntegrationContractHandler({
+      loadSummaries: async () => summaries
+    });
+    const response = await handler({
+      method: "GET",
+      path: "/api/providers/codex/usage"
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      providerId: "codex",
+      providerLabel: "OpenAI Codex",
+      reportEndDay: "2026-06-07",
+      reportStartDay: "2026-06-01",
+      totals: {
+        observedMetricValue: 950_000,
+        observedMetricUnit: "tokens",
+        totalCostUsd: 80
+      }
+    });
+  });
+
+  it("createDynamicIntegrationContractHandler_BudgetsEndpoint_DerivesDispatchGuards", async () => {
+    const handler = createDynamicIntegrationContractHandler({
+      budgetLimits,
+      loadSummaries: async () => summaries,
+      now: () => new Date("2026-06-07T16:00:00.000Z")
+    });
+    const response = await handler({
+      method: "GET",
+      path: "/api/budgets"
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      contractVersion: "sdlca-token-reporting-dynamic-v0.1",
+      generatedAt: "2026-06-07T16:00:00.000Z",
+      status: "degraded"
+    });
+    const body = response.body as {
+      budgets: Array<{
+        dispatchGuard: { decision: string };
+        providerId: string;
+        threshold: string;
+      }>;
+    };
+
+    expect(body.budgets).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          dispatchGuard: expect.objectContaining({ decision: "allow" }),
+          providerId: "claude",
+          threshold: "green"
+        }),
+        expect.objectContaining({
+          dispatchGuard: expect.objectContaining({ decision: "prefer_alternate" }),
+          providerId: "codex",
+          threshold: "red"
+        }),
+        expect.objectContaining({
+          dispatchGuard: expect.objectContaining({ decision: "block" }),
+          providerId: "cursor",
+          threshold: "exhausted"
+        })
+      ])
+    );
+  });
+
+  it("createDynamicIntegrationContractHandler_BudgetStatusEndpoint_ReturnsProviderSpecificGuard", async () => {
+    const handler = createDynamicIntegrationContractHandler({
+      budgetLimits,
+      loadSummaries: async () => summaries
+    });
+    const response = await handler({
+      method: "GET",
+      path: "/api/providers/codex/budget-status"
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      budgetKind: "tokens_per_window",
+      dispatchGuard: {
+        allowDispatch: true,
+        decision: "prefer_alternate",
+        reasonCodes: ["near_budget_exhaustion", "high_worker_completion_risk"]
+      },
+      providerId: "codex",
+      remaining: 50_000,
+      threshold: "red",
+      used: 950_000
+    });
+  });
+
+  it("createDynamicIntegrationContractHandler_TokenBudgetWithRequestMetric_UsesTokenTotals", async () => {
+    const handler = createDynamicIntegrationContractHandler({
+      budgetLimits: {
+        codex: {
+          budgetKind: "tokens_per_window",
+          limit: 1_000_000
+        }
+      },
+      loadSummaries: async () => [
+        {
+          ...summary("codex", "OpenAI Codex", 20, 80, "requests"),
+          cacheCreationTokens: 10_000,
+          cacheReadTokens: 40_000,
+          inputTokens: 850_000,
+          outputTokens: 50_000,
+          requestCount: 20
+        } as ProviderReportSummary
+      ]
+    });
+    const response = await handler({
+      method: "GET",
+      path: "/api/providers/codex/budget-status"
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      budgetKind: "tokens_per_window",
+      providerId: "codex",
+      remaining: 50_000,
+      threshold: "red",
+      used: 950_000
+    });
+  });
+
+  it("createDynamicIntegrationContractHandler_RefreshEndpoint_RunsExecutorAndStoresStatus", async () => {
+    const refreshExecutor = vi.fn().mockResolvedValue({
+      providerResults: [
+        {
+          accumulatedThrough: "2026-06-07",
+          providerId: "codex",
+          status: "completed"
+        },
+        {
+          accumulatedThrough: "2026-06-06",
+          degradedReason: "admin_token_not_configured",
+          providerId: "cursor",
+          status: "degraded"
+        }
+      ]
+    });
+    const handler = createDynamicIntegrationContractHandler({
+      loadSummaries: async () => summaries,
+      now: () => new Date("2026-06-07T16:45:00.000Z"),
+      refreshExecutor
+    });
+
+    const refreshResponse = await handler({
+      body: {
+        mode: "historical",
+        providers: ["codex", "cursor"]
+      },
+      method: "POST",
+      path: "/api/refresh"
+    });
+
+    expect(refreshExecutor).toHaveBeenCalledWith({
+      includeForensicModelProfiles: false,
+      includeHuggingFaceRefresh: false,
+      mode: "historical",
+      providers: ["codex", "cursor"],
+      reviewerModels: []
+    });
+    expect(refreshResponse.status).toBe(202);
+    expect(refreshResponse.body).toMatchObject({
+      completedAt: "2026-06-07T16:45:00.000Z",
+      contractVersion: "sdlca-token-reporting-dynamic-v0.1",
+      jobId: "dynamic-refresh-20260607T164500000Z",
+      mode: "historical",
+      status: "degraded"
+    });
+
+    const statusResponse = await handler({
+      method: "GET",
+      path: "/api/refresh/dynamic-refresh-20260607T164500000Z"
+    });
+
+    expect(statusResponse.status).toBe(200);
+    expect(statusResponse.body).toMatchObject({
+      jobId: "dynamic-refresh-20260607T164500000Z",
+      providerResults: [
+        expect.objectContaining({ providerId: "codex", status: "completed" }),
+        expect.objectContaining({ providerId: "cursor", status: "degraded" })
+      ],
+      status: "degraded"
+    });
+  });
+
+  it("createDynamicIntegrationContractHandler_RefreshEndpoint_ReadOnlyModeBlocksMutation", async () => {
+    const refreshExecutor = vi.fn();
+    const handler = createDynamicIntegrationContractHandler({
+      env: {
+        TOKEN_REPORTING_READ_ONLY: "1"
+      },
+      loadSummaries: async () => summaries,
+      refreshExecutor
+    });
+
+    const response = await handler({
+      body: { mode: "incremental" },
+      method: "POST",
+      path: "/api/refresh"
+    });
+
+    expect(refreshExecutor).not.toHaveBeenCalled();
+    expect(response.status).toBe(403);
+    expect(response.body).toMatchObject({
+      code: "read_only",
+      message: expect.stringContaining("TOKEN_REPORTING_READ_ONLY")
+    });
+  });
+
+  it("createDynamicIntegrationContractHandler_RefreshEndpoint_WithForensicFlagCreatesRun", async () => {
+    const refreshExecutor = vi.fn().mockResolvedValue({
+      huggingFaceCandidateSetId: "hf-candidates-20260607T172000123Z",
+      providerResults: [
+        {
+          accumulatedThrough: "2026-06-07",
+          providerId: "codex",
+          status: "completed"
+        }
+      ]
+    });
+    const forensicExecutor = vi.fn().mockResolvedValue({
+      reviewerArtifacts: [
+        {
+          artifact: {
+            artifactKind: "local_model_forensic_review",
+            artifactSchemaVersion: "sdlca.bridge.forensic.v0",
+            findings: [],
+            generatedAt: "2026-06-07T17:20:30.000Z",
+            providerKind: "codex",
+            providerRole: "reviewer",
+            provenance: {
+              redacted: true,
+              snapshotId: "dynamic-usage-codex-2026-06-07",
+              source: "provider_execution"
+            },
+            recommendations: ["Refresh-triggered forensic review completed."],
+            summary: "Refresh-triggered bridge review"
+          },
+          artifactUri:
+            "local://token-reporting/forensics/dynamic-forensic-20260607T172000000Z/reviewers/gpt.json",
+          bridgeProviderKind: "codex",
+          reviewerModel: "gpt",
+          status: "completed"
+        }
+      ],
+      status: "completed"
+    });
+    const handler = createDynamicIntegrationContractHandler({
+      forensicExecutor,
+      loadSummaries: async () => [
+        {
+          ...summary("codex", "OpenAI Codex", 950_000, 80),
+          inputTokens: 850_000,
+          outputTokens: 50_000,
+          requestCount: 20
+        } as ProviderReportSummary
+      ],
+      now: () => new Date("2026-06-07T17:20:00.000Z"),
+      refreshExecutor
+    });
+
+    const response = await handler({
+      body: {
+        includeForensicModelProfiles: true,
+        includeHuggingFaceRefresh: true,
+        mode: "incremental",
+        providers: ["codex"],
+        reviewerModels: ["gpt"]
+      },
+      method: "POST",
+      path: "/api/refresh"
+    });
+
+    expect(refreshExecutor).toHaveBeenCalled();
+    expect(forensicExecutor).toHaveBeenCalledWith(
+      expect.objectContaining({
+        huggingFaceCandidateSetId: "hf-candidates-20260607T172000123Z",
+        reviewerModels: ["gpt"],
+        runId: "dynamic-forensic-20260607T172000000Z",
+        usageSnapshotId: "dynamic-usage-codex-2026-06-07"
+      })
+    );
+    expect(response.body).toMatchObject({
+      forensicRun: {
+        parentSynthesis: {
+          recommendation: "Refresh-triggered forensic review completed."
+        },
+        huggingFaceCandidateSetId: "hf-candidates-20260607T172000123Z",
+        runId: "dynamic-forensic-20260607T172000000Z",
+        status: "completed"
+      },
+      status: "completed"
+    });
+
+    const latestResponse = await handler({
+      method: "GET",
+      path: "/api/local-model-profiles/latest"
+    });
+    expect(latestResponse.body).toMatchObject({
+      runId: "dynamic-forensic-20260607T172000000Z",
+      status: "completed"
+    });
+  });
+
+  it("createDynamicIntegrationContractHandler_ForensicRunEndpoint_CreatesRunAndLatestProfile", async () => {
+    const handler = createDynamicIntegrationContractHandler({
+      loadSummaries: async () => summaries,
+      now: () => new Date("2026-06-07T17:00:00.000Z")
+    });
+
+    const response = await handler({
+      body: {
+        huggingFaceCandidateSetId: "hf-candidates-20260607T164524201Z",
+        reviewerModels: ["sonnet", "gpt"],
+        usageSnapshotId: "dynamic-usage-codex-2026-06-07"
+      },
+      method: "POST",
+      path: "/api/local-model-profiles/forensic-runs"
+    });
+
+    expect(response.status).toBe(202);
+    expect(response.body).toMatchObject({
+      contractVersion: "sdlca-token-reporting-dynamic-v0.1",
+      degradedReason: "bridge_forensic_executor_not_configured",
+      huggingFaceCandidateSetId: "hf-candidates-20260607T164524201Z",
+      runId: "dynamic-forensic-20260607T170000000Z",
+      status: "degraded",
+      usageSnapshotId: "dynamic-usage-codex-2026-06-07"
+    });
+    expect(response.body).toMatchObject({
+      evidencePacket: {
+        artifactUri: "local://token-reporting/forensics/dynamic-forensic-20260607T170000000Z/evidence-packet.json",
+        providerSnapshotIds: [
+          "dynamic-usage-claude-2026-06-07",
+          "dynamic-usage-codex-2026-06-07",
+          "dynamic-usage-cursor-2026-06-07"
+        ]
+      },
+      reviewerArtifacts: [
+        expect.objectContaining({
+          artifactUri: "local://token-reporting/forensics/dynamic-forensic-20260607T170000000Z/reviewers/sonnet.json",
+          reviewerModel: "sonnet",
+          status: "queued"
+        }),
+        expect.objectContaining({
+          artifactUri: "local://token-reporting/forensics/dynamic-forensic-20260607T170000000Z/reviewers/gpt.json",
+          reviewerModel: "gpt",
+          status: "queued"
+        })
+      ]
+    });
+
+    const latestResponse = await handler({
+      method: "GET",
+      path: "/api/local-model-profiles/latest"
+    });
+
+    expect(latestResponse.status).toBe(200);
+    expect(latestResponse.body).toMatchObject({
+      generatedAt: "2026-06-07T17:00:00.000Z",
+      recommendation: null,
+      runId: "dynamic-forensic-20260607T170000000Z",
+      status: "degraded"
+    });
+  });
+
+  it("createDynamicIntegrationContractHandler_ForensicRunEndpoint_ReadOnlyModeBlocksMutation", async () => {
+    const handler = createDynamicIntegrationContractHandler({
+      env: {
+        TOKEN_REPORTING_READ_ONLY: "1"
+      },
+      loadSummaries: async () => summaries
+    });
+
+    const response = await handler({
+      body: {
+        reviewerModels: ["sonnet"]
+      },
+      method: "POST",
+      path: "/api/local-model-profiles/forensic-runs"
+    });
+
+    expect(response.status).toBe(403);
+    expect(response.body).toMatchObject({
+      code: "read_only",
+      message: expect.stringContaining("TOKEN_REPORTING_READ_ONLY")
+    });
+  });
+
+  it("createDynamicIntegrationContractHandler_ForensicRunEndpoint_UsesConfiguredBridgeExecutor", async () => {
+    const forensicExecutor = vi.fn().mockResolvedValue({
+      reviewerArtifacts: [
+        {
+          artifact: {
+            artifactKind: "local_model_forensic_review",
+            artifactSchemaVersion: "sdlca.bridge.forensic.v0",
+            findings: [],
+            generatedAt: "2026-06-07T17:30:30.000Z",
+            providerKind: "codex",
+            providerRole: "reviewer",
+            provenance: {
+              redacted: true,
+              snapshotId: "dynamic-usage-codex-2026-06-07",
+              source: "provider_execution"
+            },
+            recommendations: ["Prefer Qwen2.5-Coder 32B for code-heavy work."],
+            summary: "Codex reviewer completed the forensic review."
+          },
+          artifactUri:
+            "local://token-reporting/forensics/dynamic-forensic-20260607T173000000Z/reviewers/gpt.json",
+          bridgeProviderKind: "codex",
+          reviewerModel: "gpt",
+          status: "completed"
+        }
+      ],
+      status: "completed"
+    });
+    const handler = createDynamicIntegrationContractHandler({
+      forensicExecutor,
+      loadSummaries: async () => summaries,
+      now: () => new Date("2026-06-07T17:30:00.000Z")
+    });
+
+    const response = await handler({
+      body: {
+        huggingFaceCandidateSetId: "hf-candidates-20260607T164524201Z",
+        reviewerModels: ["gpt"],
+        usageSnapshotId: "dynamic-usage-codex-2026-06-07"
+      },
+      method: "POST",
+      path: "/api/local-model-profiles/forensic-runs"
+    });
+
+    expect(forensicExecutor).toHaveBeenCalledWith(
+      expect.objectContaining({
+        createdAt: "2026-06-07T17:30:00.000Z",
+        huggingFaceCandidateSetId: "hf-candidates-20260607T164524201Z",
+        reviewerModels: ["gpt"],
+        runId: "dynamic-forensic-20260607T173000000Z",
+        usageSnapshotId: "dynamic-usage-codex-2026-06-07"
+      })
+    );
+    expect(response.status).toBe(202);
+    expect(response.body).toMatchObject({
+      degradedReason: undefined,
+      parentSynthesis: {
+        confidence: 0.7,
+        dissentingFindings: [],
+        recommendation: "Prefer Qwen2.5-Coder 32B for code-heavy work."
+      },
+      reviewerArtifacts: [
+        expect.objectContaining({
+          artifact: expect.objectContaining({
+            artifactSchemaVersion: "sdlca.bridge.forensic.v0",
+            summary: "Codex reviewer completed the forensic review."
+          }),
+          bridgeProviderKind: "codex",
+          reviewerModel: "gpt",
+          status: "completed"
+        })
+      ],
+      runId: "dynamic-forensic-20260607T173000000Z",
+      status: "completed"
+    });
+
+    const latestResponse = await handler({
+      method: "GET",
+      path: "/api/local-model-profiles/latest"
+    });
+    expect(latestResponse.body).toMatchObject({
+      recommendation: {
+        confidence: 0.7,
+        modelId: "hf-candidates-20260607T164524201Z",
+        rationale: "Prefer Qwen2.5-Coder 32B for code-heavy work."
+      },
+      runId: "dynamic-forensic-20260607T173000000Z",
+      status: "completed"
+    });
+  });
+
+  it("createDynamicIntegrationContractHandler_ForensicRunEndpoint_ReportsDegradedBridgeDispatch", async () => {
+    const forensicExecutor = vi.fn().mockResolvedValue({
+      degradedReason: "bridge_forensic_provider_unavailable",
+      reviewerArtifacts: [
+        {
+          artifactUri:
+            "local://token-reporting/forensics/dynamic-forensic-20260607T173000000Z/reviewers/gpt.json",
+          bridgeProviderKind: "codex",
+          degradedReason: "bridge_forensic_provider_unavailable",
+          reviewerModel: "gpt",
+          status: "failed"
+        }
+      ],
+      status: "degraded"
+    });
+    const handler = createDynamicIntegrationContractHandler({
+      forensicExecutor,
+      loadSummaries: async () => summaries,
+      now: () => new Date("2026-06-07T17:30:00.000Z")
+    });
+
+    const response = await handler({
+      body: {
+        reviewerModels: ["gpt"],
+        usageSnapshotId: "dynamic-usage-codex-2026-06-07"
+      },
+      method: "POST",
+      path: "/api/local-model-profiles/forensic-runs"
+    });
+
+    expect(response.status).toBe(202);
+    expect(response.body).toMatchObject({
+      bridgeDispatch: {
+        executionKind: "forensic",
+        status: "degraded"
+      },
+      degradedReason: "bridge_forensic_provider_unavailable",
+      reviewerArtifacts: [
+        expect.objectContaining({
+          bridgeProviderKind: "codex",
+          degradedReason: "bridge_forensic_provider_unavailable",
+          reviewerModel: "gpt",
+          status: "failed"
+        })
+      ],
+      runId: "dynamic-forensic-20260607T173000000Z",
+      status: "degraded"
+    });
+  });
+});

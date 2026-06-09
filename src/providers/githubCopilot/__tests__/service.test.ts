@@ -158,6 +158,10 @@ describe("createGitHubCopilotReportSummary", () => {
     await expect(readFile(outputPath, "utf8")).resolves.toContain(
       '"report_end_day": "2026-03-28"'
     );
+    const written = JSON.parse(await readFile(outputPath, "utf8")) as {
+      generatedAt?: string;
+    };
+    expect(Date.parse(written.generatedAt ?? "")).not.toBeNaN();
   });
 
   it("blocks persistence in read only mode", async () => {

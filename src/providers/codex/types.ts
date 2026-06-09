@@ -77,6 +77,7 @@ export type CodexCostsReport = z.infer<typeof codexCostsReportSchema>;
 
 /** Combined snapshot persisted to public/data/codex/latest-metadata.json */
 export const codexSnapshotSchema = z.object({
+  generatedAt: z.string().optional(),
   usage: codexUsageReportSchema,
   costs: codexCostsReportSchema.optional()
 });

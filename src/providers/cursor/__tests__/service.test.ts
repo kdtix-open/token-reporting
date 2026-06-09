@@ -233,6 +233,8 @@ describe("persistCursorDailyUsageReport", () => {
     const written = await readFile(outputPath, "utf8");
     expect(written).toContain('"cmdkUsages": 50');
     expect(written).toContain('"daily"');
+    const snapshot = JSON.parse(written) as { generatedAt?: string };
+    expect(Date.parse(snapshot.generatedAt ?? "")).not.toBeNaN();
   });
 
   it("includes spend and events when supplied", async () => {

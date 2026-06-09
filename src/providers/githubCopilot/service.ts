@@ -18,6 +18,7 @@ interface CreateSummaryArgs {
     download_links: string[];
     report_start_day: string;
     report_end_day: string;
+    generatedAt?: string;
     usage_summary?: GitHubCopilotUsageSummary;
     billing_seats?: { total_seats: number; plan: "business" | "enterprise" };
   };
@@ -72,6 +73,7 @@ export function createGitHubCopilotReportSummary({
     organization,
     reportStartDay: report.report_start_day,
     reportEndDay: report.report_end_day,
+    snapshotGeneratedAt: report.generatedAt,
     downloadCount: report.download_links.length,
     reportAgeLabel: "28-day window",
     comparisonMetric: {

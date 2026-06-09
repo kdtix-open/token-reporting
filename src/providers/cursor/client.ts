@@ -9,6 +9,8 @@ import {
 
 export interface CursorClientOptions {
   apiKey: string;
+  startDate?: number;
+  endDate?: number;
 }
 
 type FetchLike = typeof fetch;
@@ -18,7 +20,10 @@ const WINDOW_DAYS = 28;
 const EVENTS_PAGE_SIZE = 100;
 const MAX_EVENTS_PAGES = 50; // hard cap to avoid runaway loops
 
-function buildDateWindow(): { startDate: number; endDate: number } {
+function buildDateWindow(options: Pick<CursorClientOptions, "startDate" | "endDate"> = {}): { startDate: number; endDate: number } {
+  if (options.startDate && options.endDate) {
+    return { startDate: options.startDate, endDate: options.endDate };
+  }
   const endDate = Date.now();
   const startDate = endDate - WINDOW_DAYS * 24 * 60 * 60 * 1000;
   return { startDate, endDate };
@@ -54,15 +59,15 @@ async function postJson<T>(
 }
 
 export async function fetchCursorDailyUsage(
-  { apiKey }: CursorClientOptions,
+  { apiKey, startDate, endDate }: CursorClientOptions,
   fetchImpl: FetchLike = fetch
 ): Promise<CursorDailyUsageResponse> {
-  const { startDate, endDate } = buildDateWindow();
+  const window = buildDateWindow({ startDate, endDate });
   const payload = await postJson<unknown>(
     fetchImpl,
     `${CURSOR_API_BASE}/teams/daily-usage-data`,
     apiKey,
-    { startDate, endDate },
+    window,
     "daily usage"
   );
   return cursorDailyUsageResponseSchema.parse(payload);
@@ -92,10 +97,10 @@ export async function fetchCursorTeamSpend(
  * reports no further pages or `MAX_EVENTS_PAGES` is reached.
  */
 export async function fetchCursorFilteredUsageEvents(
-  { apiKey }: CursorClientOptions,
+  { apiKey, startDate, endDate }: CursorClientOptions,
   fetchImpl: FetchLike = fetch
 ): Promise<CursorFilteredUsageEventsResponse> {
-  const { startDate, endDate } = buildDateWindow();
+  const window = buildDateWindow({ startDate, endDate });
   const allEvents: CursorFilteredUsageEventsResponse["usageEvents"] = [];
   let firstPage: CursorFilteredUsageEventsResponse | null = null;
   let page = 1;
@@ -105,7 +110,7 @@ export async function fetchCursorFilteredUsageEvents(
       fetchImpl,
       `${CURSOR_API_BASE}/teams/filtered-usage-events`,
       apiKey,
-      { startDate, endDate, page, pageSize: EVENTS_PAGE_SIZE },
+      { ...window, page, pageSize: EVENTS_PAGE_SIZE },
       "filtered usage events"
     );
     const parsed = cursorFilteredUsageEventsResponseSchema.parse(raw);
@@ -124,6 +129,6 @@ export async function fetchCursorFilteredUsageEvents(
     totalUsageEventsCount: firstPage?.totalUsageEventsCount ?? allEvents.length,
     pagination: firstPage?.pagination,
     usageEvents: allEvents,
-    period: firstPage?.period
+    period: firstPage?.period ?? window
   };
 }

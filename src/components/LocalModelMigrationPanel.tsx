@@ -1,8 +1,12 @@
 import { buildLocalModelReport } from "../lib/localModelReport";
-import type { ContextConfidence, LocalModelMigrationReport, LocalModelProfile } from "../lib/localModelReport";
+import type { ContextConfidence, LocalModelMigrationReport, LocalModelProfile, ModelTier } from "../lib/localModelReport";
+import {
+  type HuggingFaceCandidateSet
+} from "../lib/huggingFaceCandidates";
 import {
   type LocalSessionDistribution
 } from "../lib/localSessionDistribution";
+import type { ReportForensicRun } from "../lib/reportExports";
 import type { ProviderReportSummary } from "../lib/types";
 
 function fmtM(n: number): string {
@@ -18,15 +22,17 @@ function fmtCtx(n: number): string {
   return `${n}`;
 }
 
-const TIER_LABEL: Record<string, string> = {
+const TIER_LABEL: Record<ModelTier, string> = {
   min: "Minimum viable",
   recommended: "Recommended",
+  pro: "Professional grade",
   enterprise: "Enterprise grade"
 };
 
-const TIER_COLOR: Record<string, string> = {
+const TIER_COLOR: Record<ModelTier, string> = {
   min: "lm-profile--min",
   recommended: "lm-profile--recommended",
+  pro: "lm-profile--pro",
   enterprise: "lm-profile--enterprise"
 };
 
@@ -90,6 +96,12 @@ function ModelCard({ profile, contextConfidence }: {
           <dt>GPU VRAM (min)</dt>
           <dd>{profile.vramGbMin} GB</dd>
         </div>
+        {profile.effectiveContextAtMinVram !== undefined && (
+          <div>
+            <dt>Context at min VRAM</dt>
+            <dd>~{fmtCtx(profile.effectiveContextAtMinVram)} tokens (Q8 KV)</dd>
+          </div>
+        )}
         {profile.systemRamGbMin !== undefined && (
           <div>
             <dt>System RAM (KV cache)</dt>
@@ -108,6 +120,24 @@ function ModelCard({ profile, contextConfidence }: {
           <dt>License</dt>
           <dd>{profile.license}</dd>
         </div>
+        {profile.hfDownloads !== undefined && (
+          <div>
+            <dt>Downloads</dt>
+            <dd>{fmtM(profile.hfDownloads)}</dd>
+          </div>
+        )}
+        {profile.hfLikes !== undefined && (
+          <div>
+            <dt>Likes</dt>
+            <dd>{profile.hfLikes.toLocaleString()}</dd>
+          </div>
+        )}
+        {profile.hfLastModified && (
+          <div>
+            <dt>Updated</dt>
+            <dd>{new Date(profile.hfLastModified).toLocaleDateString()}</dd>
+          </div>
+        )}
       </dl>
 
       <div className="lm-profile__badges">
@@ -123,12 +153,15 @@ function ModelCard({ profile, contextConfidence }: {
       </div>
 
       <p className="lm-profile__note">{profile.note}</p>
+      {profile.forensicInterpretation && (
+        <p className="lm-profile__forensic">{profile.forensicInterpretation}</p>
+      )}
     </div>
   );
 }
 
 function WorkloadCallout({ report }: { report: LocalModelMigrationReport }) {
-  const { contextConfidence, recommendedProfile, workloadGap, estimatedContextWindowNeeded, requiredTokensPerSec } = report;
+  const { contextConfidence, recommendedProfile, alternativeProfiles, workloadGap, estimatedContextWindowNeeded, requiredTokensPerSec } = report;
 
   if (contextConfidence === "insufficient_data") {
     return (
@@ -143,10 +176,28 @@ function WorkloadCallout({ report }: { report: LocalModelMigrationReport }) {
   if (recommendedProfile) {
     return (
       <div className="lm-workload-callout lm-workload-callout--ok">
-        ★ <strong>Lowest-cost on-prem fit:</strong>{" "}
-        <strong>{recommendedProfile.name}</strong> covers your{" "}
-        {estimatedContextWindowNeeded != null ? fmtCtx(estimatedContextWindowNeeded) : "—"}-token
-        context window at {requiredTokensPerSec.toFixed(1)} tok/s required.
+        <div>
+          ★ <strong>Lowest-cost on-prem fit:</strong>{" "}
+          <strong>{recommendedProfile.name}</strong> covers your{" "}
+          {estimatedContextWindowNeeded != null ? fmtCtx(estimatedContextWindowNeeded) : "—"}-token
+          context window at {requiredTokensPerSec.toFixed(1)} tok/s required.
+        </div>
+        {alternativeProfiles.length > 0 && (
+          <div className="lm-workload-callout__alternatives">
+            <span className="lm-workload-callout__alt-label">Also viable:</span>
+            {alternativeProfiles.map((p) => (
+              <a
+                key={p.hfRepoId}
+                href={`https://huggingface.co/${p.hfRepoId}`}
+                target="_blank"
+                rel="noreferrer"
+                className="lm-workload-callout__alt-chip"
+              >
+                {p.name} ({p.parameterCount})
+              </a>
+            ))}
+          </div>
+        )}
       </div>
     );
   }
@@ -184,10 +235,22 @@ interface LocalModelMigrationPanelProps {
   summaries: ProviderReportSummary[];
   /** Pre-fetched local session distribution; re-passed on every parent refresh. */
   distribution: LocalSessionDistribution | null;
+  forensicRun: ReportForensicRun | null;
+  huggingFaceCandidateSet: HuggingFaceCandidateSet | null;
 }
 
-export function LocalModelMigrationPanel({ summaries, distribution }: LocalModelMigrationPanelProps) {
-  const report = buildLocalModelReport(summaries, distribution);
+export function LocalModelMigrationPanel({
+  summaries,
+  distribution,
+  forensicRun,
+  huggingFaceCandidateSet
+}: LocalModelMigrationPanelProps) {
+  const report = buildLocalModelReport(
+    summaries,
+    distribution,
+    huggingFaceCandidateSet,
+    forensicRun
+  );
 
   if (report.tokenObservedProviders.length === 0 && report.requestOnlyProviders.length === 0) {
     return null;
@@ -243,6 +306,12 @@ export function LocalModelMigrationPanel({ summaries, distribution }: LocalModel
           ¹ Cache reads map to KV-cache hits on local stack — lower compute cost than fresh inference. &nbsp;
           ² Pure compute = input + output + cache creation (cache reads excluded).
         </p>
+        {report.appliedForensicGuidance && (
+          <p className="lm-warn-banner lm-warn-banner--info">
+            Applied forensic guidance from <strong>{report.appliedForensicGuidance.runId}</strong>:{" "}
+            {report.appliedForensicGuidance.impactSummary}
+          </p>
+        )}
 
         {/* Provider attribution */}
         <div className="lm-attribution">
@@ -329,12 +398,26 @@ export function LocalModelMigrationPanel({ summaries, distribution }: LocalModel
             </div>
           </div>
         </div>
+        {report.appliedForensicGuidance && (
+          <div className="lm-forensic-applied">
+            <strong>Forensics-applied sizing interpretation:</strong>{" "}
+            {report.appliedForensicGuidance.routingStrategy.replaceAll("_", " ")} · local scope:{" "}
+            {report.appliedForensicGuidance.localWorkloadScope} · hosted guardrail:{" "}
+            {report.appliedForensicGuidance.hostedWorkloadScope}.
+          </div>
+        )}
       </div>
 
       {/* ── Model profiles ───────────────────────────────────────────── */}
       <div className="lm-section">
         <h3 className="lm-section__heading">On-prem model profiles</h3>
         <WorkloadCallout report={report} />
+        {report.appliedForensicGuidance && (
+          <div className="lm-forensic-applied">
+            <strong>Profile interpretation applied from reviewers:</strong>{" "}
+            Candidate cards are evaluated as route-specific options, not as a single full-workload replacement.
+          </div>
+        )}
         <div className="lm-profiles">
           {report.profiles.map((p) => (
             <ModelCard key={p.hfRepoId} profile={p} contextConfidence={report.contextConfidence} />
@@ -345,6 +428,64 @@ export function LocalModelMigrationPanel({ summaries, distribution }: LocalModel
           Actual performance varies by hardware, batch size, prompt length, and KV-cache configuration.
         </p>
       </div>
+
+      {forensicRun?.parentSynthesis && (
+        <div className="lm-section lm-forensic">
+          <h3 className="lm-section__heading">Forensic reviewer consensus</h3>
+          <div className="lm-forensic__summary">
+            <div>
+              <span className="lm-forensic__label">Run</span>
+              <strong>{forensicRun.runId ?? "unknown"}</strong>
+            </div>
+            <div>
+              <span className="lm-forensic__label">Status</span>
+              <strong>{forensicRun.status ?? "unknown"}</strong>
+            </div>
+            <div>
+              <span className="lm-forensic__label">Confidence</span>
+              <strong>
+                {typeof forensicRun.parentSynthesis.confidence === "number"
+                  ? `${Math.round(forensicRun.parentSynthesis.confidence * 100)}%`
+                  : "unknown"}
+              </strong>
+            </div>
+            <div>
+              <span className="lm-forensic__label">Reviewers</span>
+              <strong>{forensicRun.parentSynthesis.reviewerCount ?? "unknown"}</strong>
+            </div>
+          </div>
+          <p className="lm-forensic__recommendation">
+            {forensicRun.parentSynthesis.recommendation}
+          </p>
+          {forensicRun.parentSynthesis.dissentingFindings &&
+            forensicRun.parentSynthesis.dissentingFindings.length > 0 && (
+              <ul className="lm-forensic__findings">
+                {forensicRun.parentSynthesis.dissentingFindings.slice(0, 3).map((finding) => (
+                  <li key={`${readFindingText(finding, "title")}-${readFindingText(finding, "severity")}`}>
+                    <span>{readFindingText(finding, "severity").toUpperCase()}</span>
+                    <strong>{readFindingText(finding, "title")}</strong>
+                    <p>{readFindingText(finding, "details")}</p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          {forensicRun.reviewerArtifacts && forensicRun.reviewerArtifacts.length > 0 && (
+            <p className="lm-footnote">
+              Reviewer artifacts:{" "}
+              {forensicRun.reviewerArtifacts
+                .map((artifact) =>
+                  `${readFindingText(artifact, "reviewerModel")} ${readFindingText(artifact, "status")}`
+                )
+                .join("; ")}
+            </p>
+          )}
+        </div>
+      )}
     </section>
   );
+}
+
+function readFindingText(value: Record<string, unknown>, field: string): string {
+  const fieldValue = value[field];
+  return typeof fieldValue === "string" && fieldValue ? fieldValue : "unknown";
 }

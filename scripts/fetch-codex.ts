@@ -1,4 +1,8 @@
 import { fetchCodexUsageReport, fetchCodexCostsReport } from "../src/providers/codex/client";
+import {
+  codexSecondsWindow,
+  resolveFetchDayWindow
+} from "../src/lib/providerHistory";
 import { persistCodexUsageReport } from "../src/providers/codex/persistence";
 
 async function main() {
@@ -11,11 +15,15 @@ async function main() {
     );
   }
 
-  const usage = await fetchCodexUsageReport({ apiKey });
+  const dayWindow = await resolveFetchDayWindow("codex");
+  const secondsWindow = codexSecondsWindow(dayWindow);
+  console.log(`Fetching OpenAI Codex usage from ${dayWindow.startDay} through ${dayWindow.endDay}...`);
+
+  const usage = await fetchCodexUsageReport({ apiKey, ...secondsWindow });
 
   let costs;
   try {
-    costs = await fetchCodexCostsReport({ apiKey });
+    costs = await fetchCodexCostsReport({ apiKey, ...secondsWindow });
     console.log("Fetched actual daily cost data from /v1/organization/costs");
   } catch (err) {
     console.warn("Could not fetch costs report (falling back to estimated):", err instanceof Error ? err.message : err);

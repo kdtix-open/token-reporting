@@ -71,7 +71,8 @@ function parseLineItem(raw: string): ParsedLineItem | null {
 
 export function createCodexReportSummary(
   usage: CodexUsageReport,
-  costs?: CodexCostsReport
+  costs?: CodexCostsReport,
+  snapshotGeneratedAt?: string
 ): CodexReportSummary {
   let inputTokens = 0;
   let outputTokens = 0;
@@ -224,6 +225,7 @@ export function createCodexReportSummary(
     providerLabel: "OpenAI Codex",
     reportStartDay: unixSecToIsoDay(startTime),
     reportEndDay: unixSecToIsoDay(endTime),
+    snapshotGeneratedAt,
     reportAgeLabel: "28-day window",
     comparisonMetric: {
       value: requestCount,

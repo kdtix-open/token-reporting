@@ -41,6 +41,8 @@ export interface ProviderReportSummary {
   providerLabel: string;
   reportStartDay: string;
   reportEndDay: string;
+  /** ISO timestamp for when the persisted provider snapshot was generated. */
+  snapshotGeneratedAt?: string;
   reportAgeLabel: string;
   comparisonMetric: ComparisonMetric;
   spendProjection: SpendProjection;

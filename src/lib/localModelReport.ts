@@ -1,11 +1,51 @@
 import type { LocalSessionDistribution } from "./localSessionDistribution";
+import type { HuggingFaceCandidateSet } from "./huggingFaceCandidates";
 import type { ProviderReportSummary } from "./types";
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
 export type ContextConfidence = "high" | "low" | "insufficient_data";
 export type CodeCapability = "excellent" | "good" | "fair";
-export type ModelTier = "min" | "recommended" | "enterprise";
+export type ModelTier = "min" | "recommended" | "pro" | "enterprise";
+export type ForensicRoutingStrategy =
+  | "hosted_guardrail"
+  | "local_candidate"
+  | "reviewer_consensus"
+  | "tiered_hybrid";
+
+export interface LocalModelForensicFinding {
+  details: string;
+  evidenceRefs: string[];
+  severity: string;
+  title: string;
+}
+
+export interface LocalModelAppliedForensicGuidance {
+  appliedSections: string[];
+  blockingFindings: LocalModelForensicFinding[];
+  confidence: number | null;
+  hostedWorkloadScope: string;
+  impactSummary: string;
+  localWorkloadScope: string;
+  recommendation: string;
+  reviewerCount: number | null;
+  routingStrategy: ForensicRoutingStrategy;
+  runId: string | null;
+  status: string | null;
+  updatedAt: string | null;
+}
+
+export interface LocalModelForensicRunInput {
+  parentSynthesis?: {
+    confidence?: number;
+    dissentingFindings?: Array<Record<string, unknown>>;
+    recommendation?: string;
+    reviewerCount?: number;
+  };
+  runId?: string;
+  status?: string;
+  updatedAt?: string;
+}
 
 export interface LocalModelProfile {
   tier: ModelTier;
@@ -16,6 +56,12 @@ export interface LocalModelProfile {
   /** Quantization used for VRAM and speed estimates */
   quantization: string;
   vramGbMin: number;
+  /**
+   * Effective context window achievable at vramGbMin (Q8 KV). Omitted when
+   * the full contextWindow fits in VRAM at the stated minimum. When present,
+   * more VRAM is required to serve the full contextWindow.
+   */
+  effectiveContextAtMinVram?: number;
   /**
    * System RAM needed for KV-cache CPU offload when the context window is
    * too large to fit the KV cache in VRAM. Omitted for models where the KV
@@ -33,6 +79,12 @@ export interface LocalModelProfile {
   contextFits: boolean;
   /** Can throughput serve estimated daily load in an 8-hour active window? */
   throughputFits: boolean;
+  hfCandidateSetId?: string;
+  hfDegradedReason?: string;
+  hfDownloads?: number;
+  hfLastModified?: string;
+  hfLikes?: number;
+  forensicInterpretation?: string;
   note: string;
 }
 
@@ -108,11 +160,26 @@ export interface LocalModelMigrationReport {
   recommendedProfile: LocalModelProfile | null;
 
   /**
+   * Additional catalogue entries that also satisfy contextFits AND throughputFits,
+   * ordered by recommendation preference (ascending tier / cost) after the
+   * recommendedProfile. Empty when contextConfidence is "insufficient_data" or
+   * when fewer than two profiles satisfy the workload.
+   */
+  alternativeProfiles: LocalModelProfile[];
+
+  /**
    * Describes which requirements no profile in the catalogue can satisfy.
    * Only set when contextConfidence is "high" or "low" AND recommendedProfile
    * is null (i.e. something is genuinely unmet).
    */
   workloadGap: { context: boolean; throughput: boolean } | null;
+
+  /**
+   * Reviewer synthesis applied to this local migration report. This does not
+   * mutate raw token math; it changes how sizing/profile recommendations are
+   * interpreted for local-vs-hosted routing.
+   */
+  appliedForensicGuidance: LocalModelAppliedForensicGuidance | null;
 }
 
 // ── HuggingFace model catalogue ─────────────────────────────────────────────
@@ -156,11 +223,13 @@ const CATALOGUE: Omit<LocalModelProfile, "contextFits" | "throughputFits">[] = [
     // KV math (verified from config.json): 48 layers × 8 KV heads × 128 head_dim.
     // fp16 KV: 192 KB/token; Q8 KV: 96 KB/token.
     // Weights Q4_K_M: 8.99 GiB (bartowski GGUF, confirmed).
-    // 12 GB: loads model (~9.7 GB) + ~2.3 GB KV → ~13K ctx (fp16) / ~26K ctx (Q8 KV).
+    // 12 GB: loads model (~9.7 GB) + ~2.3 GB KV → ~25K ctx (Q8 KV) — effectiveContextAtMinVram.
     // 16 GB: ~34K ctx (fp16 KV) / ~68K ctx (Q8 KV).
     // 24 GB: full 128K with Q8 KV (12 GB KV + 9.7 GB weights = 21.7 GB → fits ✓).
     //        fp16 KV at 128K = 24 GB → total 33.7 GB → needs 40+ GB.
     vramGbMin: 12,
+    // Effective Q8 KV context at 12 GB VRAM: (12 - 9.7) GB / 96 KB = ~25K tokens.
+    effectiveContextAtMinVram: 25_165,
     // RTX 4070 Ti Super 16GB (672 GB/s) ÷ 9.7 GB model → ~55 tok/s (CUDA est.).
     // RTX 4090 24GB (1008 GB/s) → ~80 tok/s.
     gpuClass: "RTX 4070 Ti Super 16GB (~55 tok/s, ≤32K ctx) — RTX 4090 / A10G 24GB (~80 tok/s, full 128K Q8 KV)",
@@ -169,7 +238,33 @@ const CATALOGUE: Omit<LocalModelProfile, "contextFits" | "throughputFits">[] = [
     codeCapability: "excellent",
     toolUseSupport: true,
     commercialSafe: true,
-    note: "Code-specialized fine-tune; Apache 2.0 licence; strong completions, chat, and function-calling. Best quality/cost balance for developer tooling. A 12 GB card handles up to ~26K context (Q8 KV); full 128K context requires a 24 GB GPU (Q8 KV: weights 9.7 GB + KV 12 GB = 21.7 GB total). Throughput: ~55 tok/s on RTX 4070 Ti Super; ~80 tok/s on RTX 4090."
+    note: "Code-specialized fine-tune; Apache 2.0 licence; strong completions, chat, and function-calling. Best quality/cost balance for developer tooling. A 12 GB card handles up to ~25K context (Q8 KV); full 128K context requires a 24 GB GPU (Q8 KV: weights 9.7 GB + KV 12 GB = 21.7 GB total). Throughput: ~55 tok/s on RTX 4070 Ti Super; ~80 tok/s on RTX 4090."
+  },
+  {
+    tier: "pro",
+    name: "Qwen2.5-Coder 32B Instruct",
+    hfRepoId: "Qwen/Qwen2.5-Coder-32B-Instruct",
+    contextWindow: 131_072,
+    parameterCount: "32B",
+    quantization: "Q4_K_M",
+    // KV math (architecture: 64 layers × 8 KV heads × 128 head_dim).
+    // fp16 KV: 256 KB/token; Q8 KV: 128 KB/token.
+    // Weights Q4_K_M: ~19.3 GiB (~20.7 GB), estimated from 32.8B param count × 4.5 bits/B.
+    // 24 GB: loads weights (~20.7 GB) → ~2.5 GB headroom → ~20K ctx (fp16 KV) / ~40K ctx (Q8 KV).
+    // 40 GB (A100 40GB): 40 - 20.7 = 19.3 GB KV → Q8 KV: ~154K ctx → full 128K ✓.
+    // 48 GB (2× RTX 3090 NVLink): ample room for full 128K Q8 KV.
+    vramGbMin: 24,
+    // Effective Q8 KV context at 24 GB VRAM: (24 - 20.7) GB / 128 KB ≈ 40K tokens.
+    effectiveContextAtMinVram: 40_960,
+    // RTX 4090 24GB (1008 GB/s) ÷ 20.7 GB × 0.85 CUDA ≈ 41 tok/s.
+    // A100 40GB (1,555 GB/s HBM2e) ÷ 20.7 GB × 0.85 ≈ 64 tok/s.
+    gpuClass: "RTX 4090 24GB (~40 tok/s, ≤40K ctx Q8 KV) — A100 40GB (~60 tok/s, full 128K Q8 KV) — 2× RTX 3090 48GB (~40 tok/s, full 128K Q8 KV)",
+    tokensPerSecEstimate: 40,
+    license: "Apache 2.0",
+    codeCapability: "excellent",
+    toolUseSupport: true,
+    commercialSafe: true,
+    note: "Most downloaded code model on HuggingFace (6.5M+ downloads). Apache 2.0 — no usage restrictions. Excellent coding, chat, and tool use. At minimum VRAM (24 GB): weights ~20.7 GB leave ~3.3 GB for KV → ~40K effective context (Q8 KV); suitable for most single-file tasks. Full 128K context needs ≥40 GB (e.g. A100 40GB: 20.7 GB weights + 16 GB Q8 KV = 36.7 GB). Throughput: ~40 tok/s on RTX 4090; ~60 tok/s on A100 40GB."
   },
   {
     tier: "enterprise",
@@ -257,10 +352,13 @@ function getNum(s: ProviderReportSummary, field: string): number {
 
 export function buildLocalModelReport(
   summaries: ProviderReportSummary[],
-  localDistribution: LocalSessionDistribution | null = null
+  localDistribution: LocalSessionDistribution | null = null,
+  huggingFaceCandidateSet: HuggingFaceCandidateSet | null = null,
+  forensicRun: LocalModelForensicRunInput | null = null
 ): LocalModelMigrationReport {
   const tokenObservedProviders: TokenObservedProvider[] = [];
   const requestOnlyProviders: RequestOnlyProvider[] = [];
+  const appliedForensicGuidance = buildAppliedForensicGuidance(forensicRun);
 
   for (const s of summaries) {
     if (hasTokenFields(s)) {
@@ -380,12 +478,28 @@ export function buildLocalModelReport(
   const requiredTokensPerSec = dailyAvgComputeTokens / (8 * 3600);
 
   // ── Model profiles ────────────────────────────────────────────────────────
-  const profiles: LocalModelProfile[] = CATALOGUE.map((m) => ({
-    ...m,
-    contextFits:
-      estimatedContextWindowNeeded === null || m.contextWindow >= estimatedContextWindowNeeded,
-    throughputFits: m.tokensPerSecEstimate >= requiredTokensPerSec
-  }));
+  const hfCandidates = new Map(
+    (huggingFaceCandidateSet?.candidates ?? []).map((candidate) => [candidate.modelId, candidate])
+  );
+  const profiles: LocalModelProfile[] = CATALOGUE.map((m) => {
+    const profile = {
+      ...m,
+      ...huggingFaceProfileMetadata(m.hfRepoId, hfCandidates, huggingFaceCandidateSet),
+      contextFits:
+        estimatedContextWindowNeeded === null || m.contextWindow >= estimatedContextWindowNeeded,
+      throughputFits: m.tokensPerSecEstimate >= requiredTokensPerSec
+    };
+
+    return appliedForensicGuidance
+      ? {
+          ...profile,
+          forensicInterpretation: forensicProfileInterpretation(
+            profile,
+            appliedForensicGuidance
+          )
+        }
+      : profile;
+  });
 
   // ── Workload recommendation ────────────────────────────────────────────────
   // Only compute a recommendation when we have real context data — when
@@ -393,9 +507,12 @@ export function buildLocalModelReport(
   // every profile (no constraint to check), which would produce false positives.
   const hasRealContext = contextConfidence !== "insufficient_data";
 
-  const recommendedProfile: LocalModelProfile | null = hasRealContext
-    ? (profiles.find((p) => p.contextFits && p.throughputFits) ?? null)
-    : null;
+  const allFittingProfiles: LocalModelProfile[] = hasRealContext
+    ? profiles.filter((p) => p.contextFits && p.throughputFits)
+    : [];
+
+  const recommendedProfile: LocalModelProfile | null = allFittingProfiles[0] ?? null;
+  const alternativeProfiles: LocalModelProfile[] = allFittingProfiles.slice(1);
 
   const workloadGap =
     hasRealContext && recommendedProfile === null
@@ -423,6 +540,122 @@ export function buildLocalModelReport(
     requiredTokensPerSec,
     profiles,
     recommendedProfile,
-    workloadGap
+    alternativeProfiles,
+    workloadGap,
+    appliedForensicGuidance
   };
+}
+
+function buildAppliedForensicGuidance(
+  forensicRun: LocalModelForensicRunInput | null
+): LocalModelAppliedForensicGuidance | null {
+  const recommendation = forensicRun?.parentSynthesis?.recommendation;
+  if (!recommendation) return null;
+
+  const lowerRecommendation = recommendation.toLowerCase();
+  const hasLocal = lowerRecommendation.includes("local");
+  const hasHosted =
+    lowerRecommendation.includes("hosted") || lowerRecommendation.includes("cloud");
+  const routingStrategy: ForensicRoutingStrategy =
+    lowerRecommendation.includes("tiered") || (hasLocal && hasHosted)
+      ? "tiered_hybrid"
+      : hasLocal
+        ? "local_candidate"
+        : hasHosted
+          ? "hosted_guardrail"
+          : "reviewer_consensus";
+
+  return {
+    appliedSections: [
+      "Local model migration sizing",
+      "Server sizing heuristics",
+      "On-prem model profiles"
+    ],
+    blockingFindings: readForensicFindings(
+      forensicRun.parentSynthesis?.dissentingFindings ?? []
+    ),
+    confidence:
+      typeof forensicRun.parentSynthesis?.confidence === "number"
+        ? forensicRun.parentSynthesis.confidence
+        : null,
+    hostedWorkloadScope:
+      routingStrategy === "tiered_hybrid"
+        ? "tail-context Claude/Codex/Cursor agentic workloads"
+        : "workloads blocked by reviewer findings",
+    impactSummary:
+      routingStrategy === "tiered_hybrid"
+        ? "Forensics applied as a tiered hybrid policy: partial local migration for short-context work while preserving hosted routing for tail-context and agentic work."
+        : "Forensics applied as reviewer guidance for interpreting local migration sizing, server heuristics, and profile fit.",
+    localWorkloadScope:
+      routingStrategy === "tiered_hybrid"
+        ? "short-context Copilot-style completion workloads"
+        : "reviewer-approved local workloads",
+    recommendation,
+    reviewerCount:
+      typeof forensicRun.parentSynthesis?.reviewerCount === "number"
+        ? forensicRun.parentSynthesis.reviewerCount
+        : null,
+    routingStrategy,
+    runId: forensicRun.runId ?? null,
+    status: forensicRun.status ?? null,
+    updatedAt: forensicRun.updatedAt ?? null
+  };
+}
+
+function forensicProfileInterpretation(
+  profile: Pick<LocalModelProfile, "contextWindow" | "name">,
+  guidance: LocalModelAppliedForensicGuidance
+): string {
+  if (guidance.routingStrategy !== "tiered_hybrid") {
+    return "Forensic role: reviewer-guided candidate; validate against the recorded findings before routing production traffic.";
+  }
+
+  if (profile.contextWindow <= 131_072) {
+    return `Forensic role: short-context local candidate for ${guidance.localWorkloadScope}; not a full replacement for ${guidance.hostedWorkloadScope}.`;
+  }
+
+  if (profile.contextWindow > 131_072) {
+    return `Forensic role: long-context candidate screen only; reviewers still recommend hosted routing for ${guidance.hostedWorkloadScope}.`;
+  }
+
+  return `Forensic role: not recommended for the applied routing plan because ${profile.name} misses the current workload fit checks.`;
+}
+
+function readForensicFindings(
+  findings: Array<Record<string, unknown>>
+): LocalModelForensicFinding[] {
+  return findings
+    .map((finding) => ({
+      details: readString(finding.details),
+      evidenceRefs: Array.isArray(finding.evidenceRefs)
+        ? finding.evidenceRefs.filter((value): value is string => typeof value === "string")
+        : [],
+      severity: readString(finding.severity),
+      title: readString(finding.title)
+    }))
+    .filter((finding) => finding.title !== "unknown" || finding.details !== "unknown");
+}
+
+function readString(value: unknown): string {
+  return typeof value === "string" && value.trim() ? value : "unknown";
+}
+
+function huggingFaceProfileMetadata(
+  hfRepoId: string,
+  hfCandidates: Map<string, HuggingFaceCandidateSet["candidates"][number]>,
+  huggingFaceCandidateSet: HuggingFaceCandidateSet | null
+): Partial<LocalModelProfile> {
+  const candidate = hfCandidates.get(hfRepoId);
+  if (!candidate) return {};
+
+  const metadata: Partial<LocalModelProfile> = {
+    hfCandidateSetId: huggingFaceCandidateSet?.candidateSetId,
+    hfDegradedReason: candidate.degradedReason,
+    hfDownloads: candidate.downloads ?? undefined,
+    hfLastModified: candidate.lastModified ?? undefined,
+    hfLikes: candidate.likes ?? undefined
+  };
+  if (candidate.license) metadata.license = candidate.license;
+
+  return metadata;
 }

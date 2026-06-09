@@ -200,6 +200,10 @@ describe("persistClaudeUsageReport", () => {
       '"uncached_input_tokens": 10000'
     );
     await expect(readFile(outputPath, "utf8")).resolves.toContain('"usage"');
+    const snapshot = JSON.parse(await readFile(outputPath, "utf8")) as {
+      generatedAt?: string;
+    };
+    expect(Date.parse(snapshot.generatedAt ?? "")).not.toBeNaN();
   });
 
   it("blocks persistence in read-only mode", async () => {

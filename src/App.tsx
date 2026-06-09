@@ -19,8 +19,31 @@ import {
   loadLocalSessionDistribution,
   type LocalSessionDistribution,
 } from "./lib/localSessionDistribution";
+import {
+  loadHuggingFaceCandidateSet,
+  type HuggingFaceCandidateSet,
+} from "./lib/huggingFaceCandidates";
+import {
+  downloadReportExport,
+  REPORT_EXPORT_OPTIONS,
+  SQL_DIALECT_OPTIONS,
+  type ReportExportFormat,
+  type ReportForensicRun,
+  type SqlDialect,
+} from "./lib/reportExports";
+import { requestReportRefresh } from "./lib/integrationApiClient";
 import { providerRegistry } from "./providers/registry";
 import "./App.css";
+
+type RefreshStepId = "forensics" | "huggingface" | "providers" | "snapshots";
+type RefreshStepStatus = "completed" | "degraded" | "failed" | "queued" | "running";
+
+interface RefreshProgressStep {
+  detail: string;
+  id: RefreshStepId;
+  status: RefreshStepStatus;
+  title: string;
+}
 
 function renderProviderCard(summary: ProviderReportSummary) {
   switch (summary.providerId) {
@@ -64,13 +87,45 @@ function renderProviderCard(summary: ProviderReportSummary) {
   }
 }
 
+function snapshotPaths(dataPath: string): string[] {
+  const slash = dataPath.lastIndexOf("/");
+  if (slash === -1) return [dataPath];
+  return [
+    `${dataPath.slice(0, slash + 1)}accumulated-metadata.json`,
+    dataPath
+  ];
+}
+
+async function loadLatestForensicRun(queryString = ""): Promise<ReportForensicRun | null> {
+  try {
+    const response = await fetch(`/data/integration/forensic-runs.json${queryString}`);
+    if (!response.ok) return null;
+
+    const raw = (await response.json()) as unknown;
+    if (!isRecord(raw) || !isRecord(raw.runs) || typeof raw.latestRunId !== "string") {
+      return null;
+    }
+
+    const latest = raw.runs[raw.latestRunId];
+    return isRecord(latest) ? (latest as ReportForensicRun) : null;
+  } catch {
+    return null;
+  }
+}
+
 export default function App() {
   const [summaries, setSummaries] = useState<ProviderReportSummary[]>(
     providerRegistry.map((adapter) => adapter.seedSummary)
   );
   const [loading, setLoading] = useState(false);
-  const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
+  const [refreshMessage, setRefreshMessage] = useState<string | null>(null);
+  const [refreshSteps, setRefreshSteps] = useState<RefreshProgressStep[]>([]);
   const [distribution, setDistribution] = useState<LocalSessionDistribution | null>(null);
+  const [huggingFaceCandidateSet, setHuggingFaceCandidateSet] =
+    useState<HuggingFaceCandidateSet | null>(null);
+  const [forensicRun, setForensicRun] = useState<ReportForensicRun | null>(null);
+  const [exportFormat, setExportFormat] = useState<ReportExportFormat>("pdf");
+  const [sqlDialect, setSqlDialect] = useState<SqlDialect>("sqlite");
   // Counter guards against stale responses from concurrent or Strict Mode loads
   const loadCounterRef = useRef(0);
 
@@ -80,27 +135,33 @@ export default function App() {
 
     try {
       const qs = cacheBust ? `?t=${Date.now()}` : "";
-      const [results, dist] = await Promise.all([
+      const [results, dist, hfCandidates, latestForensicRun] = await Promise.all([
         Promise.all(
           providerRegistry.map(async (adapter) => {
             try {
-              const url = `/data/${adapter.dataPath}${qs}`;
-              const response = await fetch(url);
-              if (!response.ok) return adapter.seedSummary;
-              const raw = await response.json();
-              return adapter.transformSnapshot(raw);
+              for (const dataPath of snapshotPaths(adapter.dataPath)) {
+                const url = `/data/${dataPath}${qs}`;
+                const response = await fetch(url);
+                if (!response.ok) continue;
+                const raw = await response.json();
+                return adapter.transformSnapshot(raw);
+              }
+              return adapter.seedSummary;
             } catch {
               return adapter.seedSummary;
             }
           })
         ),
         loadLocalSessionDistribution(),
+        loadHuggingFaceCandidateSet(),
+        loadLatestForensicRun(qs),
       ]);
 
       if (myCount === loadCounterRef.current) {
         setSummaries(results);
         setDistribution(dist);
-        setLastRefreshed(new Date());
+        setHuggingFaceCandidateSet(hfCandidates);
+        setForensicRun(latestForensicRun);
       }
     } finally {
       if (myCount === loadCounterRef.current) {
@@ -112,6 +173,92 @@ export default function App() {
   useEffect(() => {
     void loadSnapshots(false);
   }, [loadSnapshots]);
+
+  const handleRefresh = useCallback(async () => {
+    setLoading(true);
+    setRefreshSteps(initialRefreshSteps());
+    setRefreshMessage(
+      "Starting refresh: provider data, Hugging Face candidates, and forensic reviewers are running."
+    );
+    const refreshTimers = [
+      window.setTimeout(() => {
+        setRefreshSteps((steps) =>
+          updateRefreshStep(steps, "forensics", {
+            detail: "Bridge-backed reviewer reports are still executing.",
+            status: "running"
+          })
+        );
+      }, 5_000),
+      window.setTimeout(() => {
+        setRefreshMessage(
+          "Refresh still running: provider APIs and bridge reviewers can take several minutes."
+        );
+        setRefreshSteps((steps) =>
+          steps.map((step) =>
+            step.status === "running"
+              ? {
+                  ...step,
+                  detail: `${step.detail} Still running after 15 seconds.`
+                }
+              : step
+          )
+        );
+      }, 15_000),
+      window.setTimeout(() => {
+        setRefreshMessage(
+          "Still working: waiting for provider APIs and forensic reviewers; this request is bounded."
+        );
+        setRefreshSteps((steps) =>
+          steps.map((step) =>
+            step.status === "running"
+              ? {
+                  ...step,
+                  detail: `${step.detail} Still running after 2 minutes.`
+                }
+              : step
+          )
+        );
+      }, 120_000)
+    ];
+
+    try {
+      const result = await requestReportRefresh();
+      if (result.outcome === "accepted") {
+        setRefreshMessage(`Refresh job ${result.job.jobId} ${result.job.status}`);
+        setRefreshSteps(refreshStepsFromJob(result.job));
+      } else {
+        setRefreshMessage(result.message);
+        setRefreshSteps(failedRefreshSteps(result.message));
+      }
+    } catch {
+      setRefreshMessage("Refresh API unavailable; loaded local snapshots");
+      setRefreshSteps(failedRefreshSteps("Refresh API unavailable."));
+    } finally {
+      refreshTimers.forEach((timer) => window.clearTimeout(timer));
+    }
+
+    await loadSnapshots(true);
+    setRefreshSteps((steps) =>
+      updateRefreshStep(steps, "snapshots", {
+        detail: "Snapshots reloaded after refresh response.",
+        status: "completed"
+      })
+    );
+  }, [loadSnapshots]);
+
+  const handleDownload = useCallback(() => {
+    downloadReportExport(
+      {
+        distribution,
+        forensicRun,
+        huggingFaceCandidateSet,
+        summaries
+      },
+      exportFormat,
+      sqlDialect
+    );
+  }, [distribution, exportFormat, forensicRun, huggingFaceCandidateSet, sqlDialect, summaries]);
+  const reportFreshness = reportFreshnessLabel(summaries);
 
   return (
     <main className="page-shell">
@@ -126,25 +273,312 @@ export default function App() {
         <div className="hero__actions">
           <button
             className="hero__refresh-btn"
-            onClick={() => void loadSnapshots(true)}
+            onClick={() => void handleRefresh()}
             disabled={loading}
           >
             {loading ? "Refreshing…" : "↻ Refresh Report"}
           </button>
-          {lastRefreshed && (
+          {(refreshMessage || reportFreshness) && (
             <span className="hero__refresh-meta" aria-live="polite">
-              Updated {lastRefreshed.toLocaleTimeString()}
+              {refreshMessage && <span>{refreshMessage}</span>}
+              {reportFreshness && <span>{reportFreshness}</span>}
             </span>
+          )}
+          <div className="hero__export-controls">
+            <label className="hero__export-field">
+              <span>Format</span>
+              <select
+                value={exportFormat}
+                onChange={(event) =>
+                  setExportFormat(event.target.value as ReportExportFormat)
+                }
+              >
+                {REPORT_EXPORT_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {exportFormat === "database" && (
+              <label className="hero__export-field">
+                <span>Dialect</span>
+                <select
+                  value={sqlDialect}
+                  onChange={(event) =>
+                    setSqlDialect(event.target.value as SqlDialect)
+                  }
+                >
+                  {SQL_DIALECT_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            <button className="hero__download-btn" onClick={handleDownload}>
+              Download data
+            </button>
+          </div>
+          {refreshSteps.length > 0 && (
+            <RefreshActivityPanel steps={refreshSteps} />
           )}
         </div>
       </section>
       <ProviderComparisonSection summaries={summaries} />
       <SpendProjectionPanel summaries={summaries} />
-      <LocalModelMigrationPanel summaries={summaries} distribution={distribution} />
+      <LocalModelMigrationPanel
+        summaries={summaries}
+        distribution={distribution}
+        forensicRun={forensicRun}
+        huggingFaceCandidateSet={huggingFaceCandidateSet}
+      />
       <AzureQuotaPanel summaries={summaries} />
       <div className="report-cards">
         {summaries.map(renderProviderCard)}
       </div>
     </main>
   );
+}
+
+function RefreshActivityPanel({ steps }: { steps: RefreshProgressStep[] }) {
+  return (
+    <div className="refresh-progress" role="status" aria-label="Refresh activity">
+      <div className="refresh-progress__bar" aria-hidden="true">
+        <span style={{ width: `${refreshProgressPercent(steps)}%` }} />
+      </div>
+      <ol className="refresh-progress__list">
+        {steps.map((step) => (
+          <li
+            className={`refresh-progress__step refresh-progress__step--${step.status}`}
+            key={step.id}
+          >
+            <span
+              className={`refresh-progress__indicator${
+                step.status === "running" ? " refresh-progress__indicator--active" : ""
+              }`}
+              aria-hidden="true"
+            />
+            <span className="refresh-progress__copy">
+              <span className="refresh-progress__line">
+                <span className="refresh-progress__title">{step.title}</span>
+                <span className="refresh-progress__status">
+                  {statusLabel(step.status)}
+                </span>
+              </span>
+              <span className="refresh-progress__detail">{step.detail}</span>
+            </span>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
+function reportFreshnessLabel(summaries: ProviderReportSummary[]): string | null {
+  const latestReportEndDay = maxIsoString(summaries.map((summary) => summary.reportEndDay));
+  if (!latestReportEndDay) return null;
+
+  const latestGeneratedAt = maxIsoString(
+    summaries
+      .map((summary) => summary.snapshotGeneratedAt)
+      .filter(
+        (value): value is string =>
+          typeof value === "string" && Number.isFinite(Date.parse(value))
+      )
+  );
+
+  if (latestGeneratedAt) {
+    return `Report generated ${formatUtcMinute(latestGeneratedAt)} | data through ${latestReportEndDay}`;
+  }
+
+  return `Report data through ${latestReportEndDay}`;
+}
+
+function maxIsoString(values: string[]): string | null {
+  const clean = values.filter(Boolean).sort();
+  return clean.length > 0 ? clean[clean.length - 1] : null;
+}
+
+function formatUtcMinute(value: string): string {
+  return new Date(value).toISOString().slice(0, 16).replace("T", " ") + " UTC";
+}
+
+function initialRefreshSteps(): RefreshProgressStep[] {
+  return [
+    {
+      detail: "Fetching provider Admin/API usage and cost snapshots.",
+      id: "providers",
+      status: "running",
+      title: "Provider Admin APIs"
+    },
+    {
+      detail: "Refreshing current Hugging Face model candidates.",
+      id: "huggingface",
+      status: "running",
+      title: "Hugging Face candidates"
+    },
+    {
+      detail: "Dispatching bridge-backed reviewer forensic reports.",
+      id: "forensics",
+      status: "running",
+      title: "Forensic reviewers"
+    },
+    {
+      detail: "Waiting for refresh response before reloading dashboard snapshots.",
+      id: "snapshots",
+      status: "queued",
+      title: "Report snapshot reload"
+    }
+  ];
+}
+
+function failedRefreshSteps(message: string): RefreshProgressStep[] {
+  return [
+    {
+      detail: message,
+      id: "providers",
+      status: "failed",
+      title: "Provider Admin APIs"
+    },
+    {
+      detail: "Not confirmed because the refresh request did not complete.",
+      id: "huggingface",
+      status: "queued",
+      title: "Hugging Face candidates"
+    },
+    {
+      detail: "Not confirmed because the refresh request did not complete.",
+      id: "forensics",
+      status: "queued",
+      title: "Forensic reviewers"
+    },
+    {
+      detail: "Reloading local snapshots after refresh request failure.",
+      id: "snapshots",
+      status: "running",
+      title: "Report snapshot reload"
+    }
+  ];
+}
+
+function refreshStepsFromJob(job: Record<string, unknown>): RefreshProgressStep[] {
+  const providerResults = readRecordArray(job.providerResults);
+  const forensicRun = isRecord(job.forensicRun) ? job.forensicRun : null;
+  const reviewerArtifacts = forensicRun ? readRecordArray(forensicRun.reviewerArtifacts) : [];
+  const huggingFaceCandidateSetId =
+    forensicRun && typeof forensicRun.huggingFaceCandidateSetId === "string"
+      ? forensicRun.huggingFaceCandidateSetId
+      : null;
+
+  return [
+    {
+      detail:
+        summarizeRecords(providerResults, "providerId") ||
+        "Provider refresh completed without itemized provider results.",
+      id: "providers",
+      status: statusFromRecords(providerResults, readStatus(job.status)),
+      title: "Provider Admin APIs"
+    },
+    {
+      detail:
+        huggingFaceCandidateSetId && huggingFaceCandidateSetId.includes("unavailable")
+          ? "Candidate set unavailable for this refresh."
+          : "Candidate refresh request completed.",
+      id: "huggingface",
+      status:
+        huggingFaceCandidateSetId && huggingFaceCandidateSetId.includes("unavailable")
+          ? "degraded"
+          : "completed",
+      title: "Hugging Face candidates"
+    },
+    {
+      detail:
+        summarizeRecords(reviewerArtifacts, "reviewerModel") ||
+        (forensicRun
+          ? `Forensic run ${readStatus(forensicRun.status) ?? "completed"}.`
+          : "No forensic run was returned for this refresh."),
+      id: "forensics",
+      status: statusFromRecords(
+        reviewerArtifacts,
+        forensicRun ? readStatus(forensicRun.status) : readStatus(job.status)
+      ),
+      title: "Forensic reviewers"
+    },
+    {
+      detail: "Reloading dashboard snapshots from refreshed report files.",
+      id: "snapshots",
+      status: "running",
+      title: "Report snapshot reload"
+    }
+  ];
+}
+
+function updateRefreshStep(
+  steps: RefreshProgressStep[],
+  id: RefreshStepId,
+  patch: Partial<Pick<RefreshProgressStep, "detail" | "status">>
+): RefreshProgressStep[] {
+  return steps.map((step) => (step.id === id ? { ...step, ...patch } : step));
+}
+
+function readRecordArray(value: unknown): Record<string, unknown>[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is Record<string, unknown> => isRecord(item))
+    : [];
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function readStatus(value: unknown): RefreshStepStatus | null {
+  if (value === "completed" || value === "degraded" || value === "failed") {
+    return value;
+  }
+  if (value === "running" || value === "queued") return value;
+  return null;
+}
+
+function statusFromRecords(
+  records: Record<string, unknown>[],
+  fallback: RefreshStepStatus | null
+): RefreshStepStatus {
+  const statuses = records.map((record) => readStatus(record.status)).filter(Boolean);
+  if (statuses.includes("failed")) return "failed";
+  if (statuses.includes("degraded") || statuses.includes("queued") || statuses.includes("running")) {
+    return "degraded";
+  }
+  if (statuses.length > 0 && statuses.every((status) => status === "completed")) {
+    return "completed";
+  }
+  return fallback ?? "completed";
+}
+
+function summarizeRecords(records: Record<string, unknown>[], labelField: string): string {
+  return records
+    .map((record) => {
+      const label = record[labelField];
+      const status = readStatus(record.status);
+      return typeof label === "string" && status ? `${label} ${status}` : null;
+    })
+    .filter((value): value is string => value !== null)
+    .join("; ");
+}
+
+function statusLabel(status: RefreshStepStatus): string {
+  return status.charAt(0).toUpperCase() + status.slice(1);
+}
+
+function refreshProgressPercent(steps: RefreshProgressStep[]): number {
+  if (steps.length === 0) return 0;
+  const score = steps.reduce((total, step) => {
+    if (step.status === "completed") return total + 1;
+    if (step.status === "degraded") return total + 0.85;
+    if (step.status === "failed") return total + 0.7;
+    if (step.status === "running") return total + 0.45;
+    return total;
+  }, 0);
+  return Math.round((score / steps.length) * 100);
 }

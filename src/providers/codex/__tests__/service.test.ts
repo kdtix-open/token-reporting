@@ -153,6 +153,48 @@ describe("persistCodexUsageReport", () => {
     await expect(readFile(outputPath, "utf8")).resolves.toContain(
       '"input_tokens": 12000'
     );
+    const written = JSON.parse(await readFile(outputPath, "utf8")) as {
+      generatedAt?: string;
+    };
+    expect(Date.parse(written.generatedAt ?? "")).not.toBeNaN();
+    await expect(
+      readFile(path.join(tempRoot, "accumulated-metadata.json"), "utf8")
+    ).resolves.toContain('"input_tokens": 12000');
+  });
+
+  it("upserts overlapping daily buckets into the accumulated snapshot", async () => {
+    const tempRoot = await mkdtemp(path.join(os.tmpdir(), "token-reporting-"));
+    const outputPath = path.join(tempRoot, "latest-metadata.json");
+
+    await persistCodexUsageReport({ usage: sampleReport, outputPath, env: {} });
+    await persistCodexUsageReport({
+      usage: {
+        data: [
+          {
+            start_time: 1740873600,
+            end_time: 1740960000,
+            results: [
+              {
+                input_tokens: 30_000,
+                output_tokens: 4_000,
+                num_model_requests: 300
+              }
+            ]
+          }
+        ],
+        has_more: false,
+        next_page: null
+      },
+      outputPath,
+      env: {}
+    });
+
+    const accumulated = JSON.parse(
+      await readFile(path.join(tempRoot, "accumulated-metadata.json"), "utf8")
+    ) as { usage: { data: Array<{ results: Array<{ input_tokens: number }> }> } };
+
+    expect(accumulated.usage.data).toHaveLength(2);
+    expect(accumulated.usage.data[1].results[0].input_tokens).toBe(30_000);
   });
 
   it("blocks persistence in read-only mode", async () => {

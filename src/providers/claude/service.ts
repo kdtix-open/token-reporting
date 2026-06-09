@@ -54,7 +54,8 @@ function costForResult(
 
 export function createClaudeReportSummary(
   report: ClaudeUsageReport,
-  costs?: ClaudeCostsReport
+  costs?: ClaudeCostsReport,
+  snapshotGeneratedAt?: string
 ): ClaudeReportSummary {
   let inputTokens = 0;
   let outputTokens = 0;
@@ -215,6 +216,7 @@ export function createClaudeReportSummary(
     providerLabel: "Claude",
     reportStartDay: startDay,
     reportEndDay: endDay,
+    snapshotGeneratedAt,
     reportAgeLabel: "28-day window",
     comparisonMetric: {
       value: outputTokens,

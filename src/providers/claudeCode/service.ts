@@ -110,6 +110,7 @@ export function createClaudeCodeReportSummary(
     providerLabel: "Claude Code",
     reportStartDay,
     reportEndDay,
+    snapshotGeneratedAt: snapshot.generatedAt,
     reportAgeLabel,
     comparisonMetric: {
       value: requestCount,

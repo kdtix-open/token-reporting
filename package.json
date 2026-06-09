@@ -20,7 +20,12 @@
     "report:codex": "tsx scripts/fetch-codex.ts",
     "report:claude-code": "tsx scripts/fetch-claude-code.ts",
     "report:local-sessions": "tsx scripts/analyze-local-sessions.ts",
+    "report:huggingface-candidates": "tsx scripts/refresh-huggingface-candidates.ts",
     "report:all": "tsx scripts/fetch-all.ts",
+    "report:historical": "tsx scripts/fetch-all.ts --historical",
+    "report:seed-from-git-history": "tsx scripts/seed-history-from-git.ts",
+    "integration:stub": "tsx scripts/serve-integration-stub.ts",
+    "integration:api": "tsx scripts/serve-integration-api.ts",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui"
   },

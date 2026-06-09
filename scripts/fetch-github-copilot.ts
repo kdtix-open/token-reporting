@@ -39,7 +39,7 @@ async function main() {
 
   const outputPath = await persistGitHubCopilotLatestUsersReportMetadata({
     organization,
-    report: { ...report, usage_summary, ...(billing_seats ? { billing_seats } : {}) }
+    report: { ...report, usage_summary, usage_records: usageRecords, ...(billing_seats ? { billing_seats } : {}) }
   });
 
   console.log(

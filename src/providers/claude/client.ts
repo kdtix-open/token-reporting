@@ -7,6 +7,7 @@ import {
 
 export interface ClaudeClientOptions {
   apiKey: string;
+  startingAt?: string;
 }
 
 type FetchLike = typeof fetch;
@@ -72,11 +73,11 @@ function buildCostsUrl(startingAt: string): URL {
 }
 
 export async function fetchClaudeUsageReport(
-  { apiKey }: ClaudeClientOptions,
+  { apiKey, startingAt }: ClaudeClientOptions,
   fetchImpl: FetchLike = fetch
 ): Promise<ClaudeUsageReport> {
   let page = await fetchJson(
-    buildUsageUrl(buildStartingAt()),
+    buildUsageUrl(startingAt ?? buildStartingAt()),
     apiKey,
     fetchImpl,
     (raw) => claudeUsageReportSchema.parse(raw),
@@ -102,11 +103,11 @@ export async function fetchClaudeUsageReport(
 }
 
 export async function fetchClaudeCostsReport(
-  { apiKey }: ClaudeClientOptions,
+  { apiKey, startingAt }: ClaudeClientOptions,
   fetchImpl: FetchLike = fetch
 ): Promise<ClaudeCostsReport> {
   let page = await fetchJson(
-    buildCostsUrl(buildStartingAt()),
+    buildCostsUrl(startingAt ?? buildStartingAt()),
     apiKey,
     fetchImpl,
     (raw) => claudeCostsReportSchema.parse(raw),

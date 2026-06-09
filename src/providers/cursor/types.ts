@@ -104,6 +104,7 @@ export type CursorFilteredUsageEventsResponse = z.infer<
 
 // ── Combined snapshot persisted to disk ─────────────────────────────────────
 export const cursorSnapshotSchema = z.object({
+  generatedAt: z.string().optional(),
   daily: cursorDailyUsageResponseSchema,
   spend: cursorTeamSpendResponseSchema.optional(),
   events: cursorFilteredUsageEventsResponseSchema.optional()

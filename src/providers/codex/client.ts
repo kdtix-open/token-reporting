@@ -8,6 +8,8 @@ import {
 
 export interface CodexClientOptions {
   apiKey: string;
+  startTime?: number;
+  endTime?: number;
 }
 
 type FetchLike = typeof fetch;
@@ -19,11 +21,11 @@ const PAGE_LIMIT = 31;
 /** Safety guard for pagination loops (covers >2 years of daily buckets). */
 const MAX_PAGES = 50;
 
-function buildTimeWindow(): { startTime: number; endTime: number } {
+function buildTimeWindow(options: Pick<CodexClientOptions, "startTime" | "endTime"> = {}): { startTime: number; endTime: number } {
   const nowSec = Math.floor(Date.now() / 1000);
   return {
-    startTime: nowSec - WINDOW_DAYS * 24 * 60 * 60,
-    endTime: nowSec
+    startTime: options.startTime ?? nowSec - WINDOW_DAYS * 24 * 60 * 60,
+    endTime: options.endTime ?? nowSec
   };
 }
 
@@ -61,22 +63,31 @@ async function fetchAllPages<T extends { data: unknown[]; has_more: boolean; nex
     aggregated.next_page = parsed.next_page;
     pages += 1;
     if (!parsed.has_more || !parsed.next_page) break;
-    // The API returns next_page as a full URL string.
-    nextUrl = new URL(parsed.next_page);
+    nextUrl = nextPageUrl(nextUrl, parsed.next_page);
   }
 
   return parse(aggregated);
 }
 
+function nextPageUrl(currentUrl: URL, nextPage: string): URL {
+  try {
+    return new URL(nextPage);
+  } catch {
+    const url = new URL(currentUrl.toString());
+    url.searchParams.set("page", nextPage);
+    return url;
+  }
+}
+
 export async function fetchCodexUsageReport(
-  { apiKey }: CodexClientOptions,
+  { apiKey, startTime, endTime }: CodexClientOptions,
   fetchImpl: FetchLike = fetch
 ): Promise<CodexUsageReport> {
-  const { startTime, endTime } = buildTimeWindow();
+  const window = buildTimeWindow({ startTime, endTime });
 
   const url = new URL(`${OPENAI_API_BASE}/v1/organization/usage/completions`);
-  url.searchParams.set("start_time", String(startTime));
-  url.searchParams.set("end_time", String(endTime));
+  url.searchParams.set("start_time", String(window.startTime));
+  url.searchParams.set("end_time", String(window.endTime));
   url.searchParams.set("bucket_width", "1d");
   url.searchParams.set("limit", String(PAGE_LIMIT));
   // group_by enables per-model + per-project breakdown in `results[]`.
@@ -93,14 +104,14 @@ export async function fetchCodexUsageReport(
 }
 
 export async function fetchCodexCostsReport(
-  { apiKey }: CodexClientOptions,
+  { apiKey, startTime, endTime }: CodexClientOptions,
   fetchImpl: FetchLike = fetch
 ): Promise<CodexCostsReport> {
-  const { startTime, endTime } = buildTimeWindow();
+  const window = buildTimeWindow({ startTime, endTime });
 
   const url = new URL(`${OPENAI_API_BASE}/v1/organization/costs`);
-  url.searchParams.set("start_time", String(startTime));
-  url.searchParams.set("end_time", String(endTime));
+  url.searchParams.set("start_time", String(window.startTime));
+  url.searchParams.set("end_time", String(window.endTime));
   url.searchParams.set("bucket_width", "1d");
   url.searchParams.set("limit", String(PAGE_LIMIT));
   // line_item exposes per-model, per-tier cost components.

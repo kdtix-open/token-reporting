@@ -20,6 +20,7 @@ export interface CursorReportInput {
   daily: CursorDailyUsageResponse;
   spend?: CursorTeamSpendResponse;
   events?: CursorFilteredUsageEventsResponse;
+  generatedAt?: string;
 }
 
 /**
@@ -214,6 +215,7 @@ export function createCursorReportSummary(
     providerLabel: "Cursor",
     reportStartDay: epochMsToIsoDay(daily.period.startDate),
     reportEndDay: epochMsToIsoDay(daily.period.endDate),
+    snapshotGeneratedAt: input.generatedAt,
     reportAgeLabel: "28-day window",
     comparisonMetric: {
       value:

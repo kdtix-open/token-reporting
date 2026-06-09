@@ -8,6 +8,7 @@ import { exec } from "child_process";
 import { promisify } from "util";
 
 const execAsync = promisify(exec);
+const historical = process.argv.includes("--historical");
 
 interface Script {
   name: string;
@@ -37,7 +38,12 @@ async function runScript(script: Script): Promise<ScriptResult> {
   }
 
   try {
-    const { stdout, stderr } = await execAsync(script.cmd);
+    const { stdout, stderr } = await execAsync(script.cmd, {
+      env: {
+        ...process.env,
+        ...(historical ? { TOKEN_REPORTING_FETCH_MODE: "historical" } : {})
+      }
+    });
     const out = (stdout + stderr).trim();
     const preview = out.split("\n").slice(0, 3).join("\n   ");
     console.log(`✓  ${script.name}\n   ${preview}`);
@@ -51,7 +57,11 @@ async function runScript(script: Script): Promise<ScriptResult> {
 }
 
 async function main(): Promise<void> {
-  console.log("▶  Fetching all provider data in parallel…\n");
+  console.log(
+    historical
+      ? "▶  Fetching historical provider data in parallel…\n"
+      : "▶  Fetching all provider data in parallel…\n"
+  );
   const results = await Promise.all(SCRIPTS.map(runScript));
 
   const succeeded = results.filter((r) => r.ok);

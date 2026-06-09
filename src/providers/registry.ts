@@ -82,7 +82,11 @@ const claudeAdapter: ProviderAdapter = {
     // New snapshot shape is { usage, costs? }; legacy shape is the raw usage report.
     const snapshot = claudeSnapshotSchema.safeParse(raw);
     if (snapshot.success) {
-      return createClaudeReportSummary(snapshot.data.usage, snapshot.data.costs);
+      return createClaudeReportSummary(
+        snapshot.data.usage,
+        snapshot.data.costs,
+        snapshot.data.generatedAt
+      );
     }
     return createClaudeReportSummary(claudeUsageReportSchema.parse(raw));
   }
@@ -95,7 +99,7 @@ const codexAdapter: ProviderAdapter = {
   dataPath: "codex/latest-metadata.json",
   transformSnapshot(raw) {
     const snapshot = codexSnapshotSchema.parse(raw);
-    return createCodexReportSummary(snapshot.usage, snapshot.costs);
+    return createCodexReportSummary(snapshot.usage, snapshot.costs, snapshot.generatedAt);
   }
 };
 

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { buildLocalModelReport } from "../localModelReport";
+import type { HuggingFaceCandidateSet } from "../huggingFaceCandidates";
 import type { ProviderReportSummary } from "../types";
 
 const zeroProjection = {
@@ -86,7 +87,7 @@ describe("buildLocalModelReport", () => {
     expect(report.avgTokensPerObservedRequest).toBeNull();
     expect(report.estimatedContextWindowNeeded).toBeNull();
     expect(report.contextConfidence).toBe("insufficient_data");
-    expect(report.profiles).toHaveLength(4);
+    expect(report.profiles).toHaveLength(5);
   });
 
   it("correctly aggregates Codex token data only", () => {
@@ -179,12 +180,49 @@ describe("buildLocalModelReport", () => {
     expect(report.windowDays).toBe(28);
   });
 
-  it("all 3 model profiles are present with expected tiers", () => {
+  it("all 5 model profiles are present with expected tiers", () => {
     const report = buildLocalModelReport([codexSummary]);
     const tiers = report.profiles.map((p) => p.tier);
     expect(tiers).toContain("min");
     expect(tiers).toContain("recommended");
+    expect(tiers).toContain("pro");
     expect(tiers).toContain("enterprise");
+  });
+
+  it("enriches model profiles with current Hugging Face candidate metadata", () => {
+    const candidateSet: HuggingFaceCandidateSet = {
+      candidateSetId: "hf-candidates-test",
+      candidates: [
+        {
+          architecture: "qwen2",
+          downloads: 8_100_000,
+          lastModified: "2025-01-12T00:00:00.000Z",
+          libraryName: "transformers",
+          license: "apache-2.0",
+          likes: 2_035,
+          modelId: "Qwen/Qwen2.5-Coder-32B-Instruct",
+          parameterCount: 32_763_900_000,
+          pipelineTag: "text-generation",
+          tags: ["text-generation", "code"],
+          url: "https://huggingface.co/Qwen/Qwen2.5-Coder-32B-Instruct"
+        }
+      ],
+      generatedAt: "2026-06-07T17:10:00.000Z",
+      source: "huggingface_hub_api"
+    };
+
+    const report = buildLocalModelReport([codexSummary], null, candidateSet);
+    const profile = report.profiles.find(
+      (candidate) => candidate.hfRepoId === "Qwen/Qwen2.5-Coder-32B-Instruct"
+    );
+
+    expect(profile).toMatchObject({
+      hfCandidateSetId: "hf-candidates-test",
+      hfDownloads: 8_100_000,
+      hfLastModified: "2025-01-12T00:00:00.000Z",
+      hfLikes: 2_035,
+      license: "apache-2.0"
+    });
   });
 
   it("marks all profiles as contextFits=true when context window is unknown", () => {
@@ -235,7 +273,7 @@ describe("buildLocalModelReport", () => {
     const report = buildLocalModelReport([codexSummary], highCtxDistribution as never);
     expect(report.contextConfidence).toBe("high");
     expect(report.estimatedContextWindowNeeded).toBe(500_000);
-    // Three 128K profiles fail context; 7B-1M passes
+    // Four 128K profiles fail context; 7B-1M passes
     expect(report.profiles.filter((p) => p.contextFits)).toHaveLength(1);
     expect(report.recommendedProfile).not.toBeNull();
     expect(report.recommendedProfile!.contextWindow).toBeGreaterThanOrEqual(500_000);
@@ -262,7 +300,7 @@ describe("buildLocalModelReport", () => {
 
   it("recommendedProfile is null and workloadGap has no universal blocker when axes split across profiles", () => {
     // Context need = 500K (only 7B-1M fits context)
-    // Throughput need ≈ 11 tok/s (7B-1M at 5 tok/s fails, others at 50/55 tok/s pass)
+    // Throughput need ≈ 11 tok/s (7B-1M at 5 tok/s fails, others at 40/50/55 tok/s pass)
     // → No single model satisfies both; workloadGap reflects no universal blocker
     const splitAxisDistribution = {
       generatedAt: "2025-01-01T00:00:00.000Z",
@@ -285,4 +323,120 @@ describe("buildLocalModelReport", () => {
     // No axis is a universal blocker — both context (7B-1M ok) and throughput (128K models ok) have partial fits
     expect(report.workloadGap).toEqual({ context: false, throughput: false });
   });
+
+  // ── alternativeProfiles ───────────────────────────────────────────────────
+
+  it("alternativeProfiles is empty when contextConfidence is insufficient_data", () => {
+    const report = buildLocalModelReport([cursorSummary, copilotSummary]);
+    expect(report.contextConfidence).toBe("insufficient_data");
+    expect(report.alternativeProfiles).toHaveLength(0);
+  });
+
+  it("alternativeProfiles contains all fitting profiles except the recommended one", () => {
+    // Codex with tiny token load → all 5 profiles fit; recommended = Llama (min)
+    // alternatives = the remaining 4 (14B, 32B, 72B, 7B-1M)
+    const report = buildLocalModelReport([codexSummary]);
+    expect(report.recommendedProfile).not.toBeNull();
+    expect(report.recommendedProfile!.tier).toBe("min");
+    expect(report.alternativeProfiles.length).toBe(4);
+    expect(report.alternativeProfiles.map((p) => p.tier)).toEqual(
+      expect.arrayContaining(["recommended", "pro", "enterprise"])
+    );
+    // recommended profile must not appear in alternativeProfiles
+    expect(report.alternativeProfiles.map((p) => p.hfRepoId)).not.toContain(
+      report.recommendedProfile!.hfRepoId
+    );
+  });
+
+  it("alternativeProfiles is empty when only one profile fits", () => {
+    const highCtxDistribution = {
+      generatedAt: "2025-01-01T00:00:00.000Z",
+      sources: [],
+      combined: { sampleCount: 100, mean: 200_000, p50: 150_000, p95: 280_000, p99: 300_000, max: 400_000 }
+    };
+    const report = buildLocalModelReport([codexSummary], highCtxDistribution as never);
+    // Only 7B-1M fits the 500K context need
+    expect(report.recommendedProfile).not.toBeNull();
+    expect(report.alternativeProfiles).toHaveLength(0);
+  });
+
+  it("alternativeProfiles is empty when no profile fits", () => {
+    const highThroughputSummary = {
+      ...codexSummary,
+      inputTokens: 40_000_000,
+      outputTokens: 20_000_000,
+      requestCount: 10_000_000
+    } as unknown as typeof codexSummary;
+    const report = buildLocalModelReport([highThroughputSummary]);
+    expect(report.recommendedProfile).toBeNull();
+    expect(report.alternativeProfiles).toHaveLength(0);
+  });
+
+  it("applies forensic synthesis as direct routing guidance for sizing and profiles", () => {
+    const reportWithoutForensics = buildLocalModelReport([codexSummary]);
+    const reportWithForensics = buildLocalModelReport(
+      [codexSummary],
+      null,
+      null,
+      forensicTieredRoutingRun
+    );
+
+    expect(reportWithoutForensics.appliedForensicGuidance).toBeNull();
+    expect(reportWithForensics.appliedForensicGuidance).toMatchObject({
+      appliedSections: [
+        "Local model migration sizing",
+        "Server sizing heuristics",
+        "On-prem model profiles"
+      ],
+      confidence: 0.95,
+      localWorkloadScope: "short-context Copilot-style completion workloads",
+      reviewerCount: 7,
+      routingStrategy: "tiered_hybrid",
+      runId: "dynamic-forensic-test",
+      status: "completed"
+    });
+    expect(reportWithForensics.appliedForensicGuidance?.hostedWorkloadScope).toContain(
+      "tail-context"
+    );
+    expect(reportWithForensics.appliedForensicGuidance?.impactSummary).toContain(
+      "partial local migration"
+    );
+    expect(reportWithForensics.appliedForensicGuidance?.blockingFindings).toEqual([
+      expect.objectContaining({
+        severity: "high",
+        title: "Claude and Codex tail workloads exceed candidate context budgets"
+      })
+    ]);
+    expect(
+      reportWithForensics.profiles.find((profile) =>
+        profile.hfRepoId.includes("Llama-3.1-8B")
+      )?.forensicInterpretation
+    ).toContain("short-context local candidate");
+    expect(
+      reportWithForensics.profiles.find((profile) =>
+        profile.hfRepoId.includes("7B-Instruct-1M")
+      )?.forensicInterpretation
+    ).toContain("long-context candidate screen");
+  });
 });
+
+const forensicTieredRoutingRun = {
+  parentSynthesis: {
+    confidence: 0.95,
+    dissentingFindings: [
+      {
+        details:
+          "Claude and Codex snapshots show tail context that breaches every local candidate.",
+        evidenceRefs: ["dynamic-usage-claude-2026-06-08", "hf-candidates-test"],
+        severity: "high",
+        title: "Claude and Codex tail workloads exceed candidate context budgets"
+      }
+    ],
+    recommendation:
+      "Adopt a tiered routing policy: shift the short-context Copilot completion band to a 7B-class local candidate while keeping Claude/Codex tail-context turns and Cursor agentic turns on hosted providers.",
+    reviewerCount: 7
+  },
+  runId: "dynamic-forensic-test",
+  status: "completed",
+  updatedAt: "2026-06-08T23:44:56.380Z"
+};

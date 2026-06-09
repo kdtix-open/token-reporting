@@ -1,6 +1,9 @@
 node_modules/
 dist/
 coverage/
+logs/
+output/
+tmp/
 .env
 .env.local
 .env.admin.credentials

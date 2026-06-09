@@ -122,6 +122,7 @@ export const gitHubCopilotLatestUsersReportSchema = z.object({
   download_links: z.array(z.url()),
   report_start_day: isoDaySchema,
   report_end_day: isoDaySchema,
+  generatedAt: z.string().optional(),
   /** Populated by the fetch script after downloading and parsing the signed files. */
   usage_summary: githubCopilotUsageSummarySchema.optional(),
   /** Populated by the fetch script from the billing seats endpoint. */
@@ -130,7 +131,13 @@ export const gitHubCopilotLatestUsersReportSchema = z.object({
       total_seats: z.number().int(),
       plan: z.enum(["business", "enterprise"]).default("business")
     })
-    .optional()
+    .optional(),
+  /**
+   * Locally persisted raw records from signed report files. GitHub's API only
+   * exposes the latest 28-day export, so retaining these rows is what allows
+   * this project to build a cumulative history over repeated runs.
+   */
+  usage_records: z.array(githubCopilotUsageRecordSchema).optional()
 });
 
 export type GitHubCopilotLatestUsersReport = z.infer<

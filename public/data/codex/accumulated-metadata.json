@@ -1,0 +1,4139 @@
+{
+  "generatedAt": "2026-06-09T00:24:06.200Z",
+  "usage": {
+    "data": [
+      {
+        "start_time": 1774137600,
+        "end_time": 1774224000,
+        "results": []
+      },
+      {
+        "start_time": 1774224000,
+        "end_time": 1774310400,
+        "results": []
+      },
+      {
+        "start_time": 1774310400,
+        "end_time": 1774396800,
+        "results": []
+      },
+      {
+        "start_time": 1774396800,
+        "end_time": 1774483200,
+        "results": []
+      },
+      {
+        "start_time": 1774483200,
+        "end_time": 1774569600,
+        "results": []
+      },
+      {
+        "start_time": 1774569600,
+        "end_time": 1774656000,
+        "results": []
+      },
+      {
+        "start_time": 1774656000,
+        "end_time": 1774742400,
+        "results": []
+      },
+      {
+        "start_time": 1774742400,
+        "end_time": 1774828800,
+        "results": []
+      },
+      {
+        "start_time": 1774828800,
+        "end_time": 1774915200,
+        "results": []
+      },
+      {
+        "start_time": 1774915200,
+        "end_time": 1775001600,
+        "results": [
+          {
+            "input_tokens": 5630,
+            "output_tokens": 1423,
+            "num_model_requests": 3,
+            "input_cached_tokens": 2432,
+            "input_uncached_tokens": 3198,
+            "input_text_tokens": 2094,
+            "output_text_tokens": 359,
+            "input_audio_tokens": 1104,
+            "output_audio_tokens": 1064,
+            "input_cached_text_tokens": 1728,
+            "input_cached_audio_tokens": 704,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-realtime-1.5",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          },
+          {
+            "input_tokens": 221,
+            "output_tokens": 76,
+            "num_model_requests": 7,
+            "input_cached_tokens": 0,
+            "input_uncached_tokens": 221,
+            "input_text_tokens": 0,
+            "output_text_tokens": 76,
+            "input_audio_tokens": 221,
+            "output_audio_tokens": 0,
+            "input_cached_text_tokens": 0,
+            "input_cached_audio_tokens": 0,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-4o-mini-transcribe",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          }
+        ]
+      },
+      {
+        "start_time": 1775001600,
+        "end_time": 1775088000,
+        "results": [
+          {
+            "input_tokens": 13917,
+            "output_tokens": 2597,
+            "num_model_requests": 5,
+            "input_cached_tokens": 5824,
+            "input_uncached_tokens": 8093,
+            "input_text_tokens": 5306,
+            "output_text_tokens": 638,
+            "input_audio_tokens": 2787,
+            "output_audio_tokens": 1959,
+            "input_cached_text_tokens": 4608,
+            "input_cached_audio_tokens": 1216,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-realtime-1.5",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          },
+          {
+            "input_tokens": 297,
+            "output_tokens": 87,
+            "num_model_requests": 9,
+            "input_cached_tokens": 0,
+            "input_uncached_tokens": 297,
+            "input_text_tokens": 0,
+            "output_text_tokens": 87,
+            "input_audio_tokens": 297,
+            "output_audio_tokens": 0,
+            "input_cached_text_tokens": 0,
+            "input_cached_audio_tokens": 0,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-4o-mini-transcribe",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          }
+        ]
+      },
+      {
+        "start_time": 1775088000,
+        "end_time": 1775174400,
+        "results": []
+      },
+      {
+        "start_time": 1775174400,
+        "end_time": 1775260800,
+        "results": []
+      },
+      {
+        "start_time": 1775260800,
+        "end_time": 1775347200,
+        "results": []
+      },
+      {
+        "start_time": 1775347200,
+        "end_time": 1775433600,
+        "results": [
+          {
+            "input_tokens": 28949,
+            "output_tokens": 6095,
+            "num_model_requests": 15,
+            "input_cached_tokens": 11648,
+            "input_uncached_tokens": 17301,
+            "input_text_tokens": 11551,
+            "output_text_tokens": 1524,
+            "input_audio_tokens": 5750,
+            "output_audio_tokens": 4571,
+            "input_cached_text_tokens": 9536,
+            "input_cached_audio_tokens": 2112,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-realtime-1.5",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          },
+          {
+            "input_tokens": 701,
+            "output_tokens": 203,
+            "num_model_requests": 28,
+            "input_cached_tokens": 0,
+            "input_uncached_tokens": 701,
+            "input_text_tokens": 0,
+            "output_text_tokens": 203,
+            "input_audio_tokens": 701,
+            "output_audio_tokens": 0,
+            "input_cached_text_tokens": 0,
+            "input_cached_audio_tokens": 0,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-4o-mini-transcribe",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          }
+        ]
+      },
+      {
+        "start_time": 1775433600,
+        "end_time": 1775520000,
+        "results": [
+          {
+            "input_tokens": 1698,
+            "output_tokens": 343,
+            "num_model_requests": 2,
+            "input_cached_tokens": 768,
+            "input_uncached_tokens": 930,
+            "input_text_tokens": 804,
+            "output_text_tokens": 113,
+            "input_audio_tokens": 126,
+            "output_audio_tokens": 230,
+            "input_cached_text_tokens": 704,
+            "input_cached_audio_tokens": 64,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-realtime-1.5",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          },
+          {
+            "input_tokens": 95,
+            "output_tokens": 27,
+            "num_model_requests": 2,
+            "input_cached_tokens": 0,
+            "input_uncached_tokens": 95,
+            "input_text_tokens": 0,
+            "output_text_tokens": 27,
+            "input_audio_tokens": 95,
+            "output_audio_tokens": 0,
+            "input_cached_text_tokens": 0,
+            "input_cached_audio_tokens": 0,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-4o-mini-transcribe",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          }
+        ]
+      },
+      {
+        "start_time": 1775520000,
+        "end_time": 1775606400,
+        "results": [
+          {
+            "input_tokens": 8674,
+            "output_tokens": 2205,
+            "num_model_requests": 4,
+            "input_cached_tokens": 2112,
+            "input_uncached_tokens": 6562,
+            "input_text_tokens": 4315,
+            "output_text_tokens": 519,
+            "input_audio_tokens": 2247,
+            "output_audio_tokens": 1686,
+            "input_cached_text_tokens": 1984,
+            "input_cached_audio_tokens": 128,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-realtime-1.5",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          },
+          {
+            "input_tokens": 296,
+            "output_tokens": 89,
+            "num_model_requests": 10,
+            "input_cached_tokens": 0,
+            "input_uncached_tokens": 296,
+            "input_text_tokens": 0,
+            "output_text_tokens": 89,
+            "input_audio_tokens": 296,
+            "output_audio_tokens": 0,
+            "input_cached_text_tokens": 0,
+            "input_cached_audio_tokens": 0,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-4o-mini-transcribe",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          }
+        ]
+      },
+      {
+        "start_time": 1775606400,
+        "end_time": 1775692800,
+        "results": [
+          {
+            "input_tokens": 68708,
+            "output_tokens": 9564,
+            "num_model_requests": 16,
+            "input_cached_tokens": 28864,
+            "input_uncached_tokens": 39844,
+            "input_text_tokens": 23040,
+            "output_text_tokens": 2274,
+            "input_audio_tokens": 16804,
+            "output_audio_tokens": 7290,
+            "input_cached_text_tokens": 20672,
+            "input_cached_audio_tokens": 8192,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-realtime-1.5",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          },
+          {
+            "input_tokens": 1434,
+            "output_tokens": 370,
+            "num_model_requests": 35,
+            "input_cached_tokens": 0,
+            "input_uncached_tokens": 1434,
+            "input_text_tokens": 0,
+            "output_text_tokens": 370,
+            "input_audio_tokens": 1434,
+            "output_audio_tokens": 0,
+            "input_cached_text_tokens": 0,
+            "input_cached_audio_tokens": 0,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-4o-mini-transcribe",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          }
+        ]
+      },
+      {
+        "start_time": 1775692800,
+        "end_time": 1775779200,
+        "results": []
+      },
+      {
+        "start_time": 1775779200,
+        "end_time": 1775865600,
+        "results": [
+          {
+            "input_tokens": 707,
+            "output_tokens": 223,
+            "num_model_requests": 6,
+            "input_cached_tokens": 0,
+            "input_uncached_tokens": 707,
+            "input_text_tokens": 0,
+            "output_text_tokens": 223,
+            "input_audio_tokens": 707,
+            "output_audio_tokens": 0,
+            "input_cached_text_tokens": 0,
+            "input_cached_audio_tokens": 0,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-4o-mini-transcribe",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          },
+          {
+            "input_tokens": 8296,
+            "output_tokens": 1585,
+            "num_model_requests": 4,
+            "input_cached_tokens": 1088,
+            "input_uncached_tokens": 7208,
+            "input_text_tokens": 3907,
+            "output_text_tokens": 360,
+            "input_audio_tokens": 3301,
+            "output_audio_tokens": 1225,
+            "input_cached_text_tokens": 1088,
+            "input_cached_audio_tokens": 0,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-realtime-1.5",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          },
+          {
+            "input_tokens": 15748028,
+            "output_tokens": 108940,
+            "num_model_requests": 268,
+            "input_cached_tokens": 13406848,
+            "input_uncached_tokens": 2341180,
+            "input_text_tokens": 2341180,
+            "output_text_tokens": 108940,
+            "input_audio_tokens": 0,
+            "output_audio_tokens": 0,
+            "input_cached_text_tokens": 13406848,
+            "input_cached_audio_tokens": 0,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-5.4-2026-03-05",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          },
+          {
+            "input_tokens": 175067,
+            "output_tokens": 2522,
+            "num_model_requests": 14,
+            "input_cached_tokens": 102784,
+            "input_uncached_tokens": 72283,
+            "input_text_tokens": 72283,
+            "output_text_tokens": 2522,
+            "input_audio_tokens": 0,
+            "output_audio_tokens": 0,
+            "input_cached_text_tokens": 102784,
+            "input_cached_audio_tokens": 0,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-5.3-codex",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          }
+        ]
+      },
+      {
+        "start_time": 1775865600,
+        "end_time": 1775952000,
+        "results": [
+          {
+            "input_tokens": 223,
+            "output_tokens": 62,
+            "num_model_requests": 5,
+            "input_cached_tokens": 0,
+            "input_uncached_tokens": 223,
+            "input_text_tokens": 0,
+            "output_text_tokens": 62,
+            "input_audio_tokens": 223,
+            "output_audio_tokens": 0,
+            "input_cached_text_tokens": 0,
+            "input_cached_audio_tokens": 0,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-4o-mini-transcribe",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          },
+          {
+            "input_tokens": 5464,
+            "output_tokens": 1726,
+            "num_model_requests": 3,
+            "input_cached_tokens": 3520,
+            "input_uncached_tokens": 1944,
+            "input_text_tokens": 997,
+            "output_text_tokens": 373,
+            "input_audio_tokens": 947,
+            "output_audio_tokens": 1353,
+            "input_cached_text_tokens": 2432,
+            "input_cached_audio_tokens": 1088,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-realtime-1.5",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          },
+          {
+            "input_tokens": 2128845,
+            "output_tokens": 37979,
+            "num_model_requests": 173,
+            "input_cached_tokens": 1493248,
+            "input_uncached_tokens": 635597,
+            "input_text_tokens": 635597,
+            "output_text_tokens": 37979,
+            "input_audio_tokens": 0,
+            "output_audio_tokens": 0,
+            "input_cached_text_tokens": 1493248,
+            "input_cached_audio_tokens": 0,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-5.3-codex",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          }
+        ]
+      },
+      {
+        "start_time": 1775952000,
+        "end_time": 1776038400,
+        "results": []
+      },
+      {
+        "start_time": 1776038400,
+        "end_time": 1776124800,
+        "results": [
+          {
+            "input_tokens": 39811,
+            "output_tokens": 6342,
+            "num_model_requests": 16,
+            "input_cached_tokens": 12736,
+            "input_uncached_tokens": 27075,
+            "input_text_tokens": 15553,
+            "output_text_tokens": 1501,
+            "input_audio_tokens": 11522,
+            "output_audio_tokens": 4841,
+            "input_cached_text_tokens": 8768,
+            "input_cached_audio_tokens": 3968,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-realtime-1.5",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          },
+          {
+            "input_tokens": 1386,
+            "output_tokens": 385,
+            "num_model_requests": 27,
+            "input_cached_tokens": 0,
+            "input_uncached_tokens": 1386,
+            "input_text_tokens": 0,
+            "output_text_tokens": 385,
+            "input_audio_tokens": 1386,
+            "output_audio_tokens": 0,
+            "input_cached_text_tokens": 0,
+            "input_cached_audio_tokens": 0,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-4o-mini-transcribe",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          },
+          {
+            "input_tokens": 9517125,
+            "output_tokens": 97535,
+            "num_model_requests": 363,
+            "input_cached_tokens": 7647744,
+            "input_uncached_tokens": 1869381,
+            "input_text_tokens": 1869381,
+            "output_text_tokens": 97535,
+            "input_audio_tokens": 0,
+            "output_audio_tokens": 0,
+            "input_cached_text_tokens": 7647744,
+            "input_cached_audio_tokens": 0,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-5.3-codex",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          }
+        ]
+      },
+      {
+        "start_time": 1776124800,
+        "end_time": 1776211200,
+        "results": [
+          {
+            "input_tokens": 43074,
+            "output_tokens": 389,
+            "num_model_requests": 4,
+            "input_cached_tokens": 10496,
+            "input_uncached_tokens": 32578,
+            "input_text_tokens": 32578,
+            "output_text_tokens": 389,
+            "input_audio_tokens": 0,
+            "output_audio_tokens": 0,
+            "input_cached_text_tokens": 10496,
+            "input_cached_audio_tokens": 0,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-5.3-codex",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          },
+          {
+            "input_tokens": 41525,
+            "output_tokens": 4679,
+            "num_model_requests": 6,
+            "input_cached_tokens": 21824,
+            "input_uncached_tokens": 19701,
+            "input_text_tokens": 14022,
+            "output_text_tokens": 1133,
+            "input_audio_tokens": 5679,
+            "output_audio_tokens": 3546,
+            "input_cached_text_tokens": 18432,
+            "input_cached_audio_tokens": 3392,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-realtime-1.5",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          },
+          {
+            "input_tokens": 520,
+            "output_tokens": 188,
+            "num_model_requests": 20,
+            "input_cached_tokens": 0,
+            "input_uncached_tokens": 520,
+            "input_text_tokens": 0,
+            "output_text_tokens": 188,
+            "input_audio_tokens": 520,
+            "output_audio_tokens": 0,
+            "input_cached_text_tokens": 0,
+            "input_cached_audio_tokens": 0,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-4o-mini-transcribe",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          }
+        ]
+      },
+      {
+        "start_time": 1776211200,
+        "end_time": 1776297600,
+        "results": [
+          {
+            "input_tokens": 5866,
+            "output_tokens": 922,
+            "num_model_requests": 1,
+            "input_cached_tokens": 2304,
+            "input_uncached_tokens": 3562,
+            "input_text_tokens": 2402,
+            "output_text_tokens": 227,
+            "input_audio_tokens": 1160,
+            "output_audio_tokens": 695,
+            "input_cached_text_tokens": 2304,
+            "input_cached_audio_tokens": 0,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-realtime-1.5",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          },
+          {
+            "input_tokens": 11519165,
+            "output_tokens": 121150,
+            "num_model_requests": 578,
+            "input_cached_tokens": 9302016,
+            "input_uncached_tokens": 2217149,
+            "input_text_tokens": 2217149,
+            "output_text_tokens": 121150,
+            "input_audio_tokens": 0,
+            "output_audio_tokens": 0,
+            "input_cached_text_tokens": 9302016,
+            "input_cached_audio_tokens": 0,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-5.3-codex",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          },
+          {
+            "input_tokens": 146,
+            "output_tokens": 37,
+            "num_model_requests": 5,
+            "input_cached_tokens": 0,
+            "input_uncached_tokens": 146,
+            "input_text_tokens": 0,
+            "output_text_tokens": 37,
+            "input_audio_tokens": 146,
+            "output_audio_tokens": 0,
+            "input_cached_text_tokens": 0,
+            "input_cached_audio_tokens": 0,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-4o-mini-transcribe",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          }
+        ]
+      },
+      {
+        "start_time": 1776297600,
+        "end_time": 1776384000,
+        "results": [
+          {
+            "input_tokens": 5407134,
+            "output_tokens": 47797,
+            "num_model_requests": 213,
+            "input_cached_tokens": 4118656,
+            "input_uncached_tokens": 1288478,
+            "input_text_tokens": 1288478,
+            "output_text_tokens": 47797,
+            "input_audio_tokens": 0,
+            "output_audio_tokens": 0,
+            "input_cached_text_tokens": 4118656,
+            "input_cached_audio_tokens": 0,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-5.3-codex",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          }
+        ]
+      },
+      {
+        "start_time": 1776384000,
+        "end_time": 1776470400,
+        "results": [
+          {
+            "input_tokens": 1544,
+            "output_tokens": 447,
+            "num_model_requests": 58,
+            "input_cached_tokens": 0,
+            "input_uncached_tokens": 1544,
+            "input_text_tokens": 0,
+            "output_text_tokens": 447,
+            "input_audio_tokens": 1544,
+            "output_audio_tokens": 0,
+            "input_cached_text_tokens": 0,
+            "input_cached_audio_tokens": 0,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-4o-mini-transcribe",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          },
+          {
+            "input_tokens": 29920,
+            "output_tokens": 202,
+            "num_model_requests": 2,
+            "input_cached_tokens": 0,
+            "input_uncached_tokens": 29920,
+            "input_text_tokens": 29920,
+            "output_text_tokens": 202,
+            "input_audio_tokens": 0,
+            "output_audio_tokens": 0,
+            "input_cached_text_tokens": 0,
+            "input_cached_audio_tokens": 0,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-5.3-codex",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          },
+          {
+            "input_tokens": 116863,
+            "output_tokens": 13503,
+            "num_model_requests": 19,
+            "input_cached_tokens": 66432,
+            "input_uncached_tokens": 50431,
+            "input_text_tokens": 33733,
+            "output_text_tokens": 3217,
+            "input_audio_tokens": 16698,
+            "output_audio_tokens": 10286,
+            "input_cached_text_tokens": 54016,
+            "input_cached_audio_tokens": 12416,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-realtime-1.5",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          }
+        ]
+      },
+      {
+        "start_time": 1776470400,
+        "end_time": 1776556800,
+        "results": []
+      },
+      {
+        "start_time": 1776556800,
+        "end_time": 1776643200,
+        "results": [
+          {
+            "input_tokens": 1287,
+            "output_tokens": 624,
+            "num_model_requests": 1,
+            "input_cached_tokens": 1088,
+            "input_uncached_tokens": 199,
+            "input_text_tokens": 76,
+            "output_text_tokens": 137,
+            "input_audio_tokens": 123,
+            "output_audio_tokens": 487,
+            "input_cached_text_tokens": 1088,
+            "input_cached_audio_tokens": 0,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-realtime-1.5",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          },
+          {
+            "input_tokens": 36,
+            "output_tokens": 16,
+            "num_model_requests": 3,
+            "input_cached_tokens": 0,
+            "input_uncached_tokens": 36,
+            "input_text_tokens": 0,
+            "output_text_tokens": 16,
+            "input_audio_tokens": 36,
+            "output_audio_tokens": 0,
+            "input_cached_text_tokens": 0,
+            "input_cached_audio_tokens": 0,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-4o-mini-transcribe",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          }
+        ]
+      },
+      {
+        "start_time": 1776643200,
+        "end_time": 1776729600,
+        "results": []
+      },
+      {
+        "start_time": 1776729600,
+        "end_time": 1776816000,
+        "results": []
+      },
+      {
+        "start_time": 1776816000,
+        "end_time": 1776902400,
+        "results": []
+      },
+      {
+        "start_time": 1776902400,
+        "end_time": 1776988800,
+        "results": [
+          {
+            "input_tokens": 2508325,
+            "output_tokens": 121380,
+            "num_model_requests": 132,
+            "input_cached_tokens": 2253312,
+            "input_uncached_tokens": 255013,
+            "input_text_tokens": 174857,
+            "output_text_tokens": 32997,
+            "input_audio_tokens": 80156,
+            "output_audio_tokens": 88383,
+            "input_cached_text_tokens": 2041728,
+            "input_cached_audio_tokens": 211584,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-realtime-1.5",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          },
+          {
+            "input_tokens": 3342,
+            "output_tokens": 1077,
+            "num_model_requests": 155,
+            "input_cached_tokens": 0,
+            "input_uncached_tokens": 3342,
+            "input_text_tokens": 0,
+            "output_text_tokens": 1077,
+            "input_audio_tokens": 3342,
+            "output_audio_tokens": 0,
+            "input_cached_text_tokens": 0,
+            "input_cached_audio_tokens": 0,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-4o-mini-transcribe",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          }
+        ]
+      },
+      {
+        "start_time": 1776988800,
+        "end_time": 1777075200,
+        "results": [
+          {
+            "input_tokens": 788468,
+            "output_tokens": 13811,
+            "num_model_requests": 15,
+            "input_cached_tokens": 735168,
+            "input_uncached_tokens": 53300,
+            "input_text_tokens": 43224,
+            "output_text_tokens": 4363,
+            "input_audio_tokens": 10076,
+            "output_audio_tokens": 9448,
+            "input_cached_text_tokens": 710656,
+            "input_cached_audio_tokens": 24512,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-realtime-1.5",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          }
+        ]
+      },
+      {
+        "start_time": 1777075200,
+        "end_time": 1777161600,
+        "results": []
+      },
+      {
+        "start_time": 1777161600,
+        "end_time": 1777248000,
+        "results": []
+      },
+      {
+        "start_time": 1777248000,
+        "end_time": 1777334400,
+        "results": [
+          {
+            "input_tokens": 864,
+            "output_tokens": 662,
+            "num_model_requests": 1,
+            "input_cached_tokens": 0,
+            "input_uncached_tokens": 864,
+            "input_text_tokens": 703,
+            "output_text_tokens": 131,
+            "input_audio_tokens": 161,
+            "output_audio_tokens": 531,
+            "input_cached_text_tokens": 0,
+            "input_cached_audio_tokens": 0,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-realtime-1.5",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          },
+          {
+            "input_tokens": 161,
+            "output_tokens": 50,
+            "num_model_requests": 1,
+            "input_cached_tokens": 0,
+            "input_uncached_tokens": 161,
+            "input_text_tokens": 0,
+            "output_text_tokens": 50,
+            "input_audio_tokens": 161,
+            "output_audio_tokens": 0,
+            "input_cached_text_tokens": 0,
+            "input_cached_audio_tokens": 0,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-4o-mini-transcribe",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          },
+          {
+            "input_tokens": 3913687,
+            "output_tokens": 41203,
+            "num_model_requests": 52,
+            "input_cached_tokens": 3385856,
+            "input_uncached_tokens": 527831,
+            "input_text_tokens": 527831,
+            "output_text_tokens": 41203,
+            "input_audio_tokens": 0,
+            "output_audio_tokens": 0,
+            "input_cached_text_tokens": 3385856,
+            "input_cached_audio_tokens": 0,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-5.4-2026-03-05",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          },
+          {
+            "input_tokens": 163125,
+            "output_tokens": 650,
+            "num_model_requests": 9,
+            "input_cached_tokens": 0,
+            "input_uncached_tokens": 163125,
+            "input_text_tokens": 163125,
+            "output_text_tokens": 650,
+            "input_audio_tokens": 0,
+            "output_audio_tokens": 0,
+            "input_cached_text_tokens": 0,
+            "input_cached_audio_tokens": 0,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-5.5-2026-04-23",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          }
+        ]
+      },
+      {
+        "start_time": 1777334400,
+        "end_time": 1777420800,
+        "results": []
+      },
+      {
+        "start_time": 1777420800,
+        "end_time": 1777507200,
+        "results": [
+          {
+            "input_tokens": 91198,
+            "output_tokens": 444,
+            "num_model_requests": 5,
+            "input_cached_tokens": 0,
+            "input_uncached_tokens": 91198,
+            "input_text_tokens": 91198,
+            "output_text_tokens": 444,
+            "input_audio_tokens": 0,
+            "output_audio_tokens": 0,
+            "input_cached_text_tokens": 0,
+            "input_cached_audio_tokens": 0,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-5.5-2026-04-23",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          }
+        ]
+      },
+      {
+        "start_time": 1777507200,
+        "end_time": 1777593600,
+        "results": [
+          {
+            "input_tokens": 21503,
+            "output_tokens": 60,
+            "num_model_requests": 1,
+            "input_cached_tokens": 0,
+            "input_uncached_tokens": 21503,
+            "input_text_tokens": 21503,
+            "output_text_tokens": 60,
+            "input_audio_tokens": 0,
+            "output_audio_tokens": 0,
+            "input_cached_text_tokens": 0,
+            "input_cached_audio_tokens": 0,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-5.4-mini-2026-03-17",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          },
+          {
+            "input_tokens": 93250,
+            "output_tokens": 761,
+            "num_model_requests": 1,
+            "input_cached_tokens": 0,
+            "input_uncached_tokens": 93250,
+            "input_text_tokens": 93250,
+            "output_text_tokens": 761,
+            "input_audio_tokens": 0,
+            "output_audio_tokens": 0,
+            "input_cached_text_tokens": 0,
+            "input_cached_audio_tokens": 0,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-5.4-2026-03-05",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          },
+          {
+            "input_tokens": 5844665,
+            "output_tokens": 21576,
+            "num_model_requests": 65,
+            "input_cached_tokens": 5109504,
+            "input_uncached_tokens": 735161,
+            "input_text_tokens": 735161,
+            "output_text_tokens": 21576,
+            "input_audio_tokens": 0,
+            "output_audio_tokens": 0,
+            "input_cached_text_tokens": 5109504,
+            "input_cached_audio_tokens": 0,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-5.5-2026-04-23",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          }
+        ]
+      },
+      {
+        "start_time": 1777593600,
+        "end_time": 1777680000,
+        "results": [
+          {
+            "input_tokens": 3254234,
+            "output_tokens": 12929,
+            "num_model_requests": 49,
+            "input_cached_tokens": 2586624,
+            "input_uncached_tokens": 667610,
+            "input_text_tokens": 667610,
+            "output_text_tokens": 12929,
+            "input_audio_tokens": 0,
+            "output_audio_tokens": 0,
+            "input_cached_text_tokens": 2586624,
+            "input_cached_audio_tokens": 0,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-5.5-2026-04-23",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          }
+        ]
+      },
+      {
+        "start_time": 1777680000,
+        "end_time": 1777766400,
+        "results": []
+      },
+      {
+        "start_time": 1777766400,
+        "end_time": 1777852800,
+        "results": []
+      },
+      {
+        "start_time": 1777852800,
+        "end_time": 1777939200,
+        "results": [
+          {
+            "input_tokens": 18062,
+            "output_tokens": 94,
+            "num_model_requests": 1,
+            "input_cached_tokens": 0,
+            "input_uncached_tokens": 18062,
+            "input_text_tokens": 18062,
+            "output_text_tokens": 94,
+            "input_audio_tokens": 0,
+            "output_audio_tokens": 0,
+            "input_cached_text_tokens": 0,
+            "input_cached_audio_tokens": 0,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-5.5-2026-04-23",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          }
+        ]
+      },
+      {
+        "start_time": 1777939200,
+        "end_time": 1778025600,
+        "results": [
+          {
+            "input_tokens": 7365170,
+            "output_tokens": 63665,
+            "num_model_requests": 182,
+            "input_cached_tokens": 6594816,
+            "input_uncached_tokens": 770354,
+            "input_text_tokens": 770354,
+            "output_text_tokens": 63665,
+            "input_audio_tokens": 0,
+            "output_audio_tokens": 0,
+            "input_cached_text_tokens": 6594816,
+            "input_cached_audio_tokens": 0,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-5.5-2026-04-23",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          }
+        ]
+      },
+      {
+        "start_time": 1778025600,
+        "end_time": 1778112000,
+        "results": [
+          {
+            "input_tokens": 3355467,
+            "output_tokens": 25148,
+            "num_model_requests": 87,
+            "input_cached_tokens": 3058816,
+            "input_uncached_tokens": 296651,
+            "input_text_tokens": 296651,
+            "output_text_tokens": 25148,
+            "input_audio_tokens": 0,
+            "output_audio_tokens": 0,
+            "input_cached_text_tokens": 3058816,
+            "input_cached_audio_tokens": 0,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-5.5-2026-04-23",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          }
+        ]
+      },
+      {
+        "start_time": 1778112000,
+        "end_time": 1778198400,
+        "results": []
+      },
+      {
+        "start_time": 1778198400,
+        "end_time": 1778284800,
+        "results": []
+      },
+      {
+        "start_time": 1778284800,
+        "end_time": 1778371200,
+        "results": []
+      },
+      {
+        "start_time": 1778371200,
+        "end_time": 1778457600,
+        "results": []
+      },
+      {
+        "start_time": 1778457600,
+        "end_time": 1778544000,
+        "results": []
+      },
+      {
+        "start_time": 1778544000,
+        "end_time": 1778630400,
+        "results": []
+      },
+      {
+        "start_time": 1778630400,
+        "end_time": 1778716800,
+        "results": []
+      },
+      {
+        "start_time": 1778716800,
+        "end_time": 1778803200,
+        "results": []
+      },
+      {
+        "start_time": 1778803200,
+        "end_time": 1778889600,
+        "results": []
+      },
+      {
+        "start_time": 1778889600,
+        "end_time": 1778976000,
+        "results": []
+      },
+      {
+        "start_time": 1778976000,
+        "end_time": 1779062400,
+        "results": []
+      },
+      {
+        "start_time": 1779062400,
+        "end_time": 1779148800,
+        "results": []
+      },
+      {
+        "start_time": 1779148800,
+        "end_time": 1779235200,
+        "results": []
+      },
+      {
+        "start_time": 1779235200,
+        "end_time": 1779321600,
+        "results": []
+      },
+      {
+        "start_time": 1779321600,
+        "end_time": 1779408000,
+        "results": []
+      },
+      {
+        "start_time": 1779408000,
+        "end_time": 1779494400,
+        "results": []
+      },
+      {
+        "start_time": 1779494400,
+        "end_time": 1779580800,
+        "results": []
+      },
+      {
+        "start_time": 1779580800,
+        "end_time": 1779667200,
+        "results": []
+      },
+      {
+        "start_time": 1779667200,
+        "end_time": 1779753600,
+        "results": []
+      },
+      {
+        "start_time": 1779753600,
+        "end_time": 1779840000,
+        "results": []
+      },
+      {
+        "start_time": 1779840000,
+        "end_time": 1779926400,
+        "results": []
+      },
+      {
+        "start_time": 1779926400,
+        "end_time": 1780012800,
+        "results": []
+      },
+      {
+        "start_time": 1780012800,
+        "end_time": 1780099200,
+        "results": []
+      },
+      {
+        "start_time": 1780099200,
+        "end_time": 1780185600,
+        "results": []
+      },
+      {
+        "start_time": 1780185600,
+        "end_time": 1780272000,
+        "results": []
+      },
+      {
+        "start_time": 1780272000,
+        "end_time": 1780358400,
+        "results": []
+      },
+      {
+        "start_time": 1780358400,
+        "end_time": 1780444800,
+        "results": []
+      },
+      {
+        "start_time": 1780444800,
+        "end_time": 1780531200,
+        "results": [
+          {
+            "input_tokens": 1052,
+            "output_tokens": 291,
+            "num_model_requests": 18,
+            "input_cached_tokens": 0,
+            "input_uncached_tokens": 1052,
+            "input_text_tokens": 0,
+            "output_text_tokens": 291,
+            "input_audio_tokens": 1052,
+            "output_audio_tokens": 0,
+            "input_cached_text_tokens": 0,
+            "input_cached_audio_tokens": 0,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-4o-mini-transcribe",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          },
+          {
+            "input_tokens": 26628,
+            "output_tokens": 10145,
+            "num_model_requests": 43,
+            "input_cached_tokens": 10496,
+            "input_uncached_tokens": 16132,
+            "input_text_tokens": 11832,
+            "output_text_tokens": 2395,
+            "input_audio_tokens": 4300,
+            "output_audio_tokens": 7750,
+            "input_cached_text_tokens": 9088,
+            "input_cached_audio_tokens": 1408,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-realtime-1.5",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          },
+          {
+            "input_tokens": 37591391,
+            "output_tokens": 188740,
+            "num_model_requests": 609,
+            "input_cached_tokens": 35436928,
+            "input_uncached_tokens": 2154463,
+            "input_text_tokens": 2154463,
+            "output_text_tokens": 188740,
+            "input_audio_tokens": 0,
+            "output_audio_tokens": 0,
+            "input_cached_text_tokens": 35436928,
+            "input_cached_audio_tokens": 0,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-5.5-2026-04-23",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          }
+        ]
+      },
+      {
+        "start_time": 1780531200,
+        "end_time": 1780617600,
+        "results": [
+          {
+            "input_tokens": 146140865,
+            "output_tokens": 660238,
+            "num_model_requests": 2111,
+            "input_cached_tokens": 131365888,
+            "input_uncached_tokens": 14774977,
+            "input_text_tokens": 14774977,
+            "output_text_tokens": 660238,
+            "input_audio_tokens": 0,
+            "output_audio_tokens": 0,
+            "input_cached_text_tokens": 131365888,
+            "input_cached_audio_tokens": 0,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-5.5-2026-04-23",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          }
+        ]
+      },
+      {
+        "start_time": 1780617600,
+        "end_time": 1780704000,
+        "results": [
+          {
+            "input_tokens": 89129403,
+            "output_tokens": 471026,
+            "num_model_requests": 1405,
+            "input_cached_tokens": 80430464,
+            "input_uncached_tokens": 8698939,
+            "input_text_tokens": 8698939,
+            "output_text_tokens": 471026,
+            "input_audio_tokens": 0,
+            "output_audio_tokens": 0,
+            "input_cached_text_tokens": 80430464,
+            "input_cached_audio_tokens": 0,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-5.5-2026-04-23",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          }
+        ]
+      },
+      {
+        "start_time": 1780704000,
+        "end_time": 1780790400,
+        "results": []
+      },
+      {
+        "start_time": 1780790400,
+        "end_time": 1780876800,
+        "results": []
+      },
+      {
+        "start_time": 1780876800,
+        "end_time": 1780963200,
+        "results": [
+          {
+            "input_tokens": 2601129,
+            "output_tokens": 47782,
+            "num_model_requests": 95,
+            "input_cached_tokens": 1941120,
+            "input_uncached_tokens": 660009,
+            "input_text_tokens": 660009,
+            "output_text_tokens": 47782,
+            "input_audio_tokens": 0,
+            "output_audio_tokens": 0,
+            "input_cached_text_tokens": 1941120,
+            "input_cached_audio_tokens": 0,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-5.5-2026-04-23",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          }
+        ]
+      },
+      {
+        "start_time": 1780963200,
+        "end_time": 1781049600,
+        "results": []
+      }
+    ],
+    "has_more": false,
+    "next_page": null
+  },
+  "costs": {
+    "data": [
+      {
+        "start_time": 1774137600,
+        "end_time": 1774224000,
+        "results": []
+      },
+      {
+        "start_time": 1774224000,
+        "end_time": 1774310400,
+        "results": []
+      },
+      {
+        "start_time": 1774310400,
+        "end_time": 1774396800,
+        "results": []
+      },
+      {
+        "start_time": 1774396800,
+        "end_time": 1774483200,
+        "results": []
+      },
+      {
+        "start_time": 1774483200,
+        "end_time": 1774569600,
+        "results": []
+      },
+      {
+        "start_time": 1774569600,
+        "end_time": 1774656000,
+        "results": []
+      },
+      {
+        "start_time": 1774656000,
+        "end_time": 1774742400,
+        "results": []
+      },
+      {
+        "start_time": 1774742400,
+        "end_time": 1774828800,
+        "results": []
+      },
+      {
+        "start_time": 1774828800,
+        "end_time": 1774915200,
+        "results": []
+      },
+      {
+        "start_time": 1774915200,
+        "end_time": 1775001600,
+        "results": [
+          {
+            "amount": {
+              "value": 0.000663,
+              "currency": "usd"
+            },
+            "line_item": "gpt-4o-mini-transcribe-2025-12-15 audio, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.00038,
+              "currency": "usd"
+            },
+            "line_item": "gpt-4o-mini-transcribe-2025-12-15 text, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.0002816,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 audio, cached input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.035328,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 audio, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.068096,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 audio, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.0006912,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 text, cached input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.008376,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 text, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.005744,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 text, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          }
+        ]
+      },
+      {
+        "start_time": 1775001600,
+        "end_time": 1775088000,
+        "results": [
+          {
+            "amount": {
+              "value": 0.000891,
+              "currency": "usd"
+            },
+            "line_item": "gpt-4o-mini-transcribe-2025-12-15 audio, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.000435,
+              "currency": "usd"
+            },
+            "line_item": "gpt-4o-mini-transcribe-2025-12-15 text, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.0004864,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 audio, cached input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.089184,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 audio, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.125376,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 audio, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.0018432,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 text, cached input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.021224,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 text, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.010208,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 text, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          }
+        ]
+      },
+      {
+        "start_time": 1775088000,
+        "end_time": 1775174400,
+        "results": []
+      },
+      {
+        "start_time": 1775174400,
+        "end_time": 1775260800,
+        "results": []
+      },
+      {
+        "start_time": 1775260800,
+        "end_time": 1775347200,
+        "results": []
+      },
+      {
+        "start_time": 1775347200,
+        "end_time": 1775433600,
+        "results": [
+          {
+            "amount": {
+              "value": 0.002103,
+              "currency": "usd"
+            },
+            "line_item": "gpt-4o-mini-transcribe-2025-12-15 audio, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.001015,
+              "currency": "usd"
+            },
+            "line_item": "gpt-4o-mini-transcribe-2025-12-15 text, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.0008448,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 audio, cached input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.184,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 audio, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.292544,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 audio, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.0038144,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 text, cached input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.046204,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 text, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.024384,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 text, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          }
+        ]
+      },
+      {
+        "start_time": 1775433600,
+        "end_time": 1775520000,
+        "results": [
+          {
+            "amount": {
+              "value": 0.000285,
+              "currency": "usd"
+            },
+            "line_item": "gpt-4o-mini-transcribe-2025-12-15 audio, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.000135,
+              "currency": "usd"
+            },
+            "line_item": "gpt-4o-mini-transcribe-2025-12-15 text, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.0000256,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 audio, cached input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.004032,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 audio, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.01472,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 audio, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.0002816,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 text, cached input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.003216,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 text, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.001808,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 text, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          }
+        ]
+      },
+      {
+        "start_time": 1775520000,
+        "end_time": 1775606400,
+        "results": [
+          {
+            "amount": {
+              "value": 0.001476,
+              "currency": "usd"
+            },
+            "line_item": "gpt-4o-mini-transcribe-2025-12-15 audio, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.00069,
+              "currency": "usd"
+            },
+            "line_item": "gpt-4o-mini-transcribe-2025-12-15 text, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.000256,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 audio, cached input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.128992,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 audio, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.197312,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 audio, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.0018432,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 text, cached input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.031788,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 text, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.01592,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 text, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          }
+        ]
+      },
+      {
+        "start_time": 1775606400,
+        "end_time": 1775692800,
+        "results": [
+          {
+            "amount": {
+              "value": 0.004302,
+              "currency": "usd"
+            },
+            "line_item": "gpt-4o-mini-transcribe-2025-12-15 audio, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.00185,
+              "currency": "usd"
+            },
+            "line_item": "gpt-4o-mini-transcribe-2025-12-15 text, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.0032768,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 audio, cached input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.537728,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 audio, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.46656,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 audio, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.0082688,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 text, cached input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.09216,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 text, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.036384,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 text, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          }
+        ]
+      },
+      {
+        "start_time": 1775692800,
+        "end_time": 1775779200,
+        "results": []
+      },
+      {
+        "start_time": 1775779200,
+        "end_time": 1775865600,
+        "results": [
+          {
+            "amount": {
+              "value": 0.002121,
+              "currency": "usd"
+            },
+            "line_item": "gpt-4o-mini-transcribe-2025-12-15 audio, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.001115,
+              "currency": "usd"
+            },
+            "line_item": "gpt-4o-mini-transcribe-2025-12-15 text, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.0179872,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.3-codex, cached input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.12649525,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.3-codex, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.035308,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.3-codex, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.105632,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 audio, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.0784,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 audio, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.0004352,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 text, cached input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.015628,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 text, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.00576,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 text, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 6.703424,
+              "currency": "usd"
+            },
+            "line_item": "priority | gpt-5.4-2026-03-05, cached input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 11.7059,
+              "currency": "usd"
+            },
+            "line_item": "priority | gpt-5.4-2026-03-05, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 3.2682,
+              "currency": "usd"
+            },
+            "line_item": "priority | gpt-5.4-2026-03-05, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.05,
+              "currency": "usd"
+            },
+            "line_item": "web search tool calls",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          }
+        ]
+      },
+      {
+        "start_time": 1775865600,
+        "end_time": 1775952000,
+        "results": [
+          {
+            "amount": {
+              "value": 0.000669,
+              "currency": "usd"
+            },
+            "line_item": "gpt-4o-mini-transcribe-2025-12-15 audio, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.00031,
+              "currency": "usd"
+            },
+            "line_item": "gpt-4o-mini-transcribe-2025-12-15 text, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.2613184,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.3-codex, cached input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 1.11229475,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.3-codex, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.531706,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.3-codex, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.0004352,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 audio, cached input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.030304,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 audio, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.086592,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 audio, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.0009728,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 text, cached input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.003988,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 text, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.005968,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 text, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          }
+        ]
+      },
+      {
+        "start_time": 1775952000,
+        "end_time": 1776038400,
+        "results": []
+      },
+      {
+        "start_time": 1776038400,
+        "end_time": 1776124800,
+        "results": [
+          {
+            "amount": {
+              "value": 0.004158,
+              "currency": "usd"
+            },
+            "line_item": "gpt-4o-mini-transcribe-2025-12-15 audio, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.001925,
+              "currency": "usd"
+            },
+            "line_item": "gpt-4o-mini-transcribe-2025-12-15 text, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 1.3383552,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.3-codex, cached input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 3.27141675,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.3-codex, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 1.36549,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.3-codex, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.0015872,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 audio, cached input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.368704,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 audio, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.309824,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 audio, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.0035072,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 text, cached input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.062212,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 text, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.024016,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 text, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.01,
+              "currency": "usd"
+            },
+            "line_item": "web search tool calls",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          }
+        ]
+      },
+      {
+        "start_time": 1776124800,
+        "end_time": 1776211200,
+        "results": [
+          {
+            "amount": {
+              "value": 0.00156,
+              "currency": "usd"
+            },
+            "line_item": "gpt-4o-mini-transcribe-2025-12-15 audio, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.00094,
+              "currency": "usd"
+            },
+            "line_item": "gpt-4o-mini-transcribe-2025-12-15 text, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.0018368,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.3-codex, cached input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.0570115,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.3-codex, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.005446,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.3-codex, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.0013568,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 audio, cached input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.181728,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 audio, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.226944,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 audio, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.0073728,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 text, cached input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.056088,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 text, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.018128,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 text, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          }
+        ]
+      },
+      {
+        "start_time": 1776211200,
+        "end_time": 1776297600,
+        "results": [
+          {
+            "amount": {
+              "value": 0.000438,
+              "currency": "usd"
+            },
+            "line_item": "gpt-4o-mini-transcribe-2025-12-15 audio, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.000185,
+              "currency": "usd"
+            },
+            "line_item": "gpt-4o-mini-transcribe-2025-12-15 text, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 1.6278528,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.3-codex, cached input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 3.88001075,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.3-codex, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 1.6961,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.3-codex, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.03712,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 audio, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.04448,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 audio, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.0009216,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 text, cached input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.009608,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 text, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.003632,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 text, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          }
+        ]
+      },
+      {
+        "start_time": 1776297600,
+        "end_time": 1776384000,
+        "results": [
+          {
+            "amount": {
+              "value": 0.7207648,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.3-codex, cached input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 2.2548365,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.3-codex, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.669158,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.3-codex, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          }
+        ]
+      },
+      {
+        "start_time": 1776384000,
+        "end_time": 1776470400,
+        "results": [
+          {
+            "amount": {
+              "value": 0.004632,
+              "currency": "usd"
+            },
+            "line_item": "gpt-4o-mini-transcribe-2025-12-15 audio, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.002235,
+              "currency": "usd"
+            },
+            "line_item": "gpt-4o-mini-transcribe-2025-12-15 text, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.05236,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.3-codex, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.002828,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.3-codex, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.0049664,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 audio, cached input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.534336,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 audio, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.658304,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 audio, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.0216064,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 text, cached input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.134932,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 text, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.051472,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 text, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          }
+        ]
+      },
+      {
+        "start_time": 1776470400,
+        "end_time": 1776556800,
+        "results": []
+      },
+      {
+        "start_time": 1776556800,
+        "end_time": 1776643200,
+        "results": [
+          {
+            "amount": {
+              "value": 0.000108,
+              "currency": "usd"
+            },
+            "line_item": "gpt-4o-mini-transcribe-2025-12-15 audio, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.00008,
+              "currency": "usd"
+            },
+            "line_item": "gpt-4o-mini-transcribe-2025-12-15 text, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.003936,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 audio, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.031168,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 audio, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.0004352,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 text, cached input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.000304,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 text, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.002192,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 text, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          }
+        ]
+      },
+      {
+        "start_time": 1776643200,
+        "end_time": 1776729600,
+        "results": []
+      },
+      {
+        "start_time": 1776729600,
+        "end_time": 1776816000,
+        "results": []
+      },
+      {
+        "start_time": 1776816000,
+        "end_time": 1776902400,
+        "results": []
+      },
+      {
+        "start_time": 1776902400,
+        "end_time": 1776988800,
+        "results": [
+          {
+            "amount": {
+              "value": 0.010026,
+              "currency": "usd"
+            },
+            "line_item": "gpt-4o-mini-transcribe-2025-12-15 audio, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.005385,
+              "currency": "usd"
+            },
+            "line_item": "gpt-4o-mini-transcribe-2025-12-15 text, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.0846336,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 audio, cached input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 2.564992,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 audio, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 5.656512,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 audio, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.8166912,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 text, cached input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.699428,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 text, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.527952,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 text, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.0192,
+              "currency": "usd"
+            },
+            "line_item": "whisper",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          }
+        ]
+      },
+      {
+        "start_time": 1776988800,
+        "end_time": 1777075200,
+        "results": [
+          {
+            "amount": {
+              "value": 0.0098048,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 audio, cached input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.322432,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 audio, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.604672,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 audio, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.2842624,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 text, cached input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.172896,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 text, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.069808,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 text, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.0097,
+              "currency": "usd"
+            },
+            "line_item": "whisper",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          }
+        ]
+      },
+      {
+        "start_time": 1777075200,
+        "end_time": 1777161600,
+        "results": []
+      },
+      {
+        "start_time": 1777161600,
+        "end_time": 1777248000,
+        "results": []
+      },
+      {
+        "start_time": 1777248000,
+        "end_time": 1777334400,
+        "results": [
+          {
+            "amount": {
+              "value": 0.000483,
+              "currency": "usd"
+            },
+            "line_item": "gpt-4o-mini-transcribe-2025-12-15 audio, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.00025,
+              "currency": "usd"
+            },
+            "line_item": "gpt-4o-mini-transcribe-2025-12-15 text, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.815625,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.5-2026-04-23, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.0195,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.5-2026-04-23, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.005152,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 audio, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.033984,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 audio, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.002812,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 text, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.002096,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 text, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 1.692928,
+              "currency": "usd"
+            },
+            "line_item": "priority | gpt-5.4-2026-03-05, cached input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 2.639155,
+              "currency": "usd"
+            },
+            "line_item": "priority | gpt-5.4-2026-03-05, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 1.23609,
+              "currency": "usd"
+            },
+            "line_item": "priority | gpt-5.4-2026-03-05, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.01,
+              "currency": "usd"
+            },
+            "line_item": "web search tool calls",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          }
+        ]
+      },
+      {
+        "start_time": 1777334400,
+        "end_time": 1777420800,
+        "results": []
+      },
+      {
+        "start_time": 1777420800,
+        "end_time": 1777507200,
+        "results": [
+          {
+            "amount": {
+              "value": 0.45599,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.5-2026-04-23, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.01332,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.5-2026-04-23, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          }
+        ]
+      },
+      {
+        "start_time": 1777507200,
+        "end_time": 1777593600,
+        "results": [
+          {
+            "amount": {
+              "value": 0.54625,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.5-2026-04-23, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.0156,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.5-2026-04-23, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.46625,
+              "currency": "usd"
+            },
+            "line_item": "priority | gpt-5.4-2026-03-05, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.02283,
+              "currency": "usd"
+            },
+            "line_item": "priority | gpt-5.4-2026-03-05, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.0322545,
+              "currency": "usd"
+            },
+            "line_item": "priority | gpt-5.4-mini-2026-03-17, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.00054,
+              "currency": "usd"
+            },
+            "line_item": "priority | gpt-5.4-mini-2026-03-17, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 6.38688,
+              "currency": "usd"
+            },
+            "line_item": "priority | gpt-5.5-2026-04-23, cached input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 7.8238875,
+              "currency": "usd"
+            },
+            "line_item": "priority | gpt-5.5-2026-04-23, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 1.5792,
+              "currency": "usd"
+            },
+            "line_item": "priority | gpt-5.5-2026-04-23, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.01,
+              "currency": "usd"
+            },
+            "line_item": "web search tool calls",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          }
+        ]
+      },
+      {
+        "start_time": 1777593600,
+        "end_time": 1777680000,
+        "results": [
+          {
+            "amount": {
+              "value": 1.293312,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.5-2026-04-23, cached input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 3.33805,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.5-2026-04-23, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.38787,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.5-2026-04-23, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          }
+        ]
+      },
+      {
+        "start_time": 1777680000,
+        "end_time": 1777766400,
+        "results": []
+      },
+      {
+        "start_time": 1777766400,
+        "end_time": 1777852800,
+        "results": []
+      },
+      {
+        "start_time": 1777852800,
+        "end_time": 1777939200,
+        "results": [
+          {
+            "amount": {
+              "value": 0,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.5-2026-04-23, cached input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.09031,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.5-2026-04-23, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.00282,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.5-2026-04-23, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          }
+        ]
+      },
+      {
+        "start_time": 1777939200,
+        "end_time": 1778025600,
+        "results": [
+          {
+            "amount": {
+              "value": 3.297408,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.5-2026-04-23, cached input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 3.85177,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.5-2026-04-23, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 1.90995,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.5-2026-04-23, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          }
+        ]
+      },
+      {
+        "start_time": 1778025600,
+        "end_time": 1778112000,
+        "results": [
+          {
+            "amount": {
+              "value": 1.529408,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.5-2026-04-23, cached input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 1.483255,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.5-2026-04-23, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.75444,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.5-2026-04-23, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          }
+        ]
+      },
+      {
+        "start_time": 1778112000,
+        "end_time": 1778198400,
+        "results": []
+      },
+      {
+        "start_time": 1778198400,
+        "end_time": 1778284800,
+        "results": []
+      },
+      {
+        "start_time": 1778284800,
+        "end_time": 1778371200,
+        "results": []
+      },
+      {
+        "start_time": 1778371200,
+        "end_time": 1778457600,
+        "results": []
+      },
+      {
+        "start_time": 1778457600,
+        "end_time": 1778544000,
+        "results": []
+      },
+      {
+        "start_time": 1778544000,
+        "end_time": 1778630400,
+        "results": []
+      },
+      {
+        "start_time": 1778630400,
+        "end_time": 1778716800,
+        "results": []
+      },
+      {
+        "start_time": 1778716800,
+        "end_time": 1778803200,
+        "results": []
+      },
+      {
+        "start_time": 1778803200,
+        "end_time": 1778889600,
+        "results": []
+      },
+      {
+        "start_time": 1778889600,
+        "end_time": 1778976000,
+        "results": []
+      },
+      {
+        "start_time": 1778976000,
+        "end_time": 1779062400,
+        "results": []
+      },
+      {
+        "start_time": 1779062400,
+        "end_time": 1779148800,
+        "results": []
+      },
+      {
+        "start_time": 1779148800,
+        "end_time": 1779235200,
+        "results": []
+      },
+      {
+        "start_time": 1779235200,
+        "end_time": 1779321600,
+        "results": []
+      },
+      {
+        "start_time": 1779321600,
+        "end_time": 1779408000,
+        "results": []
+      },
+      {
+        "start_time": 1779408000,
+        "end_time": 1779494400,
+        "results": []
+      },
+      {
+        "start_time": 1779494400,
+        "end_time": 1779580800,
+        "results": []
+      },
+      {
+        "start_time": 1779580800,
+        "end_time": 1779667200,
+        "results": []
+      },
+      {
+        "start_time": 1779667200,
+        "end_time": 1779753600,
+        "results": []
+      },
+      {
+        "start_time": 1779753600,
+        "end_time": 1779840000,
+        "results": []
+      },
+      {
+        "start_time": 1779840000,
+        "end_time": 1779926400,
+        "results": []
+      },
+      {
+        "start_time": 1779926400,
+        "end_time": 1780012800,
+        "results": []
+      },
+      {
+        "start_time": 1780012800,
+        "end_time": 1780099200,
+        "results": []
+      },
+      {
+        "start_time": 1780099200,
+        "end_time": 1780185600,
+        "results": []
+      },
+      {
+        "start_time": 1780185600,
+        "end_time": 1780272000,
+        "results": []
+      },
+      {
+        "start_time": 1780272000,
+        "end_time": 1780358400,
+        "results": []
+      },
+      {
+        "start_time": 1780358400,
+        "end_time": 1780444800,
+        "results": []
+      },
+      {
+        "start_time": 1780444800,
+        "end_time": 1780531200,
+        "results": [
+          {
+            "amount": {
+              "value": 0.003156,
+              "currency": "usd"
+            },
+            "line_item": "gpt-4o-mini-transcribe-2025-12-15 audio, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0,
+              "currency": "usd"
+            },
+            "line_item": "gpt-4o-mini-transcribe-2025-12-15 text, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.001455,
+              "currency": "usd"
+            },
+            "line_item": "gpt-4o-mini-transcribe-2025-12-15 text, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 17.716224,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.5-2026-04-23, cached input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 10.67056,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.5-2026-04-23, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 5.66148,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.5-2026-04-23, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.0005632,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 audio, cached input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.1376,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 audio, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.496,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 audio, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 image, cached input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 image, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.0036352,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 text, cached input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.047328,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 text, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.03832,
+              "currency": "usd"
+            },
+            "line_item": "gpt-realtime-1.5 text, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.0056,
+              "currency": "usd"
+            },
+            "line_item": "priority | gpt-5.5-2026-04-23, cached input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.2543875,
+              "currency": "usd"
+            },
+            "line_item": "priority | gpt-5.5-2026-04-23, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.0018,
+              "currency": "usd"
+            },
+            "line_item": "priority | gpt-5.5-2026-04-23, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          }
+        ]
+      },
+      {
+        "start_time": 1780531200,
+        "end_time": 1780617600,
+        "results": [
+          {
+            "amount": {
+              "value": 65.682944,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.5-2026-04-23, cached input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 73.874885,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.5-2026-04-23, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 19.80714,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.5-2026-04-23, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.13,
+              "currency": "usd"
+            },
+            "line_item": "web search tool calls",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          }
+        ]
+      },
+      {
+        "start_time": 1780617600,
+        "end_time": 1780704000,
+        "results": [
+          {
+            "amount": {
+              "value": 40.215232,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.5-2026-04-23, cached input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 43.494695,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.5-2026-04-23, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 14.13078,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.5-2026-04-23, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.01,
+              "currency": "usd"
+            },
+            "line_item": "web search tool calls",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          }
+        ]
+      },
+      {
+        "start_time": 1780704000,
+        "end_time": 1780790400,
+        "results": []
+      },
+      {
+        "start_time": 1780790400,
+        "end_time": 1780876800,
+        "results": []
+      },
+      {
+        "start_time": 1780876800,
+        "end_time": 1780963200,
+        "results": [
+          {
+            "amount": {
+              "value": 0.97056,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.5-2026-04-23, cached input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 3.300045,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.5-2026-04-23, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 1.43346,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.5-2026-04-23, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          }
+        ]
+      },
+      {
+        "start_time": 1780963200,
+        "end_time": 1781049600,
+        "results": []
+      }
+    ],
+    "has_more": false,
+    "next_page": null
+  }
+}
