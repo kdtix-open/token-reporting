@@ -1,0 +1,174 @@
+{
+  "summary": {
+    "total_issues": 16,
+    "p0_fixed": 0,
+    "p0_placeholders": 0,
+    "p1_gaps": 17,
+    "p2_gaps": 0
+  },
+  "issues": [
+    {
+      "number": 2,
+      "title": "Project 16 Backlog and Governance",
+      "gaps": [
+        {
+          "severity": "P1",
+          "rule": "P1-2",
+          "description": "Missing MoSCoW section",
+          "fixed": false
+        }
+      ]
+    },
+    {
+      "number": 3,
+      "title": "Hybrid Local Docker to Cloudflare MVP",
+      "gaps": [
+        {
+          "severity": "P1",
+          "rule": "P1-2",
+          "description": "Missing MoSCoW section",
+          "fixed": false
+        }
+      ]
+    },
+    {
+      "number": 4,
+      "title": "Cloudflare-Native Lane and UAT",
+      "gaps": [
+        {
+          "severity": "P1",
+          "rule": "P1-2",
+          "description": "Missing MoSCoW section",
+          "fixed": false
+        }
+      ]
+    },
+    {
+      "number": 5,
+      "title": "Project 16 Backlog Seed",
+      "gaps": [
+        {
+          "severity": "P1",
+          "rule": "P1-2",
+          "description": "Missing MoSCoW section",
+          "fixed": false
+        },
+        {
+          "severity": "P1",
+          "rule": "P1-3",
+          "description": "Missing Subtasks Needed section",
+          "fixed": false
+        }
+      ]
+    },
+    {
+      "number": 6,
+      "title": "Production Subpath Runtime",
+      "gaps": [
+        {
+          "severity": "P1",
+          "rule": "P1-2",
+          "description": "Missing MoSCoW section",
+          "fixed": false
+        },
+        {
+          "severity": "P1",
+          "rule": "P1-3",
+          "description": "Missing Subtasks Needed section",
+          "fixed": false
+        }
+      ]
+    },
+    {
+      "number": 7,
+      "title": "Docker, Caddy, and Tunnel Publication",
+      "gaps": [
+        {
+          "severity": "P1",
+          "rule": "P1-2",
+          "description": "Missing MoSCoW section",
+          "fixed": false
+        },
+        {
+          "severity": "P1",
+          "rule": "P1-3",
+          "description": "Missing Subtasks Needed section",
+          "fixed": false
+        }
+      ]
+    },
+    {
+      "number": 8,
+      "title": "Cloudflare-Native Read-Only Scaffold",
+      "gaps": [
+        {
+          "severity": "P1",
+          "rule": "P1-2",
+          "description": "Missing MoSCoW section",
+          "fixed": false
+        },
+        {
+          "severity": "P1",
+          "rule": "P1-3",
+          "description": "Missing Subtasks Needed section",
+          "fixed": false
+        }
+      ]
+    },
+    {
+      "number": 9,
+      "title": "Publication UAT and Runbook",
+      "gaps": [
+        {
+          "severity": "P1",
+          "rule": "P1-2",
+          "description": "Missing MoSCoW section",
+          "fixed": false
+        },
+        {
+          "severity": "P1",
+          "rule": "P1-3",
+          "description": "Missing Subtasks Needed section",
+          "fixed": false
+        }
+      ]
+    },
+    {
+      "number": 15,
+      "title": "Run plan-to-project workflow",
+      "gaps": [
+        {
+          "severity": "P1",
+          "rule": "P1-1",
+          "description": "Missing Assumptions section",
+          "fixed": false
+        },
+        {
+          "severity": "P1",
+          "rule": "P1-2",
+          "description": "Missing MoSCoW section",
+          "fixed": false
+        }
+      ]
+    },
+    {
+      "number": 16,
+      "title": "Add subpath production server tests",
+      "gaps": [
+        {
+          "severity": "P1",
+          "rule": "P1-1",
+          "description": "Missing Assumptions section",
+          "fixed": false
+        },
+        {
+          "severity": "P1",
+          "rule": "P1-2",
+          "description": "Missing MoSCoW section",
+          "fixed": false
+        }
+      ]
+    }
+  ],
+  "placeholder_gate": "passed"
+}

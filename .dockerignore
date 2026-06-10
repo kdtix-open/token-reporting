@@ -1,0 +1,13 @@
+node_modules
+dist
+coverage
+logs
+output
+tmp
+.git
+.env
+.env.local
+.env.admin.credentials
+.DS_Store
+.playwright-mcp
+*.tsbuildinfo

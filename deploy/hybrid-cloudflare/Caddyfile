@@ -1,0 +1,16 @@
+{
+	admin off
+	auto_https off
+}
+
+:8081 {
+	encode gzip zstd
+
+	handle /tools/token-reporting* {
+		reverse_proxy token-reporting:8080
+	}
+
+	handle {
+		respond "Token Reporting is mounted at /tools/token-reporting" 404
+	}
+}

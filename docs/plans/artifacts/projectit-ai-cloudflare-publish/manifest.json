@@ -1,0 +1,178 @@
+{
+  "scope-1": {
+    "number": 1,
+    "nodeId": "I_kwDOSH1o5M8AAAABE8-rnA",
+    "databaseId": 4627344284,
+    "level": "scope",
+    "title": "Publish Token Reporting to projectit.ai on Cloudflare",
+    "parent_ref": null,
+    "priority": "P0",
+    "size": "XL",
+    "blocking": []
+  },
+  "initiative-1": {
+    "number": 2,
+    "nodeId": "I_kwDOSH1o5M8AAAABE8-saQ",
+    "databaseId": 4627344489,
+    "level": "initiative",
+    "title": "Project 16 Backlog and Governance",
+    "parent_ref": "Publish Token Reporting to projectit.ai on Cloudflare",
+    "priority": "P0",
+    "size": "M",
+    "blocking": []
+  },
+  "initiative-2": {
+    "number": 3,
+    "nodeId": "I_kwDOSH1o5M8AAAABE8-szA",
+    "databaseId": 4627344588,
+    "level": "initiative",
+    "title": "Hybrid Local Docker to Cloudflare MVP",
+    "parent_ref": "Publish Token Reporting to projectit.ai on Cloudflare",
+    "priority": "P0",
+    "size": "L",
+    "blocking": []
+  },
+  "initiative-3": {
+    "number": 4,
+    "nodeId": "I_kwDOSH1o5M8AAAABE8-tIQ",
+    "databaseId": 4627344673,
+    "level": "initiative",
+    "title": "Cloudflare-Native Lane and UAT",
+    "parent_ref": "Publish Token Reporting to projectit.ai on Cloudflare",
+    "priority": "P1",
+    "size": "L",
+    "blocking": []
+  },
+  "epic-1": {
+    "number": 5,
+    "nodeId": "I_kwDOSH1o5M8AAAABE8-tkw",
+    "databaseId": 4627344787,
+    "level": "epic",
+    "title": "Project 16 Backlog Seed",
+    "parent_ref": "Project 16 Backlog and Governance",
+    "priority": "P0",
+    "size": "M",
+    "blocking": []
+  },
+  "epic-2": {
+    "number": 6,
+    "nodeId": "I_kwDOSH1o5M8AAAABE8-uFw",
+    "databaseId": 4627344919,
+    "level": "epic",
+    "title": "Production Subpath Runtime",
+    "parent_ref": "Hybrid Local Docker to Cloudflare MVP",
+    "priority": "P0",
+    "size": "M",
+    "blocking": []
+  },
+  "epic-3": {
+    "number": 7,
+    "nodeId": "I_kwDOSH1o5M8AAAABE8-ulQ",
+    "databaseId": 4627345045,
+    "level": "epic",
+    "title": "Docker, Caddy, and Tunnel Publication",
+    "parent_ref": "Hybrid Local Docker to Cloudflare MVP",
+    "priority": "P0",
+    "size": "M",
+    "blocking": []
+  },
+  "epic-4": {
+    "number": 8,
+    "nodeId": "I_kwDOSH1o5M8AAAABE8-wJg",
+    "databaseId": 4627345446,
+    "level": "epic",
+    "title": "Cloudflare-Native Read-Only Scaffold",
+    "parent_ref": "Cloudflare-Native Lane and UAT",
+    "priority": "P1",
+    "size": "M",
+    "blocking": []
+  },
+  "epic-5": {
+    "number": 9,
+    "nodeId": "I_kwDOSH1o5M8AAAABE8-wkA",
+    "databaseId": 4627345552,
+    "level": "epic",
+    "title": "Publication UAT and Runbook",
+    "parent_ref": "Cloudflare-Native Lane and UAT",
+    "priority": "P0",
+    "size": "M",
+    "blocking": []
+  },
+  "story-1": {
+    "number": 10,
+    "nodeId": "I_kwDOSH1o5M8AAAABE8-w9g",
+    "databaseId": 4627345654,
+    "level": "story",
+    "title": "Seed Project 16 with the publish plan",
+    "parent_ref": "Project 16 Backlog Seed",
+    "priority": "P0",
+    "size": "S",
+    "blocking": []
+  },
+  "story-2": {
+    "number": 11,
+    "nodeId": "I_kwDOSH1o5M8AAAABE8-xxQ",
+    "databaseId": 4627345861,
+    "level": "story",
+    "title": "Serve app and API under `/tools/token-reporting`",
+    "parent_ref": "Production Subpath Runtime",
+    "priority": "P0",
+    "size": "M",
+    "blocking": []
+  },
+  "story-3": {
+    "number": 12,
+    "nodeId": "I_kwDOSH1o5M8AAAABE8-ymQ",
+    "databaseId": 4627346073,
+    "level": "story",
+    "title": "Add Docker, Caddy, and Cloudflare Tunnel templates",
+    "parent_ref": "Docker, Caddy, and Tunnel Publication",
+    "priority": "P0",
+    "size": "S",
+    "blocking": []
+  },
+  "story-4": {
+    "number": 13,
+    "nodeId": "I_kwDOSH1o5M8AAAABE8-zGw",
+    "databaseId": 4627346203,
+    "level": "story",
+    "title": "Add Cloudflare-native read-only scaffold",
+    "parent_ref": "Cloudflare-Native Read-Only Scaffold",
+    "priority": "P1",
+    "size": "S",
+    "blocking": []
+  },
+  "story-5": {
+    "number": 14,
+    "nodeId": "I_kwDOSH1o5M8AAAABE8-ziQ",
+    "databaseId": 4627346313,
+    "level": "story",
+    "title": "Add publish UAT and runbook docs",
+    "parent_ref": "Publication UAT and Runbook",
+    "priority": "P0",
+    "size": "S",
+    "blocking": []
+  },
+  "task-1": {
+    "number": 15,
+    "nodeId": "I_kwDOSH1o5M8AAAABE8-z4w",
+    "databaseId": 4627346403,
+    "level": "task",
+    "title": "Run plan-to-project workflow",
+    "parent_ref": "Seed Project 16 with the publish plan",
+    "priority": "P0",
+    "size": "XS",
+    "blocking": []
+  },
+  "task-2": {
+    "number": 16,
+    "nodeId": "I_kwDOSH1o5M8AAAABE8-03w",
+    "databaseId": 4627346655,
+    "level": "task",
+    "title": "Add subpath production server tests",
+    "parent_ref": "Serve app and API under `/tools/token-reporting`",
+    "priority": "P0",
+    "size": "XS",
+    "blocking": []
+  }
+}

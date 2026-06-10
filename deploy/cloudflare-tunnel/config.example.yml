@@ -1,0 +1,8 @@
+tunnel: <TOKEN_REPORTING_TUNNEL_UUID>
+credentials-file: /etc/cloudflared/<TOKEN_REPORTING_TUNNEL_UUID>.json
+
+ingress:
+  - hostname: dev.projectit.ai
+    path: /tools/token-reporting.*
+    service: http://localhost:8081
+  - service: http_status:404

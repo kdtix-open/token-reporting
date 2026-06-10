@@ -3,6 +3,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import App from "./App";
 
+const sameOriginRefreshUrl = "http://localhost:3000/api/refresh";
+
 describe("App", () => {
   afterEach(() => {
     cleanup();
@@ -195,7 +197,7 @@ describe("App", () => {
   it("refresh button requests dynamic refresh before reloading snapshots", async () => {
     const fetchStub = vi.fn().mockImplementation((input: RequestInfo | URL) => {
       const url = String(input);
-      if (url === "http://127.0.0.1:8788/api/refresh") {
+      if (url === sameOriginRefreshUrl) {
         return Promise.resolve({
           json: async () => ({
             jobId: "dynamic-refresh-001",
@@ -222,7 +224,7 @@ describe("App", () => {
 
     await waitFor(() => {
       expect(fetchStub).toHaveBeenCalledWith(
-        "http://127.0.0.1:8788/api/refresh",
+        sameOriginRefreshUrl,
         expect.objectContaining({
           method: "POST"
         })
@@ -230,7 +232,7 @@ describe("App", () => {
     });
 
     const refreshCall = fetchStub.mock.calls.find(
-      ([input]) => String(input) === "http://127.0.0.1:8788/api/refresh"
+      ([input]) => String(input) === sameOriginRefreshUrl
     );
     expect(JSON.parse(String(refreshCall?.[1]?.body))).toEqual({
       includeForensicModelProfiles: true,
@@ -245,7 +247,7 @@ describe("App", () => {
   it("refresh button shows progress text while dynamic refresh is pending", async () => {
     const fetchStub = vi.fn().mockImplementation((input: RequestInfo | URL) => {
       const url = String(input);
-      if (url === "http://127.0.0.1:8788/api/refresh") {
+      if (url === sameOriginRefreshUrl) {
         return new Promise(() => {
           // Keep the refresh pending so the in-progress UI state is observable.
         });
@@ -280,7 +282,7 @@ describe("App", () => {
   it("refresh activity panel summarizes provider and forensic job results", async () => {
     const fetchStub = vi.fn().mockImplementation((input: RequestInfo | URL) => {
       const url = String(input);
-      if (url === "http://127.0.0.1:8788/api/refresh") {
+      if (url === sameOriginRefreshUrl) {
         return Promise.resolve({
           json: async () => ({
             forensicRun: {
@@ -325,7 +327,7 @@ describe("App", () => {
   it("refresh button keeps the report freshness visible when dynamic refresh is blocked", async () => {
     const fetchStub = vi.fn().mockImplementation((input: RequestInfo | URL) => {
       const url = String(input);
-      if (url === "http://127.0.0.1:8788/api/refresh") {
+      if (url === sameOriginRefreshUrl) {
         return Promise.resolve({
           json: async () => ({
             message:

@@ -1,0 +1,15 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "token-reporting",
+  "compatibility_date": "2026-06-10",
+  "main": "./worker/index.ts",
+  "assets": {
+    "directory": "../../dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*", "/tools/token-reporting/api/*"]
+  },
+  "vars": {
+    "TOKEN_REPORTING_PUBLIC_BASE_PATH": "/tools/token-reporting"
+  }
+}

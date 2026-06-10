@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { resolveRuntimeAssetPath } from "./runtimePaths";
+
 const distSummarySchema = z.object({
   mean: z.number(),
   p50: z.number(),
@@ -28,9 +30,11 @@ export type LocalSessionDistribution = z.infer<
 >;
 
 /** Fetch the locally-cached distribution snapshot. Returns null when missing. */
-export async function loadLocalSessionDistribution(): Promise<LocalSessionDistribution | null> {
+export async function loadLocalSessionDistribution(
+  basePath = ""
+): Promise<LocalSessionDistribution | null> {
   try {
-    const res = await fetch("/data/local-sessions/distribution.json");
+    const res = await fetch(resolveRuntimeAssetPath("data/local-sessions/distribution.json", basePath));
     if (!res.ok) return null;
     const raw = await res.json();
     const parsed = localSessionDistributionSchema.safeParse(raw);

@@ -1,0 +1,43 @@
+{
+  "project_id": "PVT_kwDOA2eoZc4BaN6H",
+  "org": "kdtix-open",
+  "repo": "kdtix-open/token-reporting",
+  "project_number": 16,
+  "issue_type_ids": {
+    "task": "IT_kwDOA2eoZc4Asdgu",
+    "scope": "IT_kwDOA2eoZc4B6SrU",
+    "initiative": "IT_kwDOA2eoZc4B6Srh",
+    "epic": "IT_kwDOA2eoZc4B6Srl",
+    "story": "IT_kwDOA2eoZc4B6Srp"
+  },
+  "field_ids": {
+    "Status": {
+      "id": "PVTSSF_lADOA2eoZc4BaN6HzhVHEV4",
+      "options": {
+        "Backlog": "f75ad846",
+        "Ready": "61e4505c",
+        "In progress": "47fc9ee4",
+        "In review": "df73e18b",
+        "Done": "98236657"
+      }
+    },
+    "Priority": {
+      "id": "PVTSSF_lADOA2eoZc4BaN6HzhVHEWo",
+      "options": {
+        "P0": "79628723",
+        "P1": "0a877460",
+        "P2": "da944a9c"
+      }
+    },
+    "Size": {
+      "id": "PVTSSF_lADOA2eoZc4BaN6HzhVHEWs",
+      "options": {
+        "XS": "6c6483d2",
+        "S": "f784b110",
+        "M": "7515a9f1",
+        "L": "817d0097",
+        "XL": "db339eb2"
+      }
+    }
+  }
+}

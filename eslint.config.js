@@ -26,10 +26,20 @@ export default tseslint.config(
     }
   },
   {
-    files: ["scripts/**/*.ts", "vite.config.ts"],
+    files: ["scripts/**/*.ts", "src/server/**/*.ts", "vite.config.ts"],
     languageOptions: {
       ecmaVersion: 2023,
       globals: globals.node
+    }
+  },
+  {
+    files: ["deploy/cloudflare/**/*.ts"],
+    languageOptions: {
+      ecmaVersion: 2023,
+      globals: {
+        ...globals.serviceworker,
+        Fetcher: "readonly"
+      }
     }
   }
 );

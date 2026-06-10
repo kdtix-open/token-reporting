@@ -38,6 +38,32 @@ npm run dev
 
 Seeded dashboard data lives under `public/data/`.
 
+## Production and projectit.ai preview
+
+The MVP publication lane is hybrid local Docker plus Cloudflare Tunnel. The app
+is built and served under `/tools/token-reporting` so it can sit beside the
+existing projectit.ai tools without changing browser-owned secrets or SDLCA
+bridge credential boundaries.
+
+```bash
+# Local production wrapper at http://127.0.0.1:8080/tools/token-reporting
+docker compose -f deploy/local-docker/docker-compose.yml up --build
+
+# Caddy route shape used by Cloudflare Tunnel
+docker compose -f deploy/hybrid-cloudflare/docker-compose.yml up --build
+
+# Build only, with projectit.ai asset paths
+npm run build:projectit
+```
+
+The post-hybrid Cloudflare-native scaffold is in `deploy/cloudflare`. It is
+read-only until stateful provider refresh, artifact storage, scheduling, and
+bridge ownership are explicitly moved to approved Cloudflare bindings.
+
+See `docs/deployment/projectit-ai-cloudflare-runbook.md` and
+`docs/uat/projectit-ai-cloudflare-publish-uat.md` for the deployment checklist
+and UAT scenarios.
+
 ## Fetching live data
 
 ### GitHub Copilot

@@ -19,6 +19,7 @@ export type ReportRefreshResult =
 
 export interface RequestReportRefreshOptions {
   apiBaseUrl?: string;
+  defaultApiBaseUrl?: string;
   fetcher?: typeof fetch;
   includeForensicModelProfiles?: boolean;
   includeHuggingFaceRefresh?: boolean;
@@ -33,7 +34,9 @@ const defaultTimeoutMs = 300_000;
 export async function requestReportRefresh(
   options: RequestReportRefreshOptions = {}
 ): Promise<ReportRefreshResult> {
-  const apiBaseUrl = trimTrailingSlash(options.apiBaseUrl ?? defaultApiBaseUrl);
+  const apiBaseUrl = trimTrailingSlash(
+    options.apiBaseUrl ?? options.defaultApiBaseUrl ?? defaultApiBaseUrl
+  );
   const fetcher = options.fetcher ?? fetch;
   const timeoutMs = options.timeoutMs ?? defaultTimeoutMs;
   const timeout = createTimeoutController(timeoutMs);

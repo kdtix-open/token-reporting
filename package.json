@@ -9,7 +9,9 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -p tsconfig.app.json --noEmit && vite build",
+    "build:projectit": "TOKEN_REPORTING_BASE_PATH=/tools/token-reporting npm run build",
     "preview": "vite preview",
+    "serve:production": "tsx scripts/serve-production.ts",
     "test": "vitest run --coverage",
     "test:watch": "vitest",
     "typecheck": "tsc -p tsconfig.app.json --noEmit",

@@ -3,6 +3,29 @@ import { describe, expect, it, vi } from "vitest";
 import { requestReportRefresh } from "../integrationApiClient";
 
 describe("integrationApiClient", () => {
+  it("requestReportRefresh_DefaultBrowserOrigin_PostsToSameOriginApi", async () => {
+    const fetcher = vi.fn().mockResolvedValue({
+      json: async () => ({
+        jobId: "dynamic-refresh-same-origin",
+        status: "completed"
+      }),
+      ok: true,
+      status: 202
+    });
+
+    await requestReportRefresh({
+      defaultApiBaseUrl: "https://dev.projectit.ai/tools/token-reporting",
+      fetcher
+    });
+
+    expect(fetcher).toHaveBeenCalledWith(
+      "https://dev.projectit.ai/tools/token-reporting/api/refresh",
+      expect.objectContaining({
+        method: "POST"
+      })
+    );
+  });
+
   it("requestReportRefresh_DefaultRequest_PostsIncrementalForensicRefresh", async () => {
     const fetcher = vi.fn().mockResolvedValue({
       json: async () => ({

@@ -1,0 +1,23 @@
+services:
+  token-reporting:
+    build:
+      context: ../..
+      dockerfile: deploy/local-docker/Dockerfile
+    image: kdtix/token-reporting:local
+    environment:
+      DEBUG: "3"
+      VERBOSE: "3"
+      TOKEN_REPORTING_ADMIN_ENV_FILE: /app/.env.admin.credentials
+      TOKEN_REPORTING_DATA_ROOT: /app/public/data
+      TOKEN_REPORTING_DIST_ROOT: /app/dist
+      TOKEN_REPORTING_HOST: 0.0.0.0
+      TOKEN_REPORTING_LOG_ROOT: /app/logs
+      TOKEN_REPORTING_PORT: "8080"
+      TOKEN_REPORTING_PUBLIC_BASE_PATH: /tools/token-reporting
+    ports:
+      - "8080:8080"
+    volumes:
+      - ../../public/data:/app/public/data
+      - ../../logs:/app/logs
+      # Uncomment locally when running live provider refreshes.
+      # - ../../.env.admin.credentials:/app/.env.admin.credentials:ro

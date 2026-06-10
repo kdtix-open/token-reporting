@@ -1,3 +1,5 @@
+import { resolveRuntimeAssetPath } from "./runtimePaths";
+
 export interface HuggingFaceModelCandidate {
   architecture: string | null;
   degradedReason?: string;
@@ -54,10 +56,13 @@ export async function refreshHuggingFaceCandidates(
 }
 
 export async function loadHuggingFaceCandidateSet(
-  fetcher: typeof fetch = fetch
+  fetcher: typeof fetch = fetch,
+  basePath = ""
 ): Promise<HuggingFaceCandidateSet | null> {
   try {
-    const response = await fetcher("/data/huggingface/local-model-candidates.json");
+    const response = await fetcher(
+      resolveRuntimeAssetPath("data/huggingface/local-model-candidates.json", basePath)
+    );
     if (!response.ok) return null;
 
     return (await response.json()) as HuggingFaceCandidateSet;

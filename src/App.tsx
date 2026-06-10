@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { ClaudeCodeReportCard } from "./components/ClaudeCodeReportCard";
 import { ClaudeReportCard } from "./components/ClaudeReportCard";
@@ -33,6 +33,7 @@ import {
   type SqlDialect,
 } from "./lib/reportExports";
 import { requestReportRefresh } from "./lib/integrationApiClient";
+import { resolveRuntimeApiBaseUrl, resolveRuntimeAssetPath } from "./lib/runtimePaths";
 import { providerRegistry } from "./providers/registry";
 import "./App.css";
 
@@ -97,9 +98,14 @@ function snapshotPaths(dataPath: string): string[] {
   ];
 }
 
-async function loadLatestForensicRun(queryString = ""): Promise<ReportForensicRun | null> {
+async function loadLatestForensicRun(
+  basePath = "",
+  queryString = ""
+): Promise<ReportForensicRun | null> {
   try {
-    const response = await fetch(`/data/integration/forensic-runs.json${queryString}`);
+    const response = await fetch(
+      resolveRuntimeAssetPath(`data/integration/forensic-runs.json${queryString}`, basePath)
+    );
     if (!response.ok) return null;
 
     const raw = (await response.json()) as unknown;
@@ -115,6 +121,16 @@ async function loadLatestForensicRun(queryString = ""): Promise<ReportForensicRu
 }
 
 export default function App() {
+  const appBasePath = import.meta.env.BASE_URL;
+  const apiBaseUrl = useMemo(
+    () =>
+      resolveRuntimeApiBaseUrl({
+        basePath: appBasePath,
+        configuredApiBaseUrl: import.meta.env.VITE_TOKEN_REPORTING_API_BASE_URL,
+        origin: typeof window === "undefined" ? undefined : window.location.origin
+      }),
+    [appBasePath]
+  );
   const [summaries, setSummaries] = useState<ProviderReportSummary[]>(
     providerRegistry.map((adapter) => adapter.seedSummary)
   );
@@ -141,7 +157,7 @@ export default function App() {
           providerRegistry.map(async (adapter) => {
             try {
               for (const dataPath of snapshotPaths(adapter.dataPath)) {
-                const url = `/data/${dataPath}${qs}`;
+                const url = resolveRuntimeAssetPath(`data/${dataPath}${qs}`, appBasePath);
                 const response = await fetch(url);
                 if (!response.ok) continue;
                 const raw = await response.json();
@@ -153,9 +169,9 @@ export default function App() {
             }
           })
         ),
-        loadLocalSessionDistribution(),
-        loadHuggingFaceCandidateSet(),
-        loadLatestForensicRun(qs),
+        loadLocalSessionDistribution(appBasePath),
+        loadHuggingFaceCandidateSet(fetch, appBasePath),
+        loadLatestForensicRun(appBasePath, qs),
       ]);
 
       if (myCount === loadCounterRef.current) {
@@ -169,7 +185,7 @@ export default function App() {
         setLoading(false);
       }
     }
-  }, []);
+  }, [appBasePath]);
 
   useEffect(() => {
     void loadSnapshots(false);
@@ -223,7 +239,7 @@ export default function App() {
     ];
 
     try {
-      const result = await requestReportRefresh();
+      const result = await requestReportRefresh({ defaultApiBaseUrl: apiBaseUrl });
       if (result.outcome === "accepted") {
         setRefreshMessage(`Refresh job ${result.job.jobId} ${result.job.status}`);
         setRefreshSteps(refreshStepsFromJob(result.job));
@@ -245,7 +261,7 @@ export default function App() {
         status: "completed"
       })
     );
-  }, [loadSnapshots]);
+  }, [apiBaseUrl, loadSnapshots]);
 
   const handleDownload = useCallback(() => {
     downloadReportExport(
