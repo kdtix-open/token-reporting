@@ -1,27 +1,22 @@
 {
-  "generatedAt": "2026-06-09T00:24:06.200Z",
+  "generatedAt": "2026-06-10T01:24:55.653Z",
   "usage": {
     "data": [
       {
-        "start_time": 1780790400,
-        "end_time": 1780876800,
-        "results": []
-      },
-      {
-        "start_time": 1780876800,
-        "end_time": 1780963200,
+        "start_time": 1780963200,
+        "end_time": 1781049600,
         "results": [
           {
-            "input_tokens": 2601129,
-            "output_tokens": 47782,
-            "num_model_requests": 95,
-            "input_cached_tokens": 1941120,
-            "input_uncached_tokens": 660009,
-            "input_text_tokens": 660009,
-            "output_text_tokens": 47782,
+            "input_tokens": 744239,
+            "output_tokens": 10867,
+            "num_model_requests": 34,
+            "input_cached_tokens": 339200,
+            "input_uncached_tokens": 405039,
+            "input_text_tokens": 405039,
+            "output_text_tokens": 10867,
             "input_audio_tokens": 0,
             "output_audio_tokens": 0,
-            "input_cached_text_tokens": 1941120,
+            "input_cached_text_tokens": 339200,
             "input_cached_audio_tokens": 0,
             "input_image_tokens": 0,
             "input_cached_image_tokens": 0,
@@ -36,9 +31,32 @@
         ]
       },
       {
-        "start_time": 1780963200,
-        "end_time": 1781049600,
-        "results": []
+        "start_time": 1781049600,
+        "end_time": 1781136000,
+        "results": [
+          {
+            "input_tokens": 492469,
+            "output_tokens": 9706,
+            "num_model_requests": 17,
+            "input_cached_tokens": 370048,
+            "input_uncached_tokens": 122421,
+            "input_text_tokens": 122421,
+            "output_text_tokens": 9706,
+            "input_audio_tokens": 0,
+            "output_audio_tokens": 0,
+            "input_cached_text_tokens": 370048,
+            "input_cached_audio_tokens": 0,
+            "input_image_tokens": 0,
+            "input_cached_image_tokens": 0,
+            "output_image_tokens": 0,
+            "model": "gpt-5.5-2026-04-23",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "user_id": null,
+            "api_key_id": null,
+            "service_tier": null,
+            "batch": null
+          }
+        ]
       }
     ],
     "has_more": false,
@@ -47,17 +65,12 @@
   "costs": {
     "data": [
       {
-        "start_time": 1780790400,
-        "end_time": 1780876800,
-        "results": []
-      },
-      {
-        "start_time": 1780876800,
-        "end_time": 1780963200,
+        "start_time": 1780963200,
+        "end_time": 1781049600,
         "results": [
           {
             "amount": {
-              "value": 0.97056,
+              "value": 0.1696,
               "currency": "usd"
             },
             "line_item": "gpt-5.5-2026-04-23, cached input",
@@ -67,7 +80,7 @@
           },
           {
             "amount": {
-              "value": 3.300045,
+              "value": 2.025195,
               "currency": "usd"
             },
             "line_item": "gpt-5.5-2026-04-23, input",
@@ -77,7 +90,7 @@
           },
           {
             "amount": {
-              "value": 1.43346,
+              "value": 0.32601,
               "currency": "usd"
             },
             "line_item": "gpt-5.5-2026-04-23, output",
@@ -88,9 +101,40 @@
         ]
       },
       {
-        "start_time": 1780963200,
-        "end_time": 1781049600,
-        "results": []
+        "start_time": 1781049600,
+        "end_time": 1781136000,
+        "results": [
+          {
+            "amount": {
+              "value": 0.187264,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.5-2026-04-23, cached input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.68535,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.5-2026-04-23, input",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          },
+          {
+            "amount": {
+              "value": 0.29394,
+              "currency": "usd"
+            },
+            "line_item": "gpt-5.5-2026-04-23, output",
+            "project_id": "proj_C1YxmyVpQ7XDlf7NBFKt4ilh",
+            "project_name": "kdtix-open",
+            "organization_id": "org-2NDrSgcHQRNPkN4e2p01It9O"
+          }
+        ]
       }
     ],
     "has_more": false,

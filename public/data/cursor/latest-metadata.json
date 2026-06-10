@@ -1,37 +1,24 @@
 {
-  "generatedAt": "2026-06-09T00:24:02.580Z",
+  "generatedAt": "2026-06-10T01:24:51.844Z",
   "daily": {
     "data": [
       {
         "userId": "user_6SPHHLfZB2hOegWEViUzY7KvGb",
-        "day": "2026-06-08",
-        "date": 1780876800000,
+        "day": "2026-06-10",
+        "date": 1781049600000,
         "email": "chris.kreager@kdtix.com",
         "cmdkUsages": 0,
         "composerRequests": 0,
         "chatRequests": 0,
-        "agentRequests": 2,
+        "agentRequests": 1,
         "usageBasedReqs": 1,
         "subscriptionIncludedReqs": 0,
         "bugbotUsages": 0
       },
       {
         "userId": "user_6SPHHLfZB2hOegWEViUzY7KvGb",
-        "day": "2026-06-09",
-        "date": 1780963200000,
-        "email": "chris.kreager@kdtix.com",
-        "cmdkUsages": 0,
-        "composerRequests": 0,
-        "chatRequests": 0,
-        "agentRequests": 0,
-        "usageBasedReqs": 0,
-        "subscriptionIncludedReqs": 0,
-        "bugbotUsages": 0
-      },
-      {
-        "userId": "user_6SPHHLfZB2hOegWEViUzY7KvGb",
-        "day": "2026-06-10",
-        "date": 1781049600000,
+        "day": "2026-06-11",
+        "date": 1781136000000,
         "email": "chris.kreager@kdtix.com",
         "cmdkUsages": 0,
         "composerRequests": 0,
@@ -43,8 +30,8 @@
       }
     ],
     "period": {
-      "startDate": 1780876800000,
-      "endDate": 1781049600000
+      "startDate": 1781049600000,
+      "endDate": 1781136000000
     }
   },
   "spend": {
@@ -54,7 +41,7 @@
         "name": "Chris Kreager",
         "email": "chris.kreager@kdtix.com",
         "role": "owner",
-        "spendCents": 30048.342027,
+        "spendCents": 30184.726927,
         "includedSpendCents": 8212.30008,
         "fastPremiumRequests": 0,
         "monthlyLimitDollars": null,
@@ -64,10 +51,10 @@
     "subscriptionCycleStart": 1778942747000,
     "totalMembers": 1,
     "limitedUsersCount": 0,
-    "maxUserSpendCents": 30048.342027
+    "maxUserSpendCents": 30184.726927
   },
   "events": {
-    "totalUsageEventsCount": 2,
+    "totalUsageEventsCount": 1,
     "pagination": {
       "numPages": 1,
       "currentPage": 1,
@@ -77,49 +64,29 @@
     },
     "usageEvents": [
       {
-        "timestamp": "1780962488352",
+        "timestamp": "1781051265200",
         "model": "composer-2.5-fast",
         "kind": "Usage-based",
         "maxMode": false,
-        "requestsCosts": 12.2,
+        "requestsCosts": 11,
         "isTokenBasedCall": true,
         "tokenUsage": {
-          "inputTokens": 67086,
-          "outputTokens": 4887,
+          "inputTokens": 75318,
+          "outputTokens": 3697,
           "cacheWriteTokens": 0,
-          "cacheReadTokens": 423892,
-          "totalCents": 48.6509
+          "cacheReadTokens": 317755,
+          "totalCents": 44.02865
         },
         "userEmail": "chris.kreager@kdtix.com",
-        "cursorTokenFee": 12.396625,
+        "cursorTokenFee": 9.91925,
         "isChargeable": true,
         "isHeadless": false,
-        "chargedCents": 61.047525
-      },
-      {
-        "timestamp": "1780884938036",
-        "model": "composer-2.5",
-        "kind": "Free",
-        "maxMode": false,
-        "requestsCosts": 0,
-        "isTokenBasedCall": true,
-        "tokenUsage": {
-          "inputTokens": 100164,
-          "outputTokens": 1721,
-          "cacheWriteTokens": 0,
-          "cacheReadTokens": 880625,
-          "totalCents": 23.05095
-        },
-        "userEmail": "chris.kreager@kdtix.com",
-        "cursorTokenFee": 0,
-        "isChargeable": false,
-        "isHeadless": false,
-        "chargedCents": 0
+        "chargedCents": 53.9479
       }
     ],
     "period": {
-      "startDate": 1780876800000,
-      "endDate": 1781049600000
+      "startDate": 1781049600000,
+      "endDate": 1781136000000
     }
   }
 }

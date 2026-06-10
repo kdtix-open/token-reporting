@@ -1,13 +1,13 @@
 {
-  "candidateSetId": "hf-candidates-20260609T002400687Z",
+  "candidateSetId": "hf-candidates-20260610T012449988Z",
   "candidates": [
     {
       "architecture": "llama",
-      "downloads": 11146200,
+      "downloads": 10031112,
       "lastModified": "2024-09-25T17:00:57.000Z",
       "libraryName": "transformers",
       "license": "llama3.1",
-      "likes": 6021,
+      "likes": 6035,
       "modelId": "meta-llama/Llama-3.1-8B-Instruct",
       "parameterCount": 8030261248,
       "pipelineTag": "text-generation",
@@ -42,11 +42,11 @@
     },
     {
       "architecture": "qwen2",
-      "downloads": 3039510,
+      "downloads": 2916010,
       "lastModified": "2025-01-12T02:02:59.000Z",
       "libraryName": "transformers",
       "license": "apache-2.0",
-      "likes": 159,
+      "likes": 160,
       "modelId": "Qwen/Qwen2.5-Coder-14B-Instruct",
       "parameterCount": 14770033664,
       "pipelineTag": "text-generation",
@@ -77,11 +77,11 @@
     },
     {
       "architecture": "qwen2",
-      "downloads": 1561334,
+      "downloads": 1516785,
       "lastModified": "2025-01-12T02:02:22.000Z",
       "libraryName": "transformers",
       "license": "apache-2.0",
-      "likes": 2036,
+      "likes": 2039,
       "modelId": "Qwen/Qwen2.5-Coder-32B-Instruct",
       "parameterCount": 32763876352,
       "pipelineTag": "text-generation",
@@ -112,7 +112,7 @@
     },
     {
       "architecture": "qwen2",
-      "downloads": 916493,
+      "downloads": 867954,
       "lastModified": "2025-01-12T02:07:38.000Z",
       "libraryName": "transformers",
       "license": "other",
@@ -142,7 +142,7 @@
     },
     {
       "architecture": "qwen2",
-      "downloads": 82714,
+      "downloads": 74920,
       "lastModified": "2025-01-29T12:39:09.000Z",
       "libraryName": "transformers",
       "license": "apache-2.0",
@@ -170,6 +170,6 @@
       "url": "https://huggingface.co/Qwen/Qwen2.5-7B-Instruct-1M"
     }
   ],
-  "generatedAt": "2026-06-09T00:24:00.687Z",
+  "generatedAt": "2026-06-10T01:24:49.988Z",
   "source": "huggingface_hub_api"
 }

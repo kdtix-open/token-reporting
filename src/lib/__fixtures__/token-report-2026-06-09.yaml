@@ -1,0 +1,77 @@
+generatedAt: 2026-06-09T00:38:14.526Z
+rows:
+  - providerId: "github-copilot"
+    providerName: "GitHub Copilot"
+    billingType: "SEAT-BASED"
+    modelId: "github-copilot:aggregate-28-day"
+    modelName: "aggregate-28-day"
+    contextWindow: null
+    snapshotId: "github-copilot:2026-06-07"
+    snapshotDate: "2026-06-07"
+    inputTokens: 8403935513
+    outputTokens: 0
+    cacheReadTokens: 0
+    cacheCreationTokens: 0
+    requestsCount: 103003
+    totalCost: 70.93
+  - providerId: "cursor"
+    providerName: "Cursor"
+    billingType: "ACTUAL"
+    modelId: "cursor:aggregate-28-day"
+    modelName: "aggregate-28-day"
+    contextWindow: null
+    snapshotId: "cursor:2026-06-10"
+    snapshotDate: "2026-06-10"
+    inputTokens: 30213514
+    outputTokens: 1574967
+    cacheReadTokens: 429142210
+    cacheCreationTokens: 490831
+    requestsCount: 423
+    totalCost: 386.41
+  - providerId: "claude"
+    providerName: "Claude"
+    billingType: "ACTUAL"
+    modelId: "claude:aggregate-28-day"
+    modelName: "aggregate-28-day"
+    contextWindow: null
+    snapshotId: "claude:2026-06-09"
+    snapshotDate: "2026-06-09"
+    inputTokens: 2407186
+    outputTokens: 6201395
+    cacheReadTokens: 689752831
+    cacheCreationTokens: 37939134
+    requestsCount: 0
+    totalCost: 471.05
+  - providerId: "claude-code"
+    providerName: "Claude Code"
+    billingType: "SEAT-BASED"
+    modelId: "claude-code:aggregate-28-day"
+    modelName: "aggregate-28-day"
+    contextWindow: null
+    snapshotId: "claude-code:2026-06-08"
+    snapshotDate: "2026-06-08"
+    inputTokens: 2202744
+    outputTokens: 60047013
+    cacheReadTokens: 17380507677
+    cacheCreationTokens: 474059860
+    requestsCount: 73784
+    totalCost: 361.29
+  - providerId: "codex"
+    providerName: "OpenAI Codex"
+    billingType: "ACTUAL"
+    modelId: "codex:aggregate-28-day"
+    modelName: "aggregate-28-day"
+    contextWindow: null
+    snapshotId: "codex:2026-06-10"
+    snapshotDate: "2026-06-10"
+    inputTokens: 347834641
+    outputTokens: 2152064
+    cacheReadTokens: 309151424
+    cacheCreationTokens: 0
+    requestsCount: 6962
+    totalCost: 398.09
+report:
+  localModelMigration:
+    contextConfidence: "high"
+    estimatedContextWindowNeeded: 1000000
+    requiredTokensPerSec: 4054.6519791666665

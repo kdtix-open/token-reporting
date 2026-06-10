@@ -1,4 +1,8 @@
 import type { HuggingFaceCandidateSet } from "./huggingFaceCandidates";
+import {
+  buildLocalInfrastructureSizing,
+  type LocalInfrastructureSizingReport,
+} from "./localInfrastructureSizing";
 import type { LocalSessionDistribution } from "./localSessionDistribution";
 import { buildLocalModelReport, type LocalModelMigrationReport } from "./localModelReport";
 import type { ProviderReportSummary } from "./types";
@@ -103,7 +107,7 @@ const EXPORT_COLUMNS = [
   "total_cost"
 ] as const;
 
-type RowValue = string | number | null;
+type RowValue = boolean | string | number | null;
 
 const textEncoder = new TextEncoder();
 
@@ -112,7 +116,7 @@ export function buildReportExportRows(
 ): ReportExportRow[] {
   return summaries.map((summary) => {
     const snapshotDate = summary.reportEndDay;
-    const modelName = "aggregate-28-day";
+    const modelName = aggregateModelName(summary);
     const modelId = `${summary.providerId}:${modelName}`;
 
     return {
@@ -125,7 +129,7 @@ export function buildReportExportRows(
       snapshotId: `${summary.providerId}:${snapshotDate}`,
       snapshotDate,
       inputTokens: getInputTokens(summary),
-      outputTokens: numberField(summary, "outputTokens"),
+      outputTokens: getOutputTokens(summary),
       cacheReadTokens: numberField(summary, "cacheReadTokens"),
       cacheCreationTokens: getCacheCreationTokens(summary),
       requestsCount: getRequestCount(summary),
@@ -281,6 +285,7 @@ interface ReportExportBreakdowns {
     windowDays: number;
     workloadGap: LocalModelMigrationReport["workloadGap"];
   };
+  localInfrastructureSizing: LocalInfrastructureSizingReport;
   providerSnapshots: ReportExportRow[];
   spendProjections: Array<{
     annualFlatUsd: number;
@@ -345,6 +350,13 @@ function buildReportExportBreakdowns(
       windowDays: localModelReport.windowDays,
       workloadGap: localModelReport.workloadGap
     },
+    localInfrastructureSizing: buildLocalInfrastructureSizing({
+      distribution: context.distribution ?? null,
+      forensicRun: context.forensicRun ?? null,
+      huggingFaceCandidateSet: context.huggingFaceCandidateSet ?? null,
+      localModelReport,
+      summaries: context.summaries
+    }),
     providerSnapshots: rows,
     spendProjections: context.summaries.map((summary) => ({
       annualFlatUsd: roundMoney(summary.spendProjection.projectedAnnualUsd),
@@ -407,6 +419,13 @@ function getInputTokens(summary: ProviderReportSummary): number {
   return numberField(summary, "inputTokens");
 }
 
+function getOutputTokens(summary: ProviderReportSummary): number {
+  if (summary.providerId === "github-copilot") {
+    return numberField(summary, "cliOutputTokens") || numberField(summary, "outputTokens");
+  }
+  return numberField(summary, "outputTokens");
+}
+
 function getCacheCreationTokens(summary: ProviderReportSummary): number {
   if (summary.providerId === "cursor") {
     return numberField(summary, "cacheWriteTokens");
@@ -431,6 +450,20 @@ function getRequestCount(summary: ProviderReportSummary): number {
     typeof summary.comparisonMetric.value === "number"
     ? summary.comparisonMetric.value
     : 0;
+}
+
+function aggregateModelName(summary: ProviderReportSummary): string {
+  const windowDays = reportWindowDays(summary);
+  return windowDays === null ? "aggregate-window" : `aggregate-${windowDays}-day`;
+}
+
+function reportWindowDays(summary: ProviderReportSummary): number | null {
+  const start = Date.parse(`${summary.reportStartDay}T00:00:00Z`);
+  const end = Date.parse(`${summary.reportEndDay}T00:00:00Z`);
+  if (Number.isFinite(start) && Number.isFinite(end) && end >= start) {
+    return Math.round((end - start) / 86_400_000) + 1;
+  }
+  return summary.spendProjection.windowDays > 0 ? summary.spendProjection.windowDays : null;
 }
 
 function roundMoney(value: number): number {
@@ -528,6 +561,247 @@ function createCsv(rows: ReportExportRow[], report?: ReportExportBreakdowns): st
         );
       }
     }
+    lines.push(
+      [
+        "local_infrastructure_sizing",
+        "workload_summary",
+        "current_project_lane_compute_tps",
+        report.localInfrastructureSizing.workloadSummary.currentProjectLaneComputeTps
+      ]
+        .map(csvCell)
+        .join(",")
+    );
+    lines.push(
+      [
+        "local_infrastructure_sizing",
+        "workload_summary",
+        "current_project_lane_p99_context",
+        report.localInfrastructureSizing.workloadSummary.currentProjectLaneP99Context
+      ]
+        .map(csvCell)
+        .join(",")
+    );
+    lines.push(
+      [
+        "local_infrastructure_sizing",
+        "first_server",
+        "recommendation",
+        report.localInfrastructureSizing.recommendedFirstServer.profileName
+      ]
+        .map(csvCell)
+        .join(",")
+    );
+    lines.push(
+      [
+        "local_infrastructure_sizing",
+        "first_server",
+        "full_local_replacement_recommended",
+        String(report.localInfrastructureSizing.recommendedFirstServer.fullLocalReplacementRecommended)
+      ]
+        .map(csvCell)
+        .join(",")
+    );
+    for (const [field, value] of Object.entries(report.localInfrastructureSizing.executiveSummary)) {
+      lines.push(
+        ["local_infrastructure_executive_summary", "decision", field, value]
+          .map(csvCell)
+          .join(",")
+      );
+    }
+    const coverage = report.localInfrastructureSizing.localCoverageSummary;
+    for (const [field, value] of Object.entries({
+      target_first_server_coverage_pct: coverage.targetFirstServerCoveragePct,
+      estimated_full_workload_capacity_pct: coverage.estimatedFullWorkloadCapacityPct,
+      safe_initial_production_routing_pct: coverage.safeInitialProductionRoutingPct,
+      shadow_coverage_pct: coverage.shadowCoveragePct,
+      canary_coverage_pct: coverage.canaryCoveragePct,
+      capacity_limited_by: coverage.capacityLimitedBy.join("; "),
+      explanation: coverage.explanation
+    })) {
+      lines.push(
+        ["local_infrastructure_coverage_summary", "guardrails", field, value]
+          .map(csvCell)
+          .join(",")
+      );
+    }
+    lines.push(
+      [
+        "local_infrastructure_workload_scope_config",
+        "config",
+        "default_sizing_scope",
+        report.localInfrastructureSizing.workloadScopeConfig.defaultSizingScope
+      ]
+        .map(csvCell)
+        .join(",")
+    );
+    lines.push(
+      [
+        "local_infrastructure_workload_scope_config",
+        "config",
+        "compare_against_all_provider_traffic",
+        String(report.localInfrastructureSizing.workloadScopeConfig.compareAgainstAllProviderTraffic)
+      ]
+        .map(csvCell)
+        .join(",")
+    );
+    for (const scope of report.localInfrastructureSizing.workloadScopeSummaries) {
+      for (const [field, value] of Object.entries({
+        label: scope.label,
+        provider_ids: scope.providerIds.join("; "),
+        route_class_ids: scope.routeClassIds.join("; "),
+        compute_tokens_per_day: scope.computeTokensPerDay,
+        current_project_lane_compute_tps: scope.currentProjectLaneComputeTps,
+        peak_tokens_per_second: scope.peakTokensPerSecond,
+        notes: scope.notes.join(" ")
+      })) {
+        lines.push(
+          ["local_infrastructure_workload_scopes", scope.scope, field, value]
+            .map(csvCell)
+            .join(",")
+        );
+      }
+    }
+    for (const route of report.localInfrastructureSizing.routeClasses) {
+      lines.push(
+        [
+          "local_infrastructure_route_classes",
+          route.id,
+          "recommended_routing",
+          route.recommendedRouting
+        ]
+          .map(csvCell)
+          .join(",")
+      );
+      lines.push(
+        [
+          "local_infrastructure_route_classes",
+          route.id,
+          "token_share_estimate",
+          route.tokenShareEstimate
+        ]
+          .map(csvCell)
+          .join(",")
+      );
+      lines.push(
+        [
+          "local_infrastructure_route_classes",
+          route.id,
+          "kind",
+          route.kind
+        ]
+          .map(csvCell)
+          .join(",")
+      );
+      lines.push(
+        [
+          "local_infrastructure_route_classes",
+          route.id,
+          "overlaps_with_route_class_ids",
+          route.overlapsWithRouteClassIds.join("; ")
+        ]
+          .map(csvCell)
+          .join(",")
+      );
+      lines.push(
+        [
+          "local_infrastructure_route_classes",
+          route.id,
+          "context_stats_source",
+          route.contextStatsSource
+        ]
+          .map(csvCell)
+          .join(",")
+      );
+      lines.push(
+        [
+          "local_infrastructure_route_classes",
+          route.id,
+          "context_stats_warning",
+          route.contextStatsWarning ?? ""
+        ]
+          .map(csvCell)
+          .join(",")
+      );
+    }
+    for (const profile of report.localInfrastructureSizing.hardwareProfiles) {
+      lines.push(
+        [
+          "local_infrastructure_hardware_profiles",
+          profile.id,
+          "pricing_confidence",
+          profile.pricingConfidence
+        ]
+          .map(csvCell)
+          .join(",")
+      );
+      lines.push(
+        [
+          "local_infrastructure_hardware_profiles",
+          profile.id,
+          "total_vram_gb",
+          profile.totalVramGb
+        ]
+          .map(csvCell)
+          .join(",")
+      );
+      for (const [field, value] of Object.entries({
+        quote_priority: profile.quotePriority,
+        first_server_role: profile.firstServerRole,
+        max_safe_initial_routing_pct: profile.maxSafeInitialRoutingPct,
+        full_project_lane_claim_allowed: String(profile.fullProjectLaneClaimAllowed),
+        analyst_narrative: profile.analystNarrative
+      })) {
+        lines.push(
+          ["local_infrastructure_hardware_profiles", profile.id, field, value]
+            .map(csvCell)
+            .join(",")
+        );
+      }
+    }
+    const financials = report.localInfrastructureSizing.financials;
+    for (const [field, value] of Object.entries({
+      capex_low_usd: financials.capexLowUsd,
+      capex_high_usd: financials.capexHighUsd,
+      annual_opex_estimate_usd: financials.annualOpexEstimateUsd,
+      annual_support_estimate_usd: financials.annualSupportEstimateUsd,
+      annual_power_cooling_estimate_usd: financials.annualPowerCoolingEstimateUsd,
+      annual_software_estimate_usd: financials.annualSoftwareEstimateUsd,
+      annual_cloud_spend_displacement_usd: financials.annualCloudSpendDisplacementUsd,
+      annual_subscription_revenue_potential_usd: financials.annualSubscriptionRevenuePotentialUsd,
+      payback_months_cloud_spend_only: financials.paybackMonthsCloudSpendOnly,
+      payback_months_revenue_capacity: financials.paybackMonthsRevenueCapacity,
+      notes: financials.notes.join(" ")
+    })) {
+      lines.push(
+        ["local_infrastructure_financials", "payback", field, value]
+          .map(csvCell)
+          .join(",")
+      );
+    }
+    for (const gate of report.localInfrastructureSizing.benchmarkGates) {
+      for (const [field, value] of Object.entries({
+        name: gate.name,
+        status: gate.status,
+        required_for_phase: gate.requiredForPhase,
+        minimum_sample_count: gate.minimumSampleCount,
+        required_metrics: gate.requiredMetrics.join("; "),
+        pass_criteria: gate.passCriteria.join("; "),
+        fail_action: gate.failAction
+      })) {
+        lines.push(
+          ["local_infrastructure_benchmark_gates", gate.gateId, field, value]
+            .map(csvCell)
+            .join(",")
+        );
+      }
+    }
+    for (const warning of report.localInfrastructureSizing.dataQualityWarnings) {
+      lines.push(
+        ["local_infrastructure_data_quality", "warning", "message", warning]
+          .map(csvCell)
+          .join(",")
+      );
+    }
     if (report.forensic.runId) {
       lines.push(
         ["forensic_reviewer_consensus", report.forensic.runId, "status", report.forensic.status]
@@ -618,6 +892,230 @@ function createYaml(rows: ReportExportRow[], report?: ReportExportBreakdowns): s
         );
       }
     }
+    lines.push("  localInfrastructureSizing:");
+    lines.push(`    generatedAt: ${yamlValue(report.localInfrastructureSizing.generatedAt)}`);
+    lines.push(`    confidence: ${yamlValue(report.localInfrastructureSizing.confidence)}`);
+    lines.push("    sourceWindow:");
+    lines.push(
+      `      coverageStart: ${yamlValue(report.localInfrastructureSizing.sourceWindow.coverageStart)}`
+    );
+    lines.push(
+      `      coverageEnd: ${yamlValue(report.localInfrastructureSizing.sourceWindow.coverageEnd)}`
+    );
+    lines.push(
+      `      maxWindowDays: ${yamlValue(report.localInfrastructureSizing.sourceWindow.maxWindowDays)}`
+    );
+    if (report.localInfrastructureSizing.dataQualityWarnings.length === 0) {
+      lines.push("    dataQualityWarnings: []");
+    } else {
+      lines.push("    dataQualityWarnings:");
+      for (const warning of report.localInfrastructureSizing.dataQualityWarnings) {
+        lines.push(`      - ${yamlValue(warning)}`);
+      }
+    }
+    lines.push("    workloadSummary:");
+    lines.push(
+      `      currentProjectLaneComputeTps: ${report.localInfrastructureSizing.workloadSummary.currentProjectLaneComputeTps}`
+    );
+    lines.push(
+      `      currentProjectLanePeakTps: ${report.localInfrastructureSizing.workloadSummary.currentProjectLanePeakTps}`
+    );
+    lines.push(
+      `      currentProjectLaneP95Context: ${yamlValue(report.localInfrastructureSizing.workloadSummary.currentProjectLaneP95Context)}`
+    );
+    lines.push(
+      `      currentProjectLaneP99Context: ${yamlValue(report.localInfrastructureSizing.workloadSummary.currentProjectLaneP99Context)}`
+    );
+    lines.push(
+      `      totalPureComputeTokens: ${report.localInfrastructureSizing.workloadSummary.totalPureComputeTokens}`
+    );
+    lines.push(
+      `      totalCacheReadTokens: ${report.localInfrastructureSizing.workloadSummary.totalCacheReadTokens}`
+    );
+    lines.push("    localMigrationPlan:");
+    lines.push(
+      `      fullLocalReplacementRecommended: ${report.localInfrastructureSizing.localMigrationPlan.fullLocalReplacementRecommended}`
+    );
+    lines.push(
+      `      candidateServerLocalCoveragePct: ${report.localInfrastructureSizing.localMigrationPlan.candidateServerLocalCoveragePct}`
+    );
+    lines.push("    localCoverageSummary:");
+    lines.push(
+      `      targetFirstServerCoveragePct: ${report.localInfrastructureSizing.localCoverageSummary.targetFirstServerCoveragePct}`
+    );
+    lines.push(
+      `      estimatedFullWorkloadCapacityPct: ${report.localInfrastructureSizing.localCoverageSummary.estimatedFullWorkloadCapacityPct}`
+    );
+    lines.push(
+      `      safeInitialProductionRoutingPct: ${report.localInfrastructureSizing.localCoverageSummary.safeInitialProductionRoutingPct}`
+    );
+    lines.push(
+      `      shadowCoveragePct: ${report.localInfrastructureSizing.localCoverageSummary.shadowCoveragePct}`
+    );
+    lines.push(
+      `      canaryCoveragePct: ${report.localInfrastructureSizing.localCoverageSummary.canaryCoveragePct}`
+    );
+    lines.push("      capacityLimitedBy:");
+    for (const limit of report.localInfrastructureSizing.localCoverageSummary.capacityLimitedBy) {
+      lines.push(`        - ${yamlValue(limit)}`);
+    }
+    lines.push(
+      `      explanation: ${yamlValue(report.localInfrastructureSizing.localCoverageSummary.explanation)}`
+    );
+    lines.push("    workloadScopeConfig:");
+    lines.push(
+      `      defaultSizingScope: ${yamlValue(report.localInfrastructureSizing.workloadScopeConfig.defaultSizingScope)}`
+    );
+    lines.push(
+      `      compareAgainstAllProviderTraffic: ${report.localInfrastructureSizing.workloadScopeConfig.compareAgainstAllProviderTraffic}`
+    );
+    lines.push("    workloadScopeSummaries:");
+    for (const scope of report.localInfrastructureSizing.workloadScopeSummaries) {
+      lines.push(`      - scope: ${yamlValue(scope.scope)}`);
+      lines.push(`        label: ${yamlValue(scope.label)}`);
+      lines.push("        providerIds:");
+      for (const providerId of scope.providerIds) {
+        lines.push(`          - ${yamlValue(providerId)}`);
+      }
+      lines.push("        routeClassIds:");
+      for (const routeClassId of scope.routeClassIds) {
+        lines.push(`          - ${yamlValue(routeClassId)}`);
+      }
+      lines.push(`        computeTokensPerDay: ${scope.computeTokensPerDay}`);
+      lines.push(
+        `        currentProjectLaneComputeTps: ${scope.currentProjectLaneComputeTps}`
+      );
+      lines.push(`        peakTokensPerSecond: ${scope.peakTokensPerSecond}`);
+      lines.push("        notes:");
+      for (const note of scope.notes) {
+        lines.push(`          - ${yamlValue(note)}`);
+      }
+    }
+    lines.push("    recommendedFirstServer:");
+    lines.push(
+      `      hardwareProfileId: ${yamlValue(report.localInfrastructureSizing.recommendedFirstServer.hardwareProfileId)}`
+    );
+    lines.push(
+      `      profileName: ${yamlValue(report.localInfrastructureSizing.recommendedFirstServer.profileName)}`
+    );
+    lines.push(
+      `      recommendationKind: ${yamlValue(report.localInfrastructureSizing.recommendedFirstServer.recommendationKind)}`
+    );
+    lines.push(
+      `      routingRecommendation: ${yamlValue(report.localInfrastructureSizing.recommendedFirstServer.routingRecommendation)}`
+    );
+    lines.push("    routeClasses:");
+    for (const route of report.localInfrastructureSizing.routeClasses) {
+      lines.push(`      - id: ${yamlValue(route.id)}`);
+      lines.push(`        name: ${yamlValue(route.name)}`);
+      lines.push(`        kind: ${yamlValue(route.kind)}`);
+      lines.push(`        recommendedRouting: ${yamlValue(route.recommendedRouting)}`);
+      lines.push(`        tokenShareEstimate: ${route.tokenShareEstimate}`);
+      lines.push(`        computeTokensPerDay: ${route.computeTokensPerDay}`);
+      lines.push(`        contextStatsSource: ${yamlValue(route.contextStatsSource)}`);
+      lines.push(
+        `        contextStatsWarning: ${yamlValue(route.contextStatsWarning ?? null)}`
+      );
+      lines.push("        overlapsWithRouteClassIds:");
+      for (const overlap of route.overlapsWithRouteClassIds) {
+        lines.push(`          - ${yamlValue(overlap)}`);
+      }
+      lines.push(`        reason: ${yamlValue(route.reason)}`);
+    }
+    lines.push("    hardwareProfiles:");
+    for (const profile of report.localInfrastructureSizing.hardwareProfiles) {
+      lines.push(`      - id: ${yamlValue(profile.id)}`);
+      lines.push(`        profileName: ${yamlValue(profile.profileName)}`);
+      lines.push(`        phase: ${yamlValue(profile.phase)}`);
+      lines.push(`        gpuType: ${yamlValue(profile.gpuType)}`);
+      lines.push(`        gpuCount: ${profile.gpuCount}`);
+      lines.push(`        totalVramGb: ${profile.totalVramGb}`);
+      lines.push(`        pricingConfidence: ${yamlValue(profile.pricingConfidence)}`);
+      lines.push(`        quotePriority: ${yamlValue(profile.quotePriority)}`);
+      lines.push(`        firstServerRole: ${yamlValue(profile.firstServerRole)}`);
+      lines.push(`        maxSafeInitialRoutingPct: ${profile.maxSafeInitialRoutingPct}`);
+      lines.push(
+        `        fullProjectLaneClaimAllowed: ${profile.fullProjectLaneClaimAllowed}`
+      );
+      lines.push(`        analystNarrative: ${yamlValue(profile.analystNarrative)}`);
+    }
+    lines.push("    financials:");
+    lines.push(`      capexLowUsd: ${yamlValue(report.localInfrastructureSizing.financials.capexLowUsd)}`);
+    lines.push(`      capexHighUsd: ${yamlValue(report.localInfrastructureSizing.financials.capexHighUsd)}`);
+    lines.push(
+      `      annualOpexEstimateUsd: ${yamlValue(report.localInfrastructureSizing.financials.annualOpexEstimateUsd)}`
+    );
+    lines.push(
+      `      annualCloudSpendDisplacementUsd: ${yamlValue(report.localInfrastructureSizing.financials.annualCloudSpendDisplacementUsd)}`
+    );
+    lines.push(
+      `      annualSubscriptionRevenuePotentialUsd: ${yamlValue(report.localInfrastructureSizing.financials.annualSubscriptionRevenuePotentialUsd)}`
+    );
+    lines.push(
+      `      paybackMonthsCloudSpendOnly: ${yamlValue(report.localInfrastructureSizing.financials.paybackMonthsCloudSpendOnly)}`
+    );
+    lines.push(
+      `      paybackMonthsRevenueCapacity: ${yamlValue(report.localInfrastructureSizing.financials.paybackMonthsRevenueCapacity)}`
+    );
+    lines.push("      notes:");
+    for (const note of report.localInfrastructureSizing.financials.notes) {
+      lines.push(`        - ${yamlValue(note)}`);
+    }
+    lines.push("    executiveSummary:");
+    lines.push(
+      `      firstQuoteToRequest: ${yamlValue(report.localInfrastructureSizing.executiveSummary.firstQuoteToRequest)}`
+    );
+    lines.push(
+      `      whatThisServerCanDoNow: ${yamlValue(report.localInfrastructureSizing.executiveSummary.whatThisServerCanDoNow)}`
+    );
+    lines.push(
+      `      whatThisServerCannotDo: ${yamlValue(report.localInfrastructureSizing.executiveSummary.whatThisServerCannotDo)}`
+    );
+    lines.push(
+      `      estimatedSafeInitialRouting: ${yamlValue(report.localInfrastructureSizing.executiveSummary.estimatedSafeInitialRouting)}`
+    );
+    lines.push(
+      `      estimatedFullWorkloadCapacity: ${yamlValue(report.localInfrastructureSizing.executiveSummary.estimatedFullWorkloadCapacity)}`
+    );
+    lines.push(
+      `      capexRange: ${yamlValue(report.localInfrastructureSizing.executiveSummary.capexRange)}`
+    );
+    lines.push(
+      `      quoteConfidence: ${yamlValue(report.localInfrastructureSizing.executiveSummary.quoteConfidence)}`
+    );
+    lines.push(
+      `      paybackFromCloudDisplacement: ${yamlValue(report.localInfrastructureSizing.executiveSummary.paybackFromCloudDisplacement)}`
+    );
+    lines.push(
+      `      paybackFromReservedCapacityProductRevenue: ${yamlValue(report.localInfrastructureSizing.executiveSummary.paybackFromReservedCapacityProductRevenue)}`
+    );
+    lines.push(
+      `      nextScaleTrigger: ${yamlValue(report.localInfrastructureSizing.executiveSummary.nextScaleTrigger)}`
+    );
+    lines.push("    benchmarkGates:");
+    for (const gate of report.localInfrastructureSizing.benchmarkGates) {
+      lines.push(`      - gateId: ${yamlValue(gate.gateId)}`);
+      lines.push(`        name: ${yamlValue(gate.name)}`);
+      lines.push(`        status: ${yamlValue(gate.status)}`);
+      lines.push(`        requiredForPhase: ${yamlValue(gate.requiredForPhase)}`);
+      lines.push(`        minimumSampleCount: ${gate.minimumSampleCount}`);
+      lines.push("        requiredMetrics:");
+      for (const metric of gate.requiredMetrics) {
+        lines.push(`          - ${yamlValue(metric)}`);
+      }
+      lines.push("        passCriteria:");
+      for (const criterion of gate.passCriteria) {
+        lines.push(`          - ${yamlValue(criterion)}`);
+      }
+      lines.push(`        failAction: ${yamlValue(gate.failAction)}`);
+    }
+    lines.push("    scaleRamp:");
+    for (const phase of report.localInfrastructureSizing.scaleRamp) {
+      lines.push(`      - phase: ${yamlValue(phase.phase)}`);
+      lines.push(`        name: ${yamlValue(phase.name)}`);
+      lines.push(`        targetLocalCoveragePct: ${phase.targetLocalCoveragePct}`);
+      lines.push(`        targetProjectLanes: ${phase.targetProjectLanes}`);
+    }
     lines.push("  forensic:");
     lines.push(`    runId: ${yamlValue(report.forensic.runId)}`);
     lines.push(`    status: ${yamlValue(report.forensic.status)}`);
@@ -634,6 +1132,7 @@ function createYaml(rows: ReportExportRow[], report?: ReportExportBreakdowns): s
 function yamlValue(value: RowValue): string {
   if (value === null) return "null";
   if (typeof value === "number") return String(value);
+  if (typeof value === "boolean") return value ? "true" : "false";
   return JSON.stringify(value);
 }
 
@@ -699,6 +1198,133 @@ function buildTextReportLines(report: ReportExportBreakdowns): string[] {
         : []),
       `  ${profile.note}`
     ]),
+    "",
+    "Local AI Infrastructure Sizing",
+    "Executive Hardware Decision Summary",
+    `First quote to request: ${report.localInfrastructureSizing.executiveSummary.firstQuoteToRequest}`,
+    `What this server can do now: ${report.localInfrastructureSizing.executiveSummary.whatThisServerCanDoNow}`,
+    `What this server cannot do: ${report.localInfrastructureSizing.executiveSummary.whatThisServerCannotDo}`,
+    `Estimated safe initial routing: ${report.localInfrastructureSizing.executiveSummary.estimatedSafeInitialRouting}`,
+    `Estimated full-workload capacity: ${report.localInfrastructureSizing.executiveSummary.estimatedFullWorkloadCapacity}`,
+    `Capex range: ${report.localInfrastructureSizing.executiveSummary.capexRange}`,
+    `Quote confidence: ${report.localInfrastructureSizing.executiveSummary.quoteConfidence}`,
+    `Payback from cloud displacement: ${report.localInfrastructureSizing.executiveSummary.paybackFromCloudDisplacement}`,
+    `Payback from reserved-capacity product revenue: ${report.localInfrastructureSizing.executiveSummary.paybackFromReservedCapacityProductRevenue}`,
+    `Next scale trigger: ${report.localInfrastructureSizing.executiveSummary.nextScaleTrigger}`,
+    `Current workload baseline: ${report.localInfrastructureSizing.workloadSummary.currentProjectLaneComputeTps.toFixed(
+      1
+    )} tok/s steady state; peak planning ${report.localInfrastructureSizing.workloadSummary.currentProjectLanePeakTps.toFixed(
+      1
+    )} tok/s; p99 context ${
+      report.localInfrastructureSizing.workloadSummary.currentProjectLaneP99Context === null
+        ? "unknown"
+        : `${formatNumber(report.localInfrastructureSizing.workloadSummary.currentProjectLaneP99Context)} tokens`
+    }`,
+    "Coverage, capacity, and routing guardrails",
+    `Target first-server migration objective: ${report.localInfrastructureSizing.localCoverageSummary.targetFirstServerCoveragePct}%`,
+    `Estimated full-workload capacity: ${report.localInfrastructureSizing.localCoverageSummary.estimatedFullWorkloadCapacityPct.toFixed(
+      1
+    )}% derived from aggregate tokens/sec`,
+    `Safe initial production routing: ${report.localInfrastructureSizing.localCoverageSummary.safeInitialProductionRoutingPct}%`,
+    `Shadow coverage: ${report.localInfrastructureSizing.localCoverageSummary.shadowCoveragePct}%; canary coverage: ${report.localInfrastructureSizing.localCoverageSummary.canaryCoveragePct}%`,
+    `Capacity limits: ${report.localInfrastructureSizing.localCoverageSummary.capacityLimitedBy.join(", ") || "benchmark validation required"}`,
+    report.localInfrastructureSizing.localCoverageSummary.explanation,
+    `Full local replacement recommended: ${
+      report.localInfrastructureSizing.localMigrationPlan.fullLocalReplacementRecommended ? "yes" : "no"
+    }`,
+    `First-server recommendation: ${report.localInfrastructureSizing.recommendedFirstServer.profileName} (${report.localInfrastructureSizing.recommendedFirstServer.recommendationKind})`,
+    `First-server routing: ${report.localInfrastructureSizing.recommendedFirstServer.routingRecommendation}`,
+    "Provider traffic normalized",
+    ...report.localInfrastructureSizing.providerCoverage.map(
+      (provider) =>
+        `${provider.providerName}: window ${provider.windowDays ?? "unknown"} days (${
+          provider.coverageStart ?? "unknown"
+        } to ${provider.coverageEnd ?? "unknown"}); input ${formatNumber(
+          provider.inputTokens
+        )}; uncached input ${
+          provider.uncachedInputTokens === null ? "unknown" : formatNumber(provider.uncachedInputTokens)
+        }; output ${formatNumber(provider.outputTokens)}; cache read ${formatNumber(
+          provider.cacheReadTokens
+        )}; cache creation ${formatNumber(provider.cacheCreationTokens)}`
+    ),
+    "Workload scope sizing",
+    `Default sizing scope: ${report.localInfrastructureSizing.workloadScopeConfig.defaultSizingScope}; compare against all-provider traffic: ${report.localInfrastructureSizing.workloadScopeConfig.compareAgainstAllProviderTraffic ? "yes" : "no"}`,
+    ...report.localInfrastructureSizing.workloadScopeSummaries.map(
+      (scope) =>
+        `${scope.label}: ${formatNumber(Math.round(scope.computeTokensPerDay))} compute tokens/day; ${scope.currentProjectLaneComputeTps.toFixed(
+          1
+        )} steady tok/s; providers ${scope.providerIds.join(", ") || "none"}; ${scope.notes.join(" ")}`
+    ),
+    "Workloads safe for local",
+    ...report.localInfrastructureSizing.routeClasses
+      .filter((route) => route.recommendedRouting === "local" || route.recommendedRouting === "hybrid")
+      .map(
+        (route) =>
+          `${route.name}: ${route.recommendedRouting}; ${Math.round(
+            route.tokenShareEstimate * 100
+          )}% token-share estimate; ${route.kind}; context ${route.contextStatsSource}${
+            route.contextStatsWarning ? ` (${route.contextStatsWarning})` : ""
+          }; ${route.reason}`
+      ),
+    "Workloads that must stay cloud",
+    ...report.localInfrastructureSizing.routeClasses
+      .filter((route) => route.recommendedRouting === "cloud" || route.recommendedRouting === "shadow_only")
+      .map(
+        (route) =>
+          `${route.name}: ${route.recommendedRouting}; ${Math.round(
+            route.tokenShareEstimate * 100
+          )}% token-share estimate; ${route.kind}${
+            route.overlapsWithRouteClassIds.length > 0
+              ? `; overlaps ${route.overlapsWithRouteClassIds.join(", ")}`
+              : ""
+          }; context ${route.contextStatsSource}${
+            route.contextStatsWarning ? ` (${route.contextStatsWarning})` : ""
+          }; ${route.reason}`
+      ),
+    "Hardware profile comparison",
+    ...report.localInfrastructureSizing.hardwareProfiles.map(
+      (profile) =>
+        `${profile.profileName}: ${profile.gpuCount} x ${profile.gpuType}; ${profile.totalVramGb} GB VRAM; ${profile.formFactor}; ${profile.pricingConfidence}; quote ${profile.quotePriority}; role ${profile.firstServerRole}; safe routing ${profile.maxSafeInitialRoutingPct}%; full lane claim ${profile.fullProjectLaneClaimAllowed ? "yes" : "no"}; ${profile.analystNarrative}`
+    ),
+    "Financial payback model",
+    `Capex: ${formatOptionalCurrency(report.localInfrastructureSizing.financials.capexLowUsd)} to ${formatOptionalCurrency(report.localInfrastructureSizing.financials.capexHighUsd)}`,
+    `Annual opex estimate: ${formatOptionalCurrency(report.localInfrastructureSizing.financials.annualOpexEstimateUsd)}; support ${formatOptionalCurrency(report.localInfrastructureSizing.financials.annualSupportEstimateUsd)}; power/cooling ${formatOptionalCurrency(report.localInfrastructureSizing.financials.annualPowerCoolingEstimateUsd)}; software ${formatOptionalCurrency(report.localInfrastructureSizing.financials.annualSoftwareEstimateUsd)}`,
+    `Annual cloud spend displacement: ${formatOptionalCurrency(report.localInfrastructureSizing.financials.annualCloudSpendDisplacementUsd)}`,
+    `Payback from cloud displacement: ${
+      report.localInfrastructureSizing.financials.paybackMonthsCloudSpendOnly === null
+        ? "not justified"
+        : `${report.localInfrastructureSizing.financials.paybackMonthsCloudSpendOnly} months`
+    }`,
+    `Annual subscription revenue potential: ${formatOptionalCurrency(report.localInfrastructureSizing.financials.annualSubscriptionRevenuePotentialUsd)}`,
+    `Payback from reserved-capacity product revenue: ${
+      report.localInfrastructureSizing.financials.paybackMonthsRevenueCapacity === null
+        ? "needs assumptions"
+        : `${report.localInfrastructureSizing.financials.paybackMonthsRevenueCapacity} months`
+    }`,
+    ...report.localInfrastructureSizing.financials.notes.map((note) => `Financial note: ${note}`),
+    "First-server quote checklist",
+    ...report.localInfrastructureSizing.procurementChecklist.slice(0, 10),
+    "Benchmark plan",
+    report.localInfrastructureSizing.benchmarkPlan.summary,
+    `Benchmark import path: ${report.localInfrastructureSizing.benchmarkPlan.benchmarkDataPath}`,
+    ...report.localInfrastructureSizing.benchmarkPlan.requiredMeasurements
+      .slice(0, 8)
+      .map((measurement) => `Measure: ${measurement}`),
+    "Benchmark gates",
+    `Production routing blocked: ${report.localInfrastructureSizing.productionRoutingBlocked ? "yes" : "no"}`,
+    ...report.localInfrastructureSizing.benchmarkGates.map(
+      (gate) =>
+        `${gate.name}: ${gate.status}; required for ${gate.requiredForPhase}; minimum samples ${gate.minimumSampleCount}; metrics ${gate.requiredMetrics.join(", ")}; fail action ${gate.failAction}`
+    ),
+    "Scale ramp",
+    ...report.localInfrastructureSizing.scaleRamp.map(
+      (phase) =>
+        `${phase.name}: target ${phase.targetLocalCoveragePct}% local coverage, ${phase.targetProjectLanes} project lanes; trigger ${phase.trigger}`
+    ),
+    "Data quality warnings",
+    ...(report.localInfrastructureSizing.dataQualityWarnings.length > 0
+      ? report.localInfrastructureSizing.dataQualityWarnings
+      : ["No local infrastructure data-quality warnings emitted."]),
     "",
     "Forensic reviewer consensus",
     `Run: ${report.forensic.runId ?? "not available"}; status: ${report.forensic.status ?? "not available"}; updated: ${
@@ -780,6 +1406,10 @@ function forensicFindingLines(findings: Array<Record<string, unknown>>): string[
 
 function formatCurrency(value: number): string {
   return `$${value.toLocaleString(undefined, { maximumFractionDigits: 2, minimumFractionDigits: 2 })}`;
+}
+
+function formatOptionalCurrency(value: number | null): string {
+  return value === null ? "quote required" : formatCurrency(value);
 }
 
 function formatNumber(value: number): string {

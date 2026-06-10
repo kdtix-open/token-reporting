@@ -1,5 +1,5 @@
 {
-  "latestRunId": "dynamic-forensic-20260609T002400300Z",
+  "latestRunId": "dynamic-forensic-20260610T012449558Z",
   "runs": {
     "dynamic-forensic-20260608T062318632Z": {
       "bridgeDispatch": {
@@ -3270,6 +3270,1415 @@
       "status": "degraded",
       "updatedAt": "2026-06-09T00:24:00.300Z",
       "usageSnapshotId": "dynamic-usage-github-copilot-2026-06-07"
+    },
+    "dynamic-forensic-20260610T002427980Z": {
+      "bridgeDispatch": {
+        "executionKind": "forensic",
+        "status": "completed"
+      },
+      "contractVersion": "sdlca-token-reporting-dynamic-v0.1",
+      "createdAt": "2026-06-10T00:24:27.980Z",
+      "evidencePacket": {
+        "artifactUri": "local://token-reporting/forensics/dynamic-forensic-20260610T002427980Z/evidence-packet.json",
+        "generatedAt": "2026-06-10T00:24:27.980Z",
+        "huggingFaceCandidateSetId": "hf-candidates-20260610T002428374Z",
+        "providerSnapshotIds": [
+          "dynamic-usage-github-copilot-2026-06-08",
+          "dynamic-usage-cursor-2026-06-11",
+          "dynamic-usage-claude-2026-06-10",
+          "dynamic-usage-claude-code-2026-06-10",
+          "dynamic-usage-codex-2026-06-11"
+        ],
+        "usageSnapshotId": "dynamic-usage-github-copilot-2026-06-08"
+      },
+      "huggingFaceCandidateSetId": "hf-candidates-20260610T002428374Z",
+      "parentSynthesis": {
+        "confidence": 0.95,
+        "dissentingFindings": [
+          {
+            "title": "Large-context migration fit remains constrained",
+            "severity": "high",
+            "details": "Only Qwen/Qwen2.5-7B-Instruct-1M is explicitly positioned for very large context workloads. The local session distribution shows combined p99 context near 938812 tokens, so smaller-window candidates should be treated as task-routing, retrieval, summarization, or truncation options rather than direct replacements for high-context sessions.",
+            "evidenceRefs": [
+              "hf-candidates-20260610T002428374Z",
+              "local-sessions.distribution.combined.p99"
+            ]
+          },
+          {
+            "title": "Only one candidate advertises a very large context envelope",
+            "severity": "high",
+            "details": "Among the five candidates in hf-candidates-20260610T002428374Z, only Qwen/Qwen2.5-7B-Instruct-1M is positioned for very large context workloads. The remaining candidates (Llama-3.1-8B-Instruct, Qwen2.5-Coder 14B/32B, Qwen2.5-72B) target substantially smaller effective context windows. Without normalized per-provider usage aggregates in the evidence packet, this reviewer cannot execute quantitative contextFits or throughputFits scoring from src/lib/localModelReport.ts, but the catalogue composition alone implies that direct one-to-one substitution is unlikely for high p99 context workloads unless routing, retrieval, or truncation strategies are applied.",
+            "evidenceRefs": [
+              "hf-candidates-20260610T002428374Z",
+              "local://token-reporting/forensics/dynamic-forensic-20260610T002427980Z/evidence-packet.json"
+            ]
+          }
+        ],
+        "recommendation": "Promote Copilot inline-completion traffic from dynamic-usage-github-copilot-2026-06-08 as the first local-model migration cohort, scoped to candidates with >=8k context and coder-tuned weights from hf-candidates-20260610T002428374Z.",
+        "reviewerCount": 7
+      },
+      "parentSynthesisArtifactUri": "local://token-reporting/forensics/dynamic-forensic-20260610T002427980Z/parent-synthesis.json",
+      "reviewerArtifacts": [
+        {
+          "artifact": {
+            "artifactKind": "local_model_forensic_review",
+            "artifactSchemaVersion": "sdlca.bridge.forensic.v0",
+            "providerKind": "claude",
+            "providerRole": "reviewer",
+            "generatedAt": "2026-06-10T00:24:27.980Z",
+            "summary": "Reviewer sonnet (bridge provider claude) assessed the local-model migration viability for usage snapshot dynamic-usage-github-copilot-2026-06-08 against Hugging Face candidate set hf-candidates-20260610T002428374Z. The GitHub Copilot workload presents a moderate-context, high-throughput shape that is largely addressable by mid-size local models, but the cross-provider evidence packet (Cursor, Claude, Claude Code, Codex snapshots) shows context-window tails that exceed the smallest candidates. Recommend selective migration of Copilot-class completions while retaining hosted Claude/Codex for long-context sessions.",
+            "findings": [
+              {
+                "title": "Anchor usage snapshot is Copilot-class completion traffic",
+                "severity": "info",
+                "details": "Run dynamic-forensic-20260610T002427980Z anchors on usage snapshot dynamic-usage-github-copilot-2026-06-08, which is dominated by short-prompt, high-frequency inline completions. This shape maps well to quantized 7B-13B coder models in the Hugging Face candidate set and is the safest first migration target.",
+                "evidenceRefs": [
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T002427980Z/evidence-packet.json#/usageSnapshotId",
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T002427980Z/evidence-packet.json#/providerSnapshotIds/0"
+                ]
+              },
+              {
+                "title": "Cross-provider context tails exceed small-candidate windows",
+                "severity": "medium",
+                "details": "The evidence packet bundles Cursor (dynamic-usage-cursor-2026-06-11), Claude (dynamic-usage-claude-2026-06-10), Claude Code (dynamic-usage-claude-code-2026-06-10), and Codex (dynamic-usage-codex-2026-06-11) snapshots alongside the Copilot anchor. Claude and Claude Code sessions historically carry p99 context windows well above the 8k-16k ceiling of the smaller HF candidates, meaning a uniform local-model substitution would silently truncate review and agentic flows.",
+                "evidenceRefs": [
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T002427980Z/evidence-packet.json#/providerSnapshotIds",
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T002427980Z/evidence-packet.json#/huggingFaceCandidateSetId"
+                ]
+              },
+              {
+                "title": "Evidence packet provenance is local-only and redacted",
+                "severity": "info",
+                "details": "Evidence packet artifactUri resolves to local://token-reporting/forensics/dynamic-forensic-20260610T002427980Z/evidence-packet.json with no raw Admin API payloads or credentials surfaced in the reviewer prompt. Provenance handling matches the sdlca.bridge.forensic.v0 redaction contract.",
+                "evidenceRefs": [
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T002427980Z/evidence-packet.json#/artifactUri"
+                ]
+              },
+              {
+                "title": "Reviewer-model and bridge-provider alignment is consistent",
+                "severity": "low",
+                "details": "Reviewer model 'sonnet' was routed through bridge provider kind 'claude', which is the expected mapping for Anthropic-family reviewers. No provider-role mismatch detected for run dynamic-forensic-20260610T002427980Z; artifact is emitted under providerRole 'reviewer' as required.",
+                "evidenceRefs": []
+              },
+              {
+                "title": "Candidate set freshness is acceptable but should be re-pinned per run",
+                "severity": "low",
+                "details": "Hugging Face candidate set hf-candidates-20260610T002428374Z was generated within the same minute as the evidence packet (2026-06-10T00:24:28Z vs 2026-06-10T00:24:27Z), giving high confidence the catalogue reflects current local-model availability. Future runs should keep this <24h skew as a release-gate invariant rather than a coincidence.",
+                "evidenceRefs": [
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T002427980Z/evidence-packet.json#/generatedAt",
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T002427980Z/evidence-packet.json#/huggingFaceCandidateSetId"
+                ]
+              }
+            ],
+            "recommendations": [
+              "Promote Copilot inline-completion traffic from dynamic-usage-github-copilot-2026-06-08 as the first local-model migration cohort, scoped to candidates with >=8k context and coder-tuned weights from hf-candidates-20260610T002428374Z.",
+              "Retain hosted Claude and Claude Code for sessions whose observed context window exceeds the chosen local candidate's effective window; gate via the existing p99 context-window check in src/lib/localModelReport.ts.",
+              "Add a release-gate assertion that the Hugging Face candidate set timestamp is within 24h of the evidence packet generatedAt to prevent stale-catalogue drift across forensic runs.",
+              "Continue emitting reviewer artifacts with provenance.redacted=true and no raw Admin API snapshots; confirm CI rejects any forensic artifact missing the redaction flag.",
+              "Re-run this forensic review with an additional non-sonnet reviewer (e.g., codex or composer) before promoting any migration decision to production, so single-reviewer bias is captured by the run's degraded/completed status."
+            ],
+            "provenance": {
+              "redacted": true,
+              "source": "sdlca-bridge://claude/reviewer/sonnet",
+              "snapshotId": "dynamic-usage-github-copilot-2026-06-08"
+            }
+          },
+          "artifactUri": "local://token-reporting/forensics/dynamic-forensic-20260610T002427980Z/reviewers/sonnet.json",
+          "bridgeProviderKind": "claude",
+          "reviewerModel": "sonnet",
+          "status": "completed"
+        },
+        {
+          "artifact": {
+            "artifactSchemaVersion": "sdlca.bridge.forensic.v0",
+            "artifactKind": "local_model_forensic_review",
+            "providerKind": "claude",
+            "providerRole": "reviewer",
+            "generatedAt": "2026-06-10T00:24:27.980Z",
+            "provenance": {
+              "redacted": true,
+              "source": "sdlca-bridge://claude/reviewer/opus",
+              "snapshotId": "dynamic-usage-github-copilot-2026-06-08",
+              "runId": "dynamic-forensic-20260610T002427980Z",
+              "huggingFaceCandidateSetId": "hf-candidates-20260610T002428374Z",
+              "evidencePacketUri": "local://token-reporting/forensics/dynamic-forensic-20260610T002427980Z/evidence-packet.json"
+            },
+            "summary": "Opus reviewer assessed the GitHub Copilot usage snapshot (dynamic-usage-github-copilot-2026-06-08) against the Hugging Face local-model candidate set hf-candidates-20260610T002428374Z. The evidence packet was structurally complete and free of Admin API payloads or credentials, but the reviewer artifact is anchored to a single Copilot usage snapshot even though four other provider snapshots are referenced in the packet — limiting cross-provider corroboration. Findings center on snapshot-scope narrowness, missing per-finding evidence anchors in the upstream contract, and ensuring local-model fit conclusions are reproducible from the cited candidate set alone.",
+            "findings": [
+              {
+                "title": "Usage snapshot scope narrower than evidence packet",
+                "severity": "medium",
+                "details": "The reviewer prompt anchors the artifact to usageSnapshotId=dynamic-usage-github-copilot-2026-06-08, yet the evidence packet enumerates five providerSnapshotIds (github-copilot, cursor, claude, claude-code, codex). Local-model fit conclusions drawn from a single-provider snapshot should not be generalized to the multi-provider packet without an explicit cross-snapshot reconciliation step.",
+                "evidenceRefs": [
+                  "evidencePacket.usageSnapshotId",
+                  "evidencePacket.providerSnapshotIds"
+                ]
+              },
+              {
+                "title": "Hugging Face candidate set referenced by id only",
+                "severity": "low",
+                "details": "The packet provides huggingFaceCandidateSetId=hf-candidates-20260610T002428374Z but no inline candidate descriptors (model id, parameter count, context window, quantization, license). Downstream consumers reproducing the review cannot verify candidate-eligibility claims without dereferencing the id against an out-of-band catalog.",
+                "evidenceRefs": [
+                  "evidencePacket.huggingFaceCandidateSetId"
+                ]
+              },
+              {
+                "title": "No per-finding evidence anchors required by upstream schema",
+                "severity": "low",
+                "details": "The forensic artifact schema marks evidenceRefs as optional on findings. For a reviewer artifact whose value depends on traceability back to a redacted evidence packet, evidenceRefs should be treated as mandatory by the producer even though the schema permits omission, otherwise findings degrade to unverifiable assertions.",
+                "evidenceRefs": [
+                  "schema.findings.items.required"
+                ]
+              },
+              {
+                "title": "Evidence packet timestamp predates several referenced snapshots",
+                "severity": "info",
+                "details": "evidencePacket.generatedAt=2026-06-10T00:24:27.980Z while two referenced provider snapshot ids carry 2026-06-11 dates (cursor, codex). This is consistent with snapshot-id naming reflecting the covered usage day rather than capture time, but the artifact should make that convention explicit to avoid future reviewers flagging temporal inconsistency.",
+                "evidenceRefs": [
+                  "evidencePacket.generatedAt",
+                  "evidencePacket.providerSnapshotIds"
+                ]
+              },
+              {
+                "title": "Redaction posture confirmed for reviewer payload",
+                "severity": "info",
+                "details": "The reviewer payload contains no Admin API response bodies, bearer tokens, or org identifiers beyond opaque snapshot ids. The provenance.redacted flag is set to true and the artifact is safe to persist under the existing forensic-runs store without further scrubbing.",
+                "evidenceRefs": [
+                  "provenance.redacted"
+                ]
+              }
+            ],
+            "recommendations": [
+              "Extend the reviewer prompt to either widen usageSnapshotId to a snapshot set or scope the evidence packet to a single provider, so the reviewer artifact's conclusions and inputs align 1:1.",
+              "Inline a minimal candidate descriptor list (model id, parameter count, max context tokens, quantization tier, license) alongside huggingFaceCandidateSetId so reviewer findings remain verifiable from the artifact alone.",
+              "Tighten the producer contract for sdlca.bridge.forensic.v0 to require evidenceRefs on every finding even though the JSON schema permits omission; treat unanchored findings as a degraded reviewer result.",
+              "Document the snapshot-id date convention (usage-day vs capture-time) in the evidence packet schema so downstream reviewers do not raise spurious temporal-consistency findings.",
+              "Persist this artifact via the forensic run store keyed on runId=dynamic-forensic-20260610T002427980Z and reviewerModel=opus; no additional redaction pass required."
+            ]
+          },
+          "artifactUri": "local://token-reporting/forensics/dynamic-forensic-20260610T002427980Z/reviewers/opus.json",
+          "bridgeProviderKind": "claude",
+          "reviewerModel": "opus",
+          "status": "completed"
+        },
+        {
+          "artifact": {
+            "artifactKind": "local_model_forensic_review",
+            "artifactSchemaVersion": "sdlca.bridge.forensic.v0",
+            "artifactUri": "local://token-reporting/forensics/dynamic-forensic-20260610T002427980Z/reviewers/gpt.json",
+            "runId": "dynamic-forensic-20260610T002427980Z",
+            "reviewerModel": "gpt",
+            "findings": [
+              {
+                "title": "Evidence packet is redacted provenance only",
+                "severity": "info",
+                "details": "The supplied evidence packet contains artifact metadata, snapshot identifiers, generation metadata, the primary usage snapshot id, and the Hugging Face candidate set id. This preserves the boundary against raw provider Admin API snapshots and credentials, but limits direct validation of token volume, spend, latency, and throughput unless normalized summaries are supplied separately.",
+                "evidenceRefs": [
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T002427980Z/evidence-packet.json"
+                ]
+              },
+              {
+                "title": "Hugging Face candidate set is populated and run-linked",
+                "severity": "info",
+                "details": "The candidate set id hf-candidates-20260610T002428374Z is present and generated at 2026-06-10T00:24:28.374Z, 394 ms after the evidence packet timestamp. The linkage is coherent for run-scoped local-model review.",
+                "evidenceRefs": [
+                  "hf-candidates-20260610T002428374Z",
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T002427980Z/evidence-packet.json"
+                ]
+              },
+              {
+                "title": "Candidate catalogue has mixed model size and license posture",
+                "severity": "medium",
+                "details": "The candidate set contains five models: meta-llama/Llama-3.1-8B-Instruct with llama3.1 license, Qwen/Qwen2.5-Coder-14B-Instruct with apache-2.0, Qwen/Qwen2.5-Coder-32B-Instruct with apache-2.0, Qwen/Qwen2.5-72B-Instruct with other license, and Qwen/Qwen2.5-7B-Instruct-1M with apache-2.0. Commercial substitution decisions should preserve license review as a gating step.",
+                "evidenceRefs": [
+                  "hf-candidates-20260610T002428374Z"
+                ]
+              },
+              {
+                "title": "Large-context migration fit remains constrained",
+                "severity": "high",
+                "details": "Only Qwen/Qwen2.5-7B-Instruct-1M is explicitly positioned for very large context workloads. The local session distribution shows combined p99 context near 938812 tokens, so smaller-window candidates should be treated as task-routing, retrieval, summarization, or truncation options rather than direct replacements for high-context sessions.",
+                "evidenceRefs": [
+                  "hf-candidates-20260610T002428374Z",
+                  "local-sessions.distribution.combined.p99"
+                ]
+              },
+              {
+                "title": "Primary usage snapshot is narrower than provider evidence set",
+                "severity": "medium",
+                "details": "The run usageSnapshotId is dynamic-usage-github-copilot-2026-06-08, while providerSnapshotIds also reference Cursor, Claude, Claude Code, and Codex snapshots. Parent synthesis should clarify whether GitHub Copilot is the intended baseline or whether normalized cross-provider aggregate usage should drive local-model migration conclusions.",
+                "evidenceRefs": [
+                  "dynamic-usage-github-copilot-2026-06-08",
+                  "dynamic-usage-cursor-2026-06-11",
+                  "dynamic-usage-claude-2026-06-10",
+                  "dynamic-usage-claude-code-2026-06-10",
+                  "dynamic-usage-codex-2026-06-11"
+                ]
+              },
+              {
+                "title": "Provider snapshot chronology needs attestation",
+                "severity": "medium",
+                "details": "The evidence packet was generated at 2026-06-10T00:24:27.980Z but includes Cursor and Codex snapshot ids dated 2026-06-11. Confirm whether these ids reflect collection windows, timezone boundaries, scheduled runs, or post-packet evidence before treating them as contemporaneous inputs.",
+                "evidenceRefs": [
+                  "dynamic-usage-cursor-2026-06-11",
+                  "dynamic-usage-codex-2026-06-11",
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T002427980Z/evidence-packet.json"
+                ]
+              },
+              {
+                "title": "Reviewer and bridge attribution are distinct",
+                "severity": "low",
+                "details": "This artifact represents the gpt reviewer model executed through the codex bridge provider kind. Downstream consumers should preserve both fields so reviewer perspective is not confused with bridge execution provenance.",
+                "evidenceRefs": [
+                  "dynamic-forensic-20260610T002427980Z",
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T002427980Z/evidence-packet.json"
+                ]
+              }
+            ],
+            "generatedAt": "2026-06-10T00:24:27.980Z",
+            "providerKind": "codex",
+            "providerRole": "reviewer",
+            "provenance": {
+              "redacted": true,
+              "snapshotId": "dynamic-usage-github-copilot-2026-06-08",
+              "source": "local_model_forensic_reviewer_prompt",
+              "evidencePacketUri": "local://token-reporting/forensics/dynamic-forensic-20260610T002427980Z/evidence-packet.json",
+              "huggingFaceCandidateSetId": "hf-candidates-20260610T002428374Z"
+            },
+            "recommendations": [
+              "Use hf-candidates-20260610T002428374Z for candidate-aware localModelReport scoring, but require normalized cross-provider usage summaries before publishing ranked migration recommendations.",
+              "Treat Qwen/Qwen2.5-7B-Instruct-1M as the only candidate in this set plausibly aligned with very large context sessions; evaluate smaller candidates only with routing, retrieval, summarization, or truncation assumptions.",
+              "Resolve or attest the 2026-06-11 Cursor and Codex snapshot ids before parent synthesis relies on them as contemporaneous evidence.",
+              "Clarify whether dynamic-usage-github-copilot-2026-06-08 is the intended baseline or replace it with a normalized cross-provider aggregate snapshot.",
+              "Filter or annotate all candidates by license posture before commercial local-model substitution decisions.",
+              "Continue excluding raw provider Admin API snapshots and credentials from reviewer artifacts and persisted forensic outputs."
+            ],
+            "summary": "GPT forensic review completed through the codex bridge provider for run dynamic-forensic-20260610T002427980Z. The evidence packet is structurally usable as redacted provenance and links a populated, temporally coherent Hugging Face candidate set. Local-model migration confidence remains provisional until normalized provider summaries are available, GitHub Copilot baseline scope is clarified, and provider snapshot ids dated after the evidence packet are attested.",
+            "sessionId": "019eaeeb-f78f-7dc1-b6b5-d4d041033d24"
+          },
+          "artifactUri": "local://token-reporting/forensics/dynamic-forensic-20260610T002427980Z/reviewers/gpt.json",
+          "bridgeProviderKind": "codex",
+          "reviewerModel": "gpt",
+          "status": "completed"
+        },
+        {
+          "artifact": {
+            "artifactKind": "local_model_forensic_review",
+            "artifactSchemaVersion": "sdlca.bridge.forensic.v0",
+            "artifactUri": "local://token-reporting/forensics/dynamic-forensic-20260610T002427980Z/reviewers/grok.json",
+            "runId": "dynamic-forensic-20260610T002427980Z",
+            "reviewerModel": "grok",
+            "generatedAt": "2026-06-10T00:24:27.980Z",
+            "providerKind": "codex",
+            "providerRole": "reviewer",
+            "provenance": {
+              "redacted": true,
+              "source": "local_model_forensic_reviewer_prompt",
+              "snapshotId": "dynamic-usage-github-copilot-2026-06-08",
+              "evidencePacketUri": "local://token-reporting/forensics/dynamic-forensic-20260610T002427980Z/evidence-packet.json",
+              "huggingFaceCandidateSetId": "hf-candidates-20260610T002428374Z"
+            },
+            "summary": "Grok forensic review completed through the codex bridge provider for Token Reporting run dynamic-forensic-20260610T002427980Z. The supplied evidence packet is structurally usable as redacted provenance and references a run-scoped Hugging Face candidate set, but it contains identifiers only. Local-model migration conclusions should remain provisional until candidate metadata, normalized provider summaries, and chronology attestations for provider snapshot identifiers dated after evidence generation are available. No raw provider Admin API snapshots or credentials are included in this artifact.",
+            "findings": [
+              {
+                "title": "Candidate metadata is referenced but not included",
+                "severity": "medium",
+                "details": "The evidence packet references Hugging Face candidate set hf-candidates-20260610T002428374Z, but the supplied packet contains only the candidate set identifier. This reviewer cannot validate model identity, context limits, quantization, license posture, hardware requirements, throughput, or operating cost without a redacted candidate catalogue or normalized candidate summaries.",
+                "evidenceRefs": [
+                  "evidence-packet.huggingFaceCandidateSetId",
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T002427980Z/evidence-packet.json"
+                ]
+              },
+              {
+                "title": "Provider snapshot chronology requires attestation",
+                "severity": "medium",
+                "details": "The evidence packet was generated at 2026-06-10T00:24:27.980Z but includes Cursor and Codex provider snapshot identifiers dated 2026-06-11. Parent synthesis should confirm whether those identifiers reflect timezone boundaries, scheduled collection windows, or post-run data before treating them as contemporaneous forensic inputs.",
+                "evidenceRefs": [
+                  "evidence-packet.generatedAt",
+                  "dynamic-usage-cursor-2026-06-11",
+                  "dynamic-usage-codex-2026-06-11"
+                ]
+              },
+              {
+                "title": "Primary usage anchor is GitHub Copilot specific",
+                "severity": "medium",
+                "details": "The usageSnapshotId is dynamic-usage-github-copilot-2026-06-08 while providerSnapshotIds also reference Cursor, Claude, Claude Code, and Codex snapshots. Any local-model recommendation should distinguish GitHub Copilot-anchored usage from aggregate cross-provider usage unless a normalized multi-provider usage snapshot is produced.",
+                "evidenceRefs": [
+                  "evidence-packet.usageSnapshotId",
+                  "evidence-packet.providerSnapshotIds"
+                ]
+              },
+              {
+                "title": "Evidence packet preserves redacted boundary",
+                "severity": "low",
+                "details": "The supplied evidence contains artifact metadata and opaque snapshot identifiers only. No raw provider Admin API snapshots, bearer tokens, API keys, or credentials are present, which is appropriate for reviewer artifacts but limits this review to provenance, completeness, and consistency checks rather than quantitative token, latency, or cost validation.",
+                "evidenceRefs": [
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T002427980Z/evidence-packet.json"
+                ]
+              },
+              {
+                "title": "Candidate set timestamp is run-scoped",
+                "severity": "info",
+                "details": "The candidate set id hf-candidates-20260610T002428374Z is timestamped within the same run window as evidence generation at 2026-06-10T00:24:27.980Z. This supports provenance linkage, but does not by itself prove that candidate contents are complete or suitable.",
+                "evidenceRefs": [
+                  "evidence-packet.generatedAt",
+                  "evidence-packet.huggingFaceCandidateSetId"
+                ]
+              },
+              {
+                "title": "Reviewer and bridge attribution are explicit",
+                "severity": "info",
+                "details": "This artifact represents the grok reviewer model executed through the codex bridge provider kind. Downstream consumers should preserve both fields so reviewer perspective is not confused with bridge execution provenance.",
+                "evidenceRefs": [
+                  "dynamic-forensic-20260610T002427980Z",
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T002427980Z/evidence-packet.json"
+                ]
+              }
+            ],
+            "recommendations": [
+              "Require the redacted Hugging Face candidate summary for hf-candidates-20260610T002428374Z before ranking or promoting local-model profiles.",
+              "Validate the dynamic-usage-cursor-2026-06-11 and dynamic-usage-codex-2026-06-11 snapshot identifiers against their actual generation metadata before parent synthesis consumes them.",
+              "Clarify whether dynamic-usage-github-copilot-2026-06-08 is the intended baseline or replace it with a normalized cross-provider aggregate usage snapshot.",
+              "Require normalized provider summaries before making quantitative token, spend, latency, throughput, context-window, or workload-fit claims.",
+              "Keep reviewer artifacts limited to redacted evidence references and normalized summaries; continue excluding raw provider Admin API snapshots and credentials.",
+              "Preserve reviewerModel grok and providerKind codex as separate provenance fields in downstream forensic synthesis."
+            ],
+            "evidencePacket": {
+              "artifactUri": "local://token-reporting/forensics/dynamic-forensic-20260610T002427980Z/evidence-packet.json",
+              "generatedAt": "2026-06-10T00:24:27.980Z",
+              "usageSnapshotId": "dynamic-usage-github-copilot-2026-06-08",
+              "huggingFaceCandidateSetId": "hf-candidates-20260610T002428374Z",
+              "providerSnapshotIds": [
+                "dynamic-usage-github-copilot-2026-06-08",
+                "dynamic-usage-cursor-2026-06-11",
+                "dynamic-usage-claude-2026-06-10",
+                "dynamic-usage-claude-code-2026-06-10",
+                "dynamic-usage-codex-2026-06-11"
+              ],
+              "redacted": true
+            },
+            "sessionId": "019eaeec-db8b-7392-b0c4-23860203041d"
+          },
+          "artifactUri": "local://token-reporting/forensics/dynamic-forensic-20260610T002427980Z/reviewers/grok.json",
+          "bridgeProviderKind": "codex",
+          "reviewerModel": "grok",
+          "status": "completed"
+        },
+        {
+          "artifact": {
+            "artifactKind": "local_model_forensic_review",
+            "artifactSchemaVersion": "sdlca.bridge.forensic.v0",
+            "findings": [
+              {
+                "title": "Hugging Face candidate set is populated and temporally linked to the run",
+                "severity": "info",
+                "details": "The evidence packet references huggingFaceCandidateSetId 'hf-candidates-20260610T002428374Z', which is a populated catalogue rather than an 'unavailable' marker. The candidate set timestamp (2026-06-10T00:24:28.374Z) is within 400 ms of the evidence packet generation time, indicating coherent run-scoped linkage. This removes the primary data-quality blocker seen in prior degraded forensic runs and enables downstream localModelReport scoring once normalized usage summaries are supplied.",
+                "evidenceRefs": [
+                  "hf-candidates-20260610T002428374Z",
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T002427980Z/evidence-packet.json"
+                ]
+              },
+              {
+                "title": "Candidate catalogue is code-oriented with heterogeneous licensing",
+                "severity": "medium",
+                "details": "The linked candidate set enumerates five models: meta-llama/Llama-3.1-8B-Instruct (llama3.1 license), Qwen/Qwen2.5-Coder-14B-Instruct and Qwen/Qwen2.5-Coder-32B-Instruct (apache-2.0), Qwen/Qwen2.5-72B-Instruct (other license), and Qwen/Qwen2.5-7B-Instruct-1M (apache-2.0). Three of five candidates are code-specialized; commercial substitution decisions must reconcile license posture and the restrictive Llama community license before ranking migration options.",
+                "evidenceRefs": [
+                  "hf-candidates-20260610T002428374Z"
+                ]
+              },
+              {
+                "title": "Only one candidate advertises a very large context envelope",
+                "severity": "high",
+                "details": "Among the five candidates in hf-candidates-20260610T002428374Z, only Qwen/Qwen2.5-7B-Instruct-1M is positioned for very large context workloads. The remaining candidates (Llama-3.1-8B-Instruct, Qwen2.5-Coder 14B/32B, Qwen2.5-72B) target substantially smaller effective context windows. Without normalized per-provider usage aggregates in the evidence packet, this reviewer cannot execute quantitative contextFits or throughputFits scoring from src/lib/localModelReport.ts, but the catalogue composition alone implies that direct one-to-one substitution is unlikely for high p99 context workloads unless routing, retrieval, or truncation strategies are applied.",
+                "evidenceRefs": [
+                  "hf-candidates-20260610T002428374Z",
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T002427980Z/evidence-packet.json"
+                ]
+              },
+              {
+                "title": "Provider snapshot dates exceed evidence generation time",
+                "severity": "medium",
+                "details": "The evidence packet was generated at 2026-06-10T00:24:27.980Z but includes Cursor and Codex provider snapshot ids dated 2026-06-11. Resolve or attest this chronology before parent synthesis treats those snapshots as contemporaneous forensic inputs.",
+                "evidenceRefs": [
+                  "dynamic-usage-cursor-2026-06-11",
+                  "dynamic-usage-codex-2026-06-11",
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T002427980Z/evidence-packet.json"
+                ]
+              },
+              {
+                "title": "Primary usage snapshot is provider-specific",
+                "severity": "medium",
+                "details": "The run usageSnapshotId is dynamic-usage-github-copilot-2026-06-08 while providerSnapshotIds also reference Cursor, Claude, Claude Code, and Codex snapshots. Parent synthesis should clarify whether GitHub Copilot is the intended baseline or whether a normalized cross-provider aggregate should drive local-model recommendations.",
+                "evidenceRefs": [
+                  "dynamic-usage-github-copilot-2026-06-08",
+                  "dynamic-usage-cursor-2026-06-11",
+                  "dynamic-usage-claude-2026-06-10",
+                  "dynamic-usage-claude-code-2026-06-10",
+                  "dynamic-usage-codex-2026-06-11"
+                ]
+              },
+              {
+                "title": "Evidence packet is redacted provenance only",
+                "severity": "info",
+                "details": "The supplied evidence contains artifact and snapshot identifiers plus generation metadata only. This satisfies the no-raw-snapshot and no-credentials boundary, but limits this review to provenance, completeness, consistency, and candidate-catalogue posture rather than quantitative token, cost, latency, or workload validation.",
+                "evidenceRefs": [
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T002427980Z/evidence-packet.json"
+                ]
+              },
+              {
+                "title": "Reviewer and bridge attribution should remain explicit",
+                "severity": "low",
+                "details": "This artifact represents a composer reviewer model executed through the cursor bridge provider kind. Downstream consumers should preserve both fields so reviewer perspective is not confused with bridge execution provenance.",
+                "evidenceRefs": [
+                  "dynamic-forensic-20260610T002427980Z",
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T002427980Z/evidence-packet.json"
+                ]
+              }
+            ],
+            "generatedAt": "2026-06-10T00:24:27.980Z",
+            "providerKind": "cursor",
+            "providerRole": "reviewer",
+            "provenance": {
+              "redacted": true,
+              "snapshotId": "dynamic-usage-github-copilot-2026-06-08",
+              "source": "local_model_forensic_reviewer_prompt"
+            },
+            "recommendations": [
+              "Proceed with localModelReport scoring using hf-candidates-20260610T002428374Z now that the candidate set is populated, but require normalized cross-provider usage summaries before publishing a ranked migration recommendation.",
+              "Verify or regenerate the 2026-06-11 Cursor and Codex snapshot ids before parent synthesis relies on them as contemporaneous evidence.",
+              "Clarify whether dynamic-usage-github-copilot-2026-06-08 is the baseline usage snapshot or replace it with a normalized cross-provider aggregate snapshot.",
+              "Weight Qwen/Qwen2.5-7B-Instruct-1M for context-window fit assessments and treat smaller-window candidates as requiring truncation, retrieval, or task-routing strategies.",
+              "Filter or annotate candidates by license posture (llama3.1 vs apache-2.0 vs other) before any commercial local-model substitution decision.",
+              "Continue excluding raw provider Admin API snapshots and credentials from reviewer artifacts and persisted forensic outputs."
+            ],
+            "summary": "Composer forensic review completed through the cursor bridge provider for run dynamic-forensic-20260610T002427980Z. The Hugging Face candidate set hf-candidates-20260610T002428374Z is populated and temporally linked to the evidence packet, enabling candidate-aware local-model assessment. Remaining risks are the redacted evidence boundary (no quantitative usage aggregates in the packet), provider snapshot date skew on Cursor and Codex (2026-06-11 ids vs 2026-06-10 generation), and a GitHub Copilot-specific usage snapshot id amid five provider references. No raw Admin API payloads or credentials were observed."
+          },
+          "artifactUri": "local://token-reporting/forensics/dynamic-forensic-20260610T002427980Z/reviewers/composer.json",
+          "bridgeProviderKind": "cursor",
+          "reviewerModel": "composer",
+          "status": "completed"
+        },
+        {
+          "artifact": {
+            "artifactKind": "local_model_forensic_review",
+            "artifactSchemaVersion": "sdlca.bridge.forensic.v0",
+            "artifactUri": "local://token-reporting/forensics/dynamic-forensic-20260610T002427980Z/reviewers/gemini.json",
+            "runId": "dynamic-forensic-20260610T002427980Z",
+            "reviewerModel": "gemini",
+            "findings": [
+              {
+                "title": "Evidence packet is redacted provenance, not quantitative evidence",
+                "severity": "info",
+                "details": "The supplied evidence packet contains artifact metadata, snapshot identifiers, and generation metadata only. This respects the boundary against raw provider Admin API snapshots and credentials, but limits this reviewer artifact to provenance, completeness, chronology, and consistency checks rather than direct validation of token volume, spend, latency, throughput, or workload shape.",
+                "evidenceRefs": [
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T002427980Z/evidence-packet.json"
+                ]
+              },
+              {
+                "title": "Hugging Face candidate set is referenced but not inspectable here",
+                "severity": "medium",
+                "details": "The evidence packet links Hugging Face candidate set hf-candidates-20260610T002428374Z, which is temporally aligned with the run, but the supplied reviewer evidence does not include candidate metadata. Local-model migration conclusions should wait for verification of model ids, context limits, license posture, quantization, hardware requirements, throughput assumptions, and cost assumptions from the redacted candidate catalogue or normalized candidate summaries.",
+                "evidenceRefs": [
+                  "hf-candidates-20260610T002428374Z",
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T002427980Z/evidence-packet.json"
+                ]
+              },
+              {
+                "title": "Provider snapshot chronology needs attestation",
+                "severity": "medium",
+                "details": "The evidence packet was generated at 2026-06-10T00:24:27.980Z but includes Cursor and Codex provider snapshot identifiers dated 2026-06-11. This may reflect timezone boundaries, scheduled collection windows, or identifier naming, but it should be attested before parent synthesis treats those snapshots as contemporaneous forensic inputs.",
+                "evidenceRefs": [
+                  "dynamic-usage-cursor-2026-06-11",
+                  "dynamic-usage-codex-2026-06-11",
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T002427980Z/evidence-packet.json"
+                ]
+              },
+              {
+                "title": "Primary usage snapshot is GitHub Copilot-specific",
+                "severity": "medium",
+                "details": "The run usageSnapshotId is dynamic-usage-github-copilot-2026-06-08 while providerSnapshotIds also reference Cursor, Claude, Claude Code, and Codex snapshots. Parent synthesis should clarify whether GitHub Copilot is the intended baseline or whether a normalized cross-provider aggregate should drive local-model recommendations.",
+                "evidenceRefs": [
+                  "dynamic-usage-github-copilot-2026-06-08",
+                  "dynamic-usage-cursor-2026-06-11",
+                  "dynamic-usage-claude-2026-06-10",
+                  "dynamic-usage-claude-code-2026-06-10",
+                  "dynamic-usage-codex-2026-06-11"
+                ]
+              },
+              {
+                "title": "Reviewer and bridge provenance are distinct",
+                "severity": "low",
+                "details": "This artifact represents a gemini reviewer model executed through the codex bridge provider kind. Downstream consumers should preserve both fields so reviewer perspective is not confused with bridge execution provenance.",
+                "evidenceRefs": [
+                  "dynamic-forensic-20260610T002427980Z",
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T002427980Z/evidence-packet.json"
+                ]
+              }
+            ],
+            "generatedAt": "2026-06-10T00:24:27.980Z",
+            "providerKind": "codex",
+            "providerRole": "reviewer",
+            "provenance": {
+              "redacted": true,
+              "snapshotId": "dynamic-usage-github-copilot-2026-06-08",
+              "source": "local_model_forensic_reviewer_prompt",
+              "evidencePacketUri": "local://token-reporting/forensics/dynamic-forensic-20260610T002427980Z/evidence-packet.json",
+              "huggingFaceCandidateSetId": "hf-candidates-20260610T002428374Z"
+            },
+            "recommendations": [
+              "Verify the linked Hugging Face candidate metadata before ranking local-model migration options.",
+              "Resolve or attest the 2026-06-11 Cursor and Codex snapshot identifiers before parent synthesis relies on them.",
+              "Clarify whether dynamic-usage-github-copilot-2026-06-08 is the baseline usage snapshot or replace it with a normalized cross-provider aggregate snapshot.",
+              "Require normalized provider summaries before making quantitative token, cost, latency, throughput, or workload claims.",
+              "Continue excluding raw provider Admin API snapshots and credentials from reviewer artifacts and persisted forensic outputs."
+            ],
+            "summary": "Gemini forensic review completed through the codex bridge provider for run dynamic-forensic-20260610T002427980Z. The evidence packet is structurally usable as redacted provenance, but local-model migration recommendations should remain provisional until candidate metadata is verified, cross-provider usage normalization is clarified, and provider snapshot identifiers dated after evidence generation are attested.",
+            "sessionId": "019eaeee-1090-7fa0-81ee-69541f4ea9d2"
+          },
+          "artifactUri": "local://token-reporting/forensics/dynamic-forensic-20260610T002427980Z/reviewers/gemini.json",
+          "bridgeProviderKind": "codex",
+          "reviewerModel": "gemini",
+          "status": "completed"
+        },
+        {
+          "artifact": {
+            "artifactKind": "local_model_forensic_review",
+            "artifactSchemaVersion": "sdlca.bridge.forensic.v0",
+            "artifactUri": "local://token-reporting/forensics/dynamic-forensic-20260610T002427980Z/reviewers/kimi.json",
+            "runId": "dynamic-forensic-20260610T002427980Z",
+            "reviewerModel": "kimi",
+            "generatedAt": "2026-06-10T00:24:27.980Z",
+            "providerKind": "codex",
+            "providerRole": "reviewer",
+            "provenance": {
+              "redacted": true,
+              "source": "local_model_forensic_reviewer_prompt",
+              "snapshotId": "dynamic-usage-github-copilot-2026-06-08",
+              "huggingFaceCandidateSetId": "hf-candidates-20260610T002428374Z",
+              "evidencePacketUri": "local://token-reporting/forensics/dynamic-forensic-20260610T002427980Z/evidence-packet.json"
+            },
+            "summary": "Codex/kimi forensic review completed against the redacted evidence packet for run dynamic-forensic-20260610T002427980Z. The packet is structurally usable as provenance and links a run-scoped Hugging Face candidate set, but reviewer confidence should remain provisional until candidate metadata and normalized provider summaries are available. The primary usage snapshot is GitHub Copilot-specific while the provider snapshot set spans multiple providers, and Cursor/Codex snapshot identifiers are dated after the evidence packet generation timestamp.",
+            "findings": [
+              {
+                "title": "Candidate set is referenced but not inspectable in packet",
+                "severity": "medium",
+                "details": "The evidence packet links Hugging Face candidate set hf-candidates-20260610T002428374Z, but the supplied reviewer evidence contains only the candidate set identifier, not model metadata. Local-model ranking should wait for candidate details such as model ids, context limits, licensing, hardware requirements, throughput assumptions, and operating cost assumptions.",
+                "evidenceRefs": [
+                  "hf-candidates-20260610T002428374Z",
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T002427980Z/evidence-packet.json"
+                ]
+              },
+              {
+                "title": "Provider snapshot dates extend beyond evidence generation time",
+                "severity": "medium",
+                "details": "The evidence packet was generated at 2026-06-10T00:24:27.980Z but includes Cursor and Codex provider snapshot ids dated 2026-06-11. Parent synthesis should confirm whether those identifiers reflect timezone boundaries, scheduled collection windows, pre-generated identifiers, or a chronology mismatch before treating those snapshots as contemporaneous forensic inputs.",
+                "evidenceRefs": [
+                  "dynamic-usage-cursor-2026-06-11",
+                  "dynamic-usage-codex-2026-06-11",
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T002427980Z/evidence-packet.json"
+                ]
+              },
+              {
+                "title": "Primary usage snapshot is narrower than provider evidence set",
+                "severity": "medium",
+                "details": "The run usage snapshot id is dynamic-usage-github-copilot-2026-06-08 while the evidence packet also references Cursor, Claude, Claude Code, and Codex snapshots. Parent synthesis should clarify whether GitHub Copilot is the intended baseline or whether normalized cross-provider aggregate usage should drive local-model migration conclusions.",
+                "evidenceRefs": [
+                  "dynamic-usage-github-copilot-2026-06-08",
+                  "dynamic-usage-cursor-2026-06-11",
+                  "dynamic-usage-claude-2026-06-10",
+                  "dynamic-usage-claude-code-2026-06-10",
+                  "dynamic-usage-codex-2026-06-11"
+                ]
+              },
+              {
+                "title": "Evidence packet preserves redacted boundary",
+                "severity": "info",
+                "details": "The supplied evidence contains artifact metadata, snapshot identifiers, and generation metadata only. This preserves the boundary against raw provider Admin API snapshots and credentials, but limits this artifact to provenance, completeness, chronology, and consistency checks rather than direct quantitative token, cost, latency, throughput, or workload validation.",
+                "evidenceRefs": [
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T002427980Z/evidence-packet.json"
+                ]
+              },
+              {
+                "title": "Reviewer and bridge attribution should remain explicit",
+                "severity": "low",
+                "details": "This artifact represents a kimi reviewer model executed through the codex bridge provider kind. Downstream consumers should preserve both fields so reviewer perspective is not confused with bridge execution provenance.",
+                "evidenceRefs": [
+                  "dynamic-forensic-20260610T002427980Z",
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T002427980Z/evidence-packet.json"
+                ]
+              }
+            ],
+            "recommendations": [
+              "Treat local-model recommendations from this run as provisional until the linked Hugging Face candidate set is available with complete model metadata.",
+              "Resolve or explicitly explain the 2026-06-11 Cursor and Codex snapshot ids before parent synthesis relies on them.",
+              "Clarify whether dynamic-usage-github-copilot-2026-06-08 is the intended baseline usage snapshot or replace it with a normalized cross-provider aggregate.",
+              "Require normalized provider summaries before making quantitative token, spend, latency, throughput, or context-window claims.",
+              "Continue excluding raw provider Admin API snapshots and credentials from reviewer artifacts and persisted forensic outputs.",
+              "Preserve reviewerModel kimi and providerKind codex as separate provenance fields in downstream forensic synthesis."
+            ],
+            "sessionId": "019eaeee-7670-7153-b984-4b1232cf0221"
+          },
+          "artifactUri": "local://token-reporting/forensics/dynamic-forensic-20260610T002427980Z/reviewers/kimi.json",
+          "bridgeProviderKind": "codex",
+          "reviewerModel": "kimi",
+          "status": "completed"
+        }
+      ],
+      "reviewerModels": [
+        "sonnet",
+        "opus",
+        "gpt",
+        "grok",
+        "composer",
+        "gemini",
+        "kimi"
+      ],
+      "runId": "dynamic-forensic-20260610T002427980Z",
+      "status": "completed",
+      "updatedAt": "2026-06-10T00:24:27.980Z",
+      "usageSnapshotId": "dynamic-usage-github-copilot-2026-06-08"
+    },
+    "dynamic-forensic-20260610T012449558Z": {
+      "bridgeDispatch": {
+        "executionKind": "forensic",
+        "status": "completed"
+      },
+      "contractVersion": "sdlca-token-reporting-dynamic-v0.1",
+      "createdAt": "2026-06-10T01:24:49.558Z",
+      "evidencePacket": {
+        "artifactUri": "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/evidence-packet.json",
+        "generatedAt": "2026-06-10T01:24:49.558Z",
+        "huggingFaceCandidateSetId": "hf-candidates-20260610T012449988Z",
+        "providerSnapshotIds": [
+          "dynamic-usage-github-copilot-2026-06-08",
+          "dynamic-usage-cursor-2026-06-11",
+          "dynamic-usage-claude-2026-06-10",
+          "dynamic-usage-claude-code-2026-06-10",
+          "dynamic-usage-codex-2026-06-11"
+        ],
+        "usageSnapshotId": "dynamic-usage-github-copilot-2026-06-08"
+      },
+      "huggingFaceCandidateSetId": "hf-candidates-20260610T012449988Z",
+      "parentSynthesis": {
+        "confidence": 0.95,
+        "dissentingFindings": [
+          {
+            "title": "Cursor and Codex provider snapshots are dated after the evidence packet generation timestamp",
+            "severity": "high",
+            "details": "The evidence packet was generated at 2026-06-10T01:24:49.558Z, but providerSnapshotIds enumerates 'dynamic-usage-cursor-2026-06-11' and 'dynamic-usage-codex-2026-06-11' — both dated one calendar day after the packet's generatedAt. A reviewer cannot causally validate a snapshot id whose embedded date postdates the manifest that references it; this either indicates a clock skew between executors, a placeholder/precomputed snapshot id, or contaminated provenance. Parent synthesis should treat these two ids as unverified until their own generatedAt metadata is reconciled.",
+            "evidenceRefs": [
+              "evidencePacket.generatedAt",
+              "evidencePacket.providerSnapshotIds[1]",
+              "evidencePacket.providerSnapshotIds[4]"
+            ]
+          },
+          {
+            "title": "Quantitative local-model fit cannot be validated from supplied evidence alone",
+            "severity": "high",
+            "details": "The evidence packet does not include normalized token volumes, cache behavior, request counts, latency distributions, context-length percentiles, tool-call rates, spend data, or workload classifications. Without those summaries, this reviewer cannot validate contextFit, throughputFit, costFit, or quality-risk assumptions for local-model migration.",
+            "evidenceRefs": [
+              "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/evidence-packet.json",
+              "dynamic-usage-github-copilot-2026-06-08"
+            ]
+          },
+          {
+            "title": "Very large context fit is concentrated in one candidate",
+            "severity": "high",
+            "details": "Only Qwen/Qwen2.5-7B-Instruct-1M is explicitly positioned for very large context workloads in this candidate set. The remaining candidates should be treated as worker or code-specialized options unless retrieval, summarization, truncation, or routing constraints are added. Direct replacement of high-p99 hosted context workloads is not supported by the redacted evidence alone.",
+            "evidenceRefs": [
+              "hf-candidates-20260610T012449988Z",
+              "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/evidence-packet.json"
+            ]
+          },
+          {
+            "title": "Only one candidate advertises a very large context envelope",
+            "severity": "high",
+            "details": "Among the five candidates in hf-candidates-20260610T012449988Z, only Qwen/Qwen2.5-7B-Instruct-1M is positioned for very large context workloads. The remaining candidates (Llama-3.1-8B-Instruct, Qwen2.5-Coder 14B/32B, Qwen2.5-72B) target substantially smaller effective context windows. Without normalized per-provider usage aggregates in the evidence packet, this reviewer cannot execute quantitative contextFits or throughputFits scoring from src/lib/localModelReport.ts, but the catalogue composition alone implies that direct one-to-one substitution is unlikely for high p99 context workloads unless routing, retrieval, or truncation strategies are applied.",
+            "evidenceRefs": [
+              "hf-candidates-20260610T012449988Z",
+              "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/evidence-packet.json"
+            ]
+          },
+          {
+            "title": "Only one listed candidate is explicitly positioned for very large context screening",
+            "severity": "high",
+            "details": "Among the five candidates, Qwen/Qwen2.5-7B-Instruct-1M is the only candidate whose identifier explicitly indicates a 1M-token context target. The other candidates may still be useful for routed or compressed workloads, but direct substitution for high-context reviewer or agent sessions should remain provisional until context-window, throughput, and quality measurements are attached.",
+            "evidenceRefs": [
+              "hf-candidates-20260610T012449988Z",
+              "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/evidence-packet.json"
+            ]
+          }
+        ],
+        "recommendation": "Block parent synthesis from consuming the Cursor (2026-06-11) and Codex (2026-06-11) snapshot ids until their per-snapshot generatedAt is verified to predate (or match) the evidence packet's 2026-06-10T01:24:49.558Z generation timestamp; future-dated identifiers in a forensic manifest are a chain-of-custody defect.",
+        "reviewerCount": 7
+      },
+      "parentSynthesisArtifactUri": "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/parent-synthesis.json",
+      "reviewerArtifacts": [
+        {
+          "artifact": {
+            "artifactKind": "local_model_forensic_review",
+            "artifactSchemaVersion": "sdlca.bridge.forensic.v0",
+            "providerKind": "claude",
+            "providerRole": "reviewer",
+            "reviewerModel": "sonnet",
+            "runId": "dynamic-forensic-20260610T012449558Z",
+            "artifactUri": "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/reviewers/sonnet.json",
+            "generatedAt": "2026-06-10T01:24:49.558Z",
+            "summary": "Reviewer model sonnet (bridge provider claude) audited the Token Reporting local-model forensic run dynamic-forensic-20260610T012449558Z against the GitHub Copilot usage snapshot dynamic-usage-github-copilot-2026-06-08 with companion Cursor, Claude, Claude Code, and Codex snapshots. Unlike prior dynamic forensic runs, the Hugging Face candidate set id 'hf-candidates-20260610T012449988Z' does not carry the 'unavailable' marker, so the candidate catalogue is presumed populated and the local-model scoring path in src/lib/localModelReport.ts can in principle resolve a real recommendation. The review is limited to evidence-packet manifest integrity and migration-readiness signals derivable from the supplied identifiers; no raw provider Admin API payloads, bearer tokens, or credentials were inspected or echoed.",
+            "evidencePacket": {
+              "artifactUri": "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/evidence-packet.json",
+              "generatedAt": "2026-06-10T01:24:49.558Z",
+              "usageSnapshotId": "dynamic-usage-github-copilot-2026-06-08",
+              "huggingFaceCandidateSetId": "hf-candidates-20260610T012449988Z",
+              "providerSnapshotIds": [
+                "dynamic-usage-github-copilot-2026-06-08",
+                "dynamic-usage-cursor-2026-06-11",
+                "dynamic-usage-claude-2026-06-10",
+                "dynamic-usage-claude-code-2026-06-10",
+                "dynamic-usage-codex-2026-06-11"
+              ],
+              "redacted": true
+            },
+            "findings": [
+              {
+                "title": "Cursor and Codex provider snapshots are dated after the evidence packet generation timestamp",
+                "severity": "high",
+                "details": "The evidence packet was generated at 2026-06-10T01:24:49.558Z, but providerSnapshotIds enumerates 'dynamic-usage-cursor-2026-06-11' and 'dynamic-usage-codex-2026-06-11' — both dated one calendar day after the packet's generatedAt. A reviewer cannot causally validate a snapshot id whose embedded date postdates the manifest that references it; this either indicates a clock skew between executors, a placeholder/precomputed snapshot id, or contaminated provenance. Parent synthesis should treat these two ids as unverified until their own generatedAt metadata is reconciled.",
+                "evidenceRefs": [
+                  "evidencePacket.generatedAt",
+                  "evidencePacket.providerSnapshotIds[1]",
+                  "evidencePacket.providerSnapshotIds[4]"
+                ]
+              },
+              {
+                "title": "Usage snapshot anchor is single-provider while companion snapshots span the full five-provider registry",
+                "severity": "medium",
+                "details": "The pinned usageSnapshotId 'dynamic-usage-github-copilot-2026-06-08' points only at GitHub Copilot, but providerSnapshotIds also enumerates Cursor (2026-06-11), Claude (2026-06-10), Claude Code (2026-06-10), and Codex (2026-06-11), covering every adapter registered in src/providers/registry.ts. Downstream consumers reading only the anchor may incorrectly treat single-provider Copilot consumption as aggregate spend. Recommend the executor either pin a multi-provider aggregate or annotate this artifact to make the companion snapshots' advisory-only role explicit.",
+                "evidenceRefs": [
+                  "evidencePacket.usageSnapshotId",
+                  "evidencePacket.providerSnapshotIds"
+                ]
+              },
+              {
+                "title": "Three-day snapshot date skew across the provider set risks biased projection inputs",
+                "severity": "medium",
+                "details": "Snapshot dates span 2026-06-08 (Copilot) through 2026-06-11 (Cursor, Codex), with Claude and Claude Code at 2026-06-10 — a three-day window. Linear regression in src/lib/projections.ts requires ≥7 days of data and is sensitive to per-provider date alignment; cross-provider comparison or trend classification computed from this packet must either normalize to a common end date or explicitly disclose the skew in any rendered comparison, otherwise 30-day projections will inherit per-provider window inconsistencies.",
+                "evidenceRefs": [
+                  "evidencePacket.providerSnapshotIds"
+                ]
+              },
+              {
+                "title": "Hugging Face candidate set identifier no longer carries the 'unavailable' marker",
+                "severity": "info",
+                "details": "The supplied huggingFaceCandidateSetId 'hf-candidates-20260610T012449988Z' is plain (no '-unavailable-' segment), distinguishing this run from the dynamic-forensic-20260608T062318632Z series where the marker was present. This is a positive signal: localModelReport scoring against empirical p99 context-window and throughput requirements can now resolve against a real catalogue. However, this reviewer was given only the candidate-set identifier — the contents (model ids, context windows, quantization, license posture, estimated local operating cost) were not enumerated in the evidence packet and were not independently inspected here.",
+                "evidenceRefs": [
+                  "evidencePacket.huggingFaceCandidateSetId"
+                ]
+              },
+              {
+                "title": "Five-provider coverage matches the registered adapter set",
+                "severity": "info",
+                "details": "providerSnapshotIds enumerates github-copilot, cursor, claude, claude-code, and codex — exactly the five providers registered in src/providers/registry.ts. No registered provider is silently missing from the evidence packet, so once the date-skew and future-dated-snapshot findings above are resolved the manifest is structurally sufficient to support cross-provider forensic comparison.",
+                "evidenceRefs": [
+                  "evidencePacket.providerSnapshotIds"
+                ]
+              },
+              {
+                "title": "No raw Admin API payloads or credentials observed in evidence packet",
+                "severity": "info",
+                "details": "The evidence packet exposes only artifactUri, generatedAt, identifiers, and snapshot ids. No bearer tokens, ANTHROPIC_ADMIN_API_KEY, CURSOR_ADMIN_API_KEY, GITHUB_TOKEN, OPENAI_API_KEY, or raw provider response bodies were present, consistent with the redaction posture required by the prompt and by the TOKEN_REPORTING_READ_ONLY guard in src/lib/permissions.ts. This reviewer artifact likewise excludes raw snapshots and credentials.",
+                "evidenceRefs": [
+                  "evidencePacket"
+                ]
+              }
+            ],
+            "recommendations": [
+              "Block parent synthesis from consuming the Cursor (2026-06-11) and Codex (2026-06-11) snapshot ids until their per-snapshot generatedAt is verified to predate (or match) the evidence packet's 2026-06-10T01:24:49.558Z generation timestamp; future-dated identifiers in a forensic manifest are a chain-of-custody defect.",
+              "Either re-pin usageSnapshotId to a multi-provider aggregate or annotate this artifact so downstream consumers do not misread the GitHub Copilot anchor as aggregate cross-provider spend.",
+              "Before computing 30/365-day projections from this packet, normalize all five providerSnapshotIds to a common as-of date (or surface the three-day skew in the rendered comparison) so the regression in src/lib/projections.ts is fed a coherent window.",
+              "Extend the evidence packet schema to enumerate the Hugging Face candidate set's contents (or at minimum a content hash and candidate count) so reviewers can validate that a non-'unavailable' candidate-set id is actually populated, rather than relying on the id format alone.",
+              "Add a per-snapshot redaction attestation ({snapshotId, redacted: true, source}) to the evidence packet so chain-of-custody is self-describing instead of relying on the executor-level guarantee in createSdlcaBridgeForensicExecutor.",
+              "Persist this reviewer artifact only at the run-scoped artifactUri; continue to exclude raw Admin API snapshots and credentials from any artifact written under public/data/ or shipped through the bridge."
+            ],
+            "provenance": {
+              "redacted": true,
+              "source": "sdlca-bridge-forensic-reviewer:claude/sonnet",
+              "snapshotId": "dynamic-usage-github-copilot-2026-06-08",
+              "huggingFaceCandidateSetId": "hf-candidates-20260610T012449988Z"
+            }
+          },
+          "artifactUri": "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/reviewers/sonnet.json",
+          "bridgeProviderKind": "claude",
+          "reviewerModel": "sonnet",
+          "status": "completed"
+        },
+        {
+          "artifact": {
+            "artifactSchemaVersion": "sdlca.bridge.forensic.v0",
+            "artifactKind": "local_model_forensic_review",
+            "providerKind": "claude",
+            "providerRole": "reviewer",
+            "generatedAt": "2026-06-10T01:24:49.600Z",
+            "provenance": {
+              "redacted": true,
+              "source": "sdlca-bridge://claude/opus/forensic/dynamic-forensic-20260610T012449558Z",
+              "snapshotId": "dynamic-usage-github-copilot-2026-06-08"
+            },
+            "summary": "Reviewer (opus via claude bridge) assessed the GitHub Copilot usage snapshot dynamic-usage-github-copilot-2026-06-08 against Hugging Face candidate set hf-candidates-20260610T012449988Z. The evidence packet is self-consistent: artifactUri, generatedAt, and the five provider snapshot ids are present and align with the declared usageSnapshotId. No raw Admin API payloads or credentials were observed in the packet. Local-model substitution for the Copilot workload looks viable for inline-completion traffic but carries unresolved questions around p99 context window headroom and chat-mode throughput that must be answered against the local-model profile catalogue before any migration recommendation is published.",
+            "findings": [
+              {
+                "title": "Evidence packet structurally complete and free of raw provider payloads",
+                "severity": "info",
+                "details": "The evidence packet exposes only identifiers (artifactUri, generatedAt, usageSnapshotId, huggingFaceCandidateSetId, providerSnapshotIds). No Admin API JSON, bearer tokens, org slugs, or seat-level PII were embedded. This is consistent with the redaction contract required by sdlca.bridge.forensic.v0.",
+                "evidenceRefs": [
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/evidence-packet.json#/artifactUri",
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/evidence-packet.json#/providerSnapshotIds"
+                ]
+              },
+              {
+                "title": "Cross-provider snapshot coverage is broader than the declared usage snapshot",
+                "severity": "low",
+                "details": "providerSnapshotIds enumerates five provider snapshots (github-copilot, cursor, claude, claude-code, codex) but the run's usageSnapshotId pins only the github-copilot 2026-06-08 snapshot. Reviewers downstream may mistakenly weight non-Copilot snapshots into the Copilot-substitution analysis. Recommend the reviewer artifact and any subsequent recommendations scope findings to the Copilot snapshot only, and treat the remaining snapshots as comparative context.",
+                "evidenceRefs": [
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/evidence-packet.json#/usageSnapshotId",
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/evidence-packet.json#/providerSnapshotIds"
+                ]
+              },
+              {
+                "title": "Hugging Face candidate set timestamp drifts ~430ms after evidence packet generation",
+                "severity": "info",
+                "details": "huggingFaceCandidateSetId carries timestamp 2026-06-10T01:24:49.988Z while the evidence packet generatedAt is 2026-06-10T01:24:49.558Z. The 430ms drift is well within expected fetch latency and does not indicate a stale candidate set, but the ordering (candidates resolved after packet generation) should be acknowledged in the run record so that future replays use the same candidate set id rather than refetching.",
+                "evidenceRefs": [
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/evidence-packet.json#/generatedAt",
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/evidence-packet.json#/huggingFaceCandidateSetId"
+                ]
+              },
+              {
+                "title": "Local-model fit for Copilot inline completion cannot be confirmed from packet alone",
+                "severity": "medium",
+                "details": "The evidence packet does not surface the empirical p99 context window or tokens-per-second demand for the Copilot snapshot. Without those metrics being joined against the Hugging Face candidate set, the reviewer cannot determine whether any local profile clears the workload's throughput and context thresholds. Downstream consumers must hydrate the packet with src/lib/localModelReport.ts derived metrics before issuing a substitution verdict.",
+                "evidenceRefs": [
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/evidence-packet.json#/usageSnapshotId",
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/evidence-packet.json#/huggingFaceCandidateSetId"
+                ]
+              },
+              {
+                "title": "Reviewer identity and bridge provider kind agree with execution contract",
+                "severity": "info",
+                "details": "Reviewer model 'opus' resolves to bridge providerKind 'claude' per the dynamic forensic executor's mapping, matching the artifact's providerKind field. No reviewer/provider mismatch was detected that would invalidate the artifact under the sdlca.bridge.forensic.v0 schema.",
+                "evidenceRefs": [
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/evidence-packet.json"
+                ]
+              }
+            ],
+            "recommendations": [
+              "Scope all Copilot local-model substitution findings strictly to usageSnapshotId dynamic-usage-github-copilot-2026-06-08; treat the other four provider snapshots as comparative baselines only.",
+              "Before publishing a substitution verdict, hydrate the evidence packet with p99 context window and throughput metrics derived via src/lib/localModelReport.ts and re-run the reviewer.",
+              "Pin huggingFaceCandidateSetId hf-candidates-20260610T012449988Z in the forensic run store so subsequent reviewers replay against an identical candidate set rather than refetching.",
+              "Persist this artifact to local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/reviewers/opus.json and record the run as 'completed' only after the medium-severity context-window finding above has been answered.",
+              "Continue to exclude raw Admin API snapshots and credentials from evidence packets; the current redaction posture meets the sdlca.bridge.forensic.v0 contract and should be preserved."
+            ]
+          },
+          "artifactUri": "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/reviewers/opus.json",
+          "bridgeProviderKind": "claude",
+          "reviewerModel": "opus",
+          "status": "completed"
+        },
+        {
+          "artifact": {
+            "artifactKind": "local_model_forensic_review",
+            "artifactSchemaVersion": "sdlca.bridge.forensic.v0",
+            "artifactUri": "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/reviewers/gpt.json",
+            "runId": "dynamic-forensic-20260610T012449558Z",
+            "reviewerModel": "gpt",
+            "generatedAt": "2026-06-10T01:24:49.558Z",
+            "providerKind": "codex",
+            "providerRole": "reviewer",
+            "provenance": {
+              "redacted": true,
+              "source": "local_model_forensic_reviewer_prompt",
+              "snapshotId": "dynamic-usage-github-copilot-2026-06-08",
+              "huggingFaceCandidateSetId": "hf-candidates-20260610T012449988Z",
+              "evidencePacketUri": "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/evidence-packet.json"
+            },
+            "summary": "GPT forensic review completed through the codex bridge provider for run dynamic-forensic-20260610T012449558Z. The supplied evidence packet is redacted and structurally usable for provenance, completeness, and chronology checks, but it does not include normalized provider usage summaries or Hugging Face candidate metadata. Local-model migration conclusions should remain provisional until candidate details, workload distributions, context requirements, throughput assumptions, and cross-provider usage normalization are available. No raw provider Admin API snapshots or credentials are included in this artifact.",
+            "findings": [
+              {
+                "title": "Evidence packet preserves redacted review boundary",
+                "severity": "info",
+                "details": "The supplied evidence contains artifact metadata, snapshot identifiers, candidate-set linkage, and generation metadata only. This is appropriate for a reviewer artifact that must exclude raw provider Admin API snapshots and credentials, but it limits the review to provenance, completeness, consistency, and chronology rather than direct quantitative validation.",
+                "evidenceRefs": [
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/evidence-packet.json"
+                ]
+              },
+              {
+                "title": "Hugging Face candidate set is linked but not inspectable in packet",
+                "severity": "medium",
+                "details": "The evidence packet references hf-candidates-20260610T012449988Z, but the packet itself does not include model identifiers, context windows, licenses, quantization options, hardware requirements, throughput expectations, or cost assumptions. Candidate ranking and local-model substitution decisions should wait for a redacted candidate summary or validated candidate catalogue.",
+                "evidenceRefs": [
+                  "hf-candidates-20260610T012449988Z",
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/evidence-packet.json"
+                ]
+              },
+              {
+                "title": "Provider snapshot identifiers extend beyond evidence generation timestamp",
+                "severity": "medium",
+                "details": "The evidence packet was generated at 2026-06-10T01:24:49.558Z but includes Cursor and Codex provider snapshot identifiers dated 2026-06-11. Parent synthesis should confirm whether those identifiers reflect timezone boundaries, collection-window naming, pre-generated IDs, or a chronology mismatch before treating all provider snapshots as contemporaneous.",
+                "evidenceRefs": [
+                  "dynamic-usage-cursor-2026-06-11",
+                  "dynamic-usage-codex-2026-06-11",
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/evidence-packet.json"
+                ]
+              },
+              {
+                "title": "Primary usage snapshot is narrower than provider snapshot set",
+                "severity": "medium",
+                "details": "The run usageSnapshotId is dynamic-usage-github-copilot-2026-06-08 while providerSnapshotIds also reference Cursor, Claude, Claude Code, and Codex. Downstream local-model analysis should clarify whether GitHub Copilot is the intended baseline or whether a normalized cross-provider aggregate should drive sizing, routing, and replacement recommendations.",
+                "evidenceRefs": [
+                  "dynamic-usage-github-copilot-2026-06-08",
+                  "dynamic-usage-cursor-2026-06-11",
+                  "dynamic-usage-claude-2026-06-10",
+                  "dynamic-usage-claude-code-2026-06-10",
+                  "dynamic-usage-codex-2026-06-11"
+                ]
+              },
+              {
+                "title": "Quantitative local-model fit cannot be validated from supplied evidence alone",
+                "severity": "high",
+                "details": "The evidence packet does not include normalized token volumes, cache behavior, request counts, latency distributions, context-length percentiles, tool-call rates, spend data, or workload classifications. Without those summaries, this reviewer cannot validate contextFit, throughputFit, costFit, or quality-risk assumptions for local-model migration.",
+                "evidenceRefs": [
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/evidence-packet.json",
+                  "dynamic-usage-github-copilot-2026-06-08"
+                ]
+              },
+              {
+                "title": "Reviewer and bridge attribution are explicit",
+                "severity": "low",
+                "details": "This artifact represents reviewerModel gpt executed through providerKind codex with providerRole reviewer. Downstream synthesis should preserve reviewer model identity separately from bridge execution provenance.",
+                "evidenceRefs": [
+                  "dynamic-forensic-20260610T012449558Z",
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/evidence-packet.json"
+                ]
+              }
+            ],
+            "recommendations": [
+              "Treat local-model migration recommendations from this run as provisional until the linked Hugging Face candidate set is available as a validated redacted summary.",
+              "Resolve or explicitly annotate the 2026-06-11 Cursor and Codex snapshot identifiers before parent synthesis treats them as contemporaneous with the 2026-06-10 evidence packet.",
+              "Clarify whether dynamic-usage-github-copilot-2026-06-08 is the intended baseline or produce a normalized cross-provider aggregate usage snapshot.",
+              "Require normalized provider summaries before making quantitative token, spend, latency, throughput, context-window, or hardware-sizing claims.",
+              "Keep reviewer artifacts limited to redacted evidence references and normalized summaries; continue excluding raw provider Admin API snapshots and credentials.",
+              "Preserve reviewerModel gpt, providerKind codex, and providerRole reviewer as separate provenance fields in downstream forensic synthesis."
+            ],
+            "sessionId": "019eaf23-84b9-7650-b7b1-be5b2d940024"
+          },
+          "artifactUri": "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/reviewers/gpt.json",
+          "bridgeProviderKind": "codex",
+          "reviewerModel": "gpt",
+          "status": "completed"
+        },
+        {
+          "artifact": {
+            "artifactKind": "local_model_forensic_review",
+            "artifactSchemaVersion": "sdlca.bridge.forensic.v0",
+            "artifactUri": "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/reviewers/grok.json",
+            "runId": "dynamic-forensic-20260610T012449558Z",
+            "reviewerModel": "grok",
+            "generatedAt": "2026-06-10T01:24:49.558Z",
+            "providerKind": "codex",
+            "providerRole": "reviewer",
+            "provenance": {
+              "redacted": true,
+              "source": "local_model_forensic_reviewer_prompt",
+              "snapshotId": "dynamic-usage-github-copilot-2026-06-08",
+              "evidencePacketUri": "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/evidence-packet.json",
+              "huggingFaceCandidateSetId": "hf-candidates-20260610T012449988Z"
+            },
+            "summary": "Grok forensic review completed through the codex bridge provider for Token Reporting run dynamic-forensic-20260610T012449558Z. The evidence packet is structurally usable as redacted provenance and links a populated, run-scoped Hugging Face candidate set. Local-model migration confidence remains provisional until normalized provider usage summaries are available, the GitHub Copilot usage anchor is clarified against the multi-provider snapshot set, and the Cursor/Codex snapshot identifiers dated 2026-06-11 are attested. No raw provider Admin API snapshots or credentials are included.",
+            "findings": [
+              {
+                "title": "Candidate set is populated and run-scoped",
+                "severity": "info",
+                "details": "The linked Hugging Face candidate set hf-candidates-20260610T012449988Z was generated at 2026-06-10T01:24:49.988Z, 430 ms after the evidence packet timestamp of 2026-06-10T01:24:49.558Z. This supports coherent run linkage and removes the unavailable-candidate blocker, but it does not by itself prove workload fit.",
+                "evidenceRefs": [
+                  "hf-candidates-20260610T012449988Z",
+                  "evidence-packet.generatedAt",
+                  "evidence-packet.huggingFaceCandidateSetId"
+                ]
+              },
+              {
+                "title": "Candidate catalogue needs license and workload gating",
+                "severity": "medium",
+                "details": "The candidate set contains five models: meta-llama/Llama-3.1-8B-Instruct, Qwen/Qwen2.5-Coder-14B-Instruct, Qwen/Qwen2.5-Coder-32B-Instruct, Qwen/Qwen2.5-72B-Instruct, and Qwen/Qwen2.5-7B-Instruct-1M. The set mixes llama3.1, apache-2.0, and other license labels, so commercial or production substitution should preserve license filtering before profile promotion.",
+                "evidenceRefs": [
+                  "hf-candidates-20260610T012449988Z"
+                ]
+              },
+              {
+                "title": "Very large context fit is concentrated in one candidate",
+                "severity": "high",
+                "details": "Only Qwen/Qwen2.5-7B-Instruct-1M is explicitly positioned for very large context workloads in this candidate set. The remaining candidates should be treated as worker or code-specialized options unless retrieval, summarization, truncation, or routing constraints are added. Direct replacement of high-p99 hosted context workloads is not supported by the redacted evidence alone.",
+                "evidenceRefs": [
+                  "hf-candidates-20260610T012449988Z",
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/evidence-packet.json"
+                ]
+              },
+              {
+                "title": "Primary usage snapshot is provider-specific",
+                "severity": "medium",
+                "details": "The run usageSnapshotId is dynamic-usage-github-copilot-2026-06-08, while providerSnapshotIds also reference Cursor, Claude, Claude Code, and Codex. Parent synthesis should clarify whether GitHub Copilot is the intended baseline or whether a normalized cross-provider aggregate should drive local-model sizing and migration recommendations.",
+                "evidenceRefs": [
+                  "evidence-packet.usageSnapshotId",
+                  "evidence-packet.providerSnapshotIds"
+                ]
+              },
+              {
+                "title": "Snapshot chronology requires attestation",
+                "severity": "medium",
+                "details": "The evidence packet was generated at 2026-06-10T01:24:49.558Z but includes Cursor and Codex provider snapshot identifiers dated 2026-06-11. This may reflect timezone boundaries, collection windows, or identifier naming, but parent synthesis should attest the chronology before treating those snapshots as contemporaneous forensic inputs.",
+                "evidenceRefs": [
+                  "evidence-packet.generatedAt",
+                  "dynamic-usage-cursor-2026-06-11",
+                  "dynamic-usage-codex-2026-06-11"
+                ]
+              },
+              {
+                "title": "Evidence boundary is properly redacted",
+                "severity": "low",
+                "details": "The supplied packet contains artifact metadata and opaque snapshot identifiers only. No raw provider Admin API snapshots, bearer tokens, API keys, secrets, or credentials are present. This is appropriate for reviewer artifacts but limits this review to provenance, completeness, consistency, and candidate posture rather than direct token, cost, latency, or throughput validation.",
+                "evidenceRefs": [
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/evidence-packet.json"
+                ]
+              },
+              {
+                "title": "Reviewer and bridge attribution are explicit",
+                "severity": "info",
+                "details": "This artifact represents the grok reviewer model executed through the codex bridge provider kind. Downstream consumers should preserve both fields so reviewer perspective is not confused with bridge execution provenance.",
+                "evidenceRefs": [
+                  "dynamic-forensic-20260610T012449558Z",
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/reviewers/grok.json"
+                ]
+              }
+            ],
+            "recommendations": [
+              "Use hf-candidates-20260610T012449988Z for candidate-aware local-model scoring, but require normalized cross-provider usage summaries before publishing ranked migration recommendations.",
+              "Treat Qwen/Qwen2.5-7B-Instruct-1M as the only candidate in this set plausibly aligned with very large context sessions; evaluate smaller candidates only with routing, retrieval, summarization, or truncation assumptions.",
+              "Clarify whether dynamic-usage-github-copilot-2026-06-08 is the intended usage baseline or replace it with a normalized cross-provider aggregate snapshot.",
+              "Validate the dynamic-usage-cursor-2026-06-11 and dynamic-usage-codex-2026-06-11 identifiers against actual generation metadata before parent synthesis consumes them.",
+              "Filter or annotate all candidates by license posture before commercial local-model substitution decisions.",
+              "Continue excluding raw provider Admin API snapshots and credentials from reviewer artifacts and persisted forensic outputs.",
+              "Preserve reviewerModel grok and providerKind codex as separate provenance fields in downstream forensic synthesis."
+            ],
+            "evidencePacket": {
+              "artifactUri": "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/evidence-packet.json",
+              "generatedAt": "2026-06-10T01:24:49.558Z",
+              "huggingFaceCandidateSetId": "hf-candidates-20260610T012449988Z",
+              "providerSnapshotIds": [
+                "dynamic-usage-github-copilot-2026-06-08",
+                "dynamic-usage-cursor-2026-06-11",
+                "dynamic-usage-claude-2026-06-10",
+                "dynamic-usage-claude-code-2026-06-10",
+                "dynamic-usage-codex-2026-06-11"
+              ],
+              "usageSnapshotId": "dynamic-usage-github-copilot-2026-06-08"
+            },
+            "sessionId": "019eaf24-15a9-7b93-bdd3-179fd6fff093"
+          },
+          "artifactUri": "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/reviewers/grok.json",
+          "bridgeProviderKind": "codex",
+          "reviewerModel": "grok",
+          "status": "completed"
+        },
+        {
+          "artifact": {
+            "artifactKind": "local_model_forensic_review",
+            "artifactSchemaVersion": "sdlca.bridge.forensic.v0",
+            "findings": [
+              {
+                "title": "Hugging Face candidate set is populated and temporally linked to the run",
+                "severity": "info",
+                "details": "The evidence packet references huggingFaceCandidateSetId 'hf-candidates-20260610T012449988Z', which is a populated catalogue rather than an 'unavailable' marker. The candidate set timestamp (2026-06-10T01:24:49.988Z) is within 430 ms of the evidence packet generation time, indicating coherent run-scoped linkage. This removes the primary data-quality blocker seen in prior degraded forensic runs and enables downstream localModelReport scoring once normalized usage summaries are supplied.",
+                "evidenceRefs": [
+                  "hf-candidates-20260610T012449988Z",
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/evidence-packet.json"
+                ]
+              },
+              {
+                "title": "Candidate catalogue is code-oriented with heterogeneous licensing",
+                "severity": "medium",
+                "details": "The linked candidate set enumerates five models: meta-llama/Llama-3.1-8B-Instruct (llama3.1 license), Qwen/Qwen2.5-Coder-14B-Instruct and Qwen/Qwen2.5-Coder-32B-Instruct (apache-2.0), Qwen/Qwen2.5-72B-Instruct (other license), and Qwen/Qwen2.5-7B-Instruct-1M (apache-2.0). Three of five candidates are code-specialized; commercial substitution decisions must reconcile license posture and the restrictive Llama community license before ranking migration options.",
+                "evidenceRefs": [
+                  "hf-candidates-20260610T012449988Z"
+                ]
+              },
+              {
+                "title": "Only one candidate advertises a very large context envelope",
+                "severity": "high",
+                "details": "Among the five candidates in hf-candidates-20260610T012449988Z, only Qwen/Qwen2.5-7B-Instruct-1M is positioned for very large context workloads. The remaining candidates (Llama-3.1-8B-Instruct, Qwen2.5-Coder 14B/32B, Qwen2.5-72B) target substantially smaller effective context windows. Without normalized per-provider usage aggregates in the evidence packet, this reviewer cannot execute quantitative contextFits or throughputFits scoring from src/lib/localModelReport.ts, but the catalogue composition alone implies that direct one-to-one substitution is unlikely for high p99 context workloads unless routing, retrieval, or truncation strategies are applied.",
+                "evidenceRefs": [
+                  "hf-candidates-20260610T012449988Z",
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/evidence-packet.json"
+                ]
+              },
+              {
+                "title": "Provider snapshot dates exceed evidence generation time",
+                "severity": "medium",
+                "details": "The evidence packet was generated at 2026-06-10T01:24:49.558Z but includes Cursor and Codex provider snapshot ids dated 2026-06-11. Resolve or attest this chronology before parent synthesis treats those snapshots as contemporaneous forensic inputs.",
+                "evidenceRefs": [
+                  "dynamic-usage-cursor-2026-06-11",
+                  "dynamic-usage-codex-2026-06-11",
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/evidence-packet.json"
+                ]
+              },
+              {
+                "title": "Primary usage snapshot is provider-specific",
+                "severity": "medium",
+                "details": "The run usageSnapshotId is dynamic-usage-github-copilot-2026-06-08 while providerSnapshotIds also reference Cursor, Claude, Claude Code, and Codex snapshots. Parent synthesis should clarify whether GitHub Copilot is the intended baseline or whether a normalized cross-provider aggregate should drive local-model recommendations.",
+                "evidenceRefs": [
+                  "dynamic-usage-github-copilot-2026-06-08",
+                  "dynamic-usage-cursor-2026-06-11",
+                  "dynamic-usage-claude-2026-06-10",
+                  "dynamic-usage-claude-code-2026-06-10",
+                  "dynamic-usage-codex-2026-06-11"
+                ]
+              },
+              {
+                "title": "Evidence packet is redacted provenance only",
+                "severity": "info",
+                "details": "The supplied evidence contains artifact and snapshot identifiers plus generation metadata only. This satisfies the no-raw-snapshot and no-credentials boundary, but limits this review to provenance, completeness, consistency, and candidate-catalogue posture rather than quantitative token, cost, latency, or workload validation.",
+                "evidenceRefs": [
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/evidence-packet.json"
+                ]
+              },
+              {
+                "title": "Reviewer and bridge attribution should remain explicit",
+                "severity": "low",
+                "details": "This artifact represents a composer reviewer model executed through the cursor bridge provider kind. Downstream consumers should preserve both fields so reviewer perspective is not confused with bridge execution provenance.",
+                "evidenceRefs": [
+                  "dynamic-forensic-20260610T012449558Z",
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/evidence-packet.json"
+                ]
+              }
+            ],
+            "generatedAt": "2026-06-10T01:24:49.558Z",
+            "providerKind": "cursor",
+            "providerRole": "reviewer",
+            "provenance": {
+              "redacted": true,
+              "snapshotId": "dynamic-usage-github-copilot-2026-06-08",
+              "source": "local_model_forensic_reviewer_prompt"
+            },
+            "recommendations": [
+              "Proceed with localModelReport scoring using hf-candidates-20260610T012449988Z now that the candidate set is populated, but require normalized cross-provider usage summaries before publishing a ranked migration recommendation.",
+              "Verify or regenerate the 2026-06-11 Cursor and Codex snapshot ids before parent synthesis relies on them as contemporaneous evidence.",
+              "Clarify whether dynamic-usage-github-copilot-2026-06-08 is the baseline usage snapshot or replace it with a normalized cross-provider aggregate snapshot.",
+              "Weight Qwen/Qwen2.5-7B-Instruct-1M for context-window fit assessments and treat smaller-window candidates as requiring truncation, retrieval, or task-routing strategies.",
+              "Filter or annotate candidates by license posture (llama3.1 vs apache-2.0 vs other) before any commercial local-model substitution decision.",
+              "Continue excluding raw provider Admin API snapshots and credentials from reviewer artifacts and persisted forensic outputs."
+            ],
+            "summary": "Composer forensic review completed through the cursor bridge provider for run dynamic-forensic-20260610T012449558Z. The Hugging Face candidate set hf-candidates-20260610T012449988Z is populated and temporally linked to the evidence packet, enabling candidate-aware local-model assessment. Remaining risks are the redacted evidence boundary (no quantitative usage aggregates in the packet), provider snapshot date skew on Cursor and Codex (2026-06-11 ids vs 2026-06-10 generation), and a GitHub Copilot-specific usage snapshot id amid five provider references. No raw Admin API payloads or credentials were observed."
+          },
+          "artifactUri": "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/reviewers/composer.json",
+          "bridgeProviderKind": "cursor",
+          "reviewerModel": "composer",
+          "status": "completed"
+        },
+        {
+          "artifact": {
+            "artifactKind": "local_model_forensic_review",
+            "artifactSchemaVersion": "sdlca.bridge.forensic.v0",
+            "artifactUri": "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/reviewers/gemini.json",
+            "runId": "dynamic-forensic-20260610T012449558Z",
+            "reviewerModel": "gemini",
+            "findings": [
+              {
+                "title": "Evidence packet is redacted provenance, not quantitative evidence",
+                "severity": "info",
+                "details": "The supplied evidence packet contains artifact metadata, snapshot identifiers, and generation metadata only. This respects the boundary against raw provider Admin API snapshots and credentials, but limits this reviewer artifact to provenance, completeness, chronology, and consistency checks rather than direct validation of token volume, spend, latency, throughput, or workload shape.",
+                "evidenceRefs": [
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/evidence-packet.json"
+                ]
+              },
+              {
+                "title": "Hugging Face candidate set is referenced but not inspectable here",
+                "severity": "medium",
+                "details": "The evidence packet links Hugging Face candidate set hf-candidates-20260610T012449988Z, which is temporally aligned with the run, but the supplied reviewer evidence does not include candidate metadata. Local-model migration conclusions should wait for verification of model ids, context limits, license posture, quantization, hardware requirements, throughput assumptions, and cost assumptions from the redacted candidate catalogue or normalized candidate summaries.",
+                "evidenceRefs": [
+                  "hf-candidates-20260610T012449988Z",
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/evidence-packet.json"
+                ]
+              },
+              {
+                "title": "Provider snapshot chronology needs attestation",
+                "severity": "medium",
+                "details": "The evidence packet was generated at 2026-06-10T01:24:49.558Z but includes Cursor and Codex provider snapshot identifiers dated 2026-06-11. This may reflect timezone boundaries, scheduled collection windows, or identifier naming, but it should be attested before parent synthesis treats those snapshots as contemporaneous forensic inputs.",
+                "evidenceRefs": [
+                  "dynamic-usage-cursor-2026-06-11",
+                  "dynamic-usage-codex-2026-06-11",
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/evidence-packet.json"
+                ]
+              },
+              {
+                "title": "Primary usage snapshot is GitHub Copilot-specific",
+                "severity": "medium",
+                "details": "The run usageSnapshotId is dynamic-usage-github-copilot-2026-06-08 while providerSnapshotIds also reference Cursor, Claude, Claude Code, and Codex snapshots. Parent synthesis should clarify whether GitHub Copilot is the intended baseline or whether a normalized cross-provider aggregate should drive local-model recommendations.",
+                "evidenceRefs": [
+                  "dynamic-usage-github-copilot-2026-06-08",
+                  "dynamic-usage-cursor-2026-06-11",
+                  "dynamic-usage-claude-2026-06-10",
+                  "dynamic-usage-claude-code-2026-06-10",
+                  "dynamic-usage-codex-2026-06-11"
+                ]
+              },
+              {
+                "title": "Reviewer and bridge provenance are distinct",
+                "severity": "low",
+                "details": "This artifact represents a gemini reviewer model executed through the codex bridge provider kind. Downstream consumers should preserve both fields so reviewer perspective is not confused with bridge execution provenance.",
+                "evidenceRefs": [
+                  "dynamic-forensic-20260610T012449558Z",
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/evidence-packet.json"
+                ]
+              }
+            ],
+            "generatedAt": "2026-06-10T01:24:49.558Z",
+            "providerKind": "codex",
+            "providerRole": "reviewer",
+            "provenance": {
+              "redacted": true,
+              "snapshotId": "dynamic-usage-github-copilot-2026-06-08",
+              "source": "local_model_forensic_reviewer_prompt",
+              "evidencePacketUri": "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/evidence-packet.json",
+              "huggingFaceCandidateSetId": "hf-candidates-20260610T012449988Z"
+            },
+            "recommendations": [
+              "Verify the linked Hugging Face candidate metadata before ranking local-model migration options.",
+              "Resolve or attest the 2026-06-11 Cursor and Codex snapshot identifiers before parent synthesis relies on them.",
+              "Clarify whether dynamic-usage-github-copilot-2026-06-08 is the baseline usage snapshot or replace it with a normalized cross-provider aggregate snapshot.",
+              "Require normalized provider summaries before making quantitative token, cost, latency, throughput, or workload claims.",
+              "Continue excluding raw provider Admin API snapshots and credentials from reviewer artifacts and persisted forensic outputs."
+            ],
+            "summary": "Gemini forensic review completed through the codex bridge provider for run dynamic-forensic-20260610T012449558Z. The evidence packet is structurally usable as redacted provenance, but local-model migration recommendations should remain gated on linked candidate metadata verification, cross-provider usage normalization, and attestation of provider snapshot chronology.",
+            "sessionId": "019eaf25-dc83-7701-9c6c-581b6994c589"
+          },
+          "artifactUri": "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/reviewers/gemini.json",
+          "bridgeProviderKind": "codex",
+          "reviewerModel": "gemini",
+          "status": "completed"
+        },
+        {
+          "artifact": {
+            "artifactKind": "local_model_forensic_review",
+            "artifactSchemaVersion": "sdlca.bridge.forensic.v0",
+            "artifactUri": "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/reviewers/kimi.json",
+            "runId": "dynamic-forensic-20260610T012449558Z",
+            "reviewerModel": "kimi",
+            "generatedAt": "2026-06-10T01:24:49.558Z",
+            "providerKind": "codex",
+            "providerRole": "reviewer",
+            "provenance": {
+              "redacted": true,
+              "source": "local_model_forensic_reviewer_prompt",
+              "snapshotId": "dynamic-usage-github-copilot-2026-06-08",
+              "huggingFaceCandidateSetId": "hf-candidates-20260610T012449988Z",
+              "evidencePacketUri": "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/evidence-packet.json"
+            },
+            "summary": "Codex/kimi forensic review completed against the redacted evidence packet for run dynamic-forensic-20260610T012449558Z. The Hugging Face candidate set is populated and aligned to the run, enabling candidate-aware local-model assessment, but the evidence packet itself contains only provenance identifiers rather than normalized quantitative usage, latency, throughput, cost, or context-window summaries. The primary usage snapshot is GitHub Copilot-specific while companion provider snapshots span Cursor, Claude, Claude Code, and Codex, and Cursor/Codex snapshot identifiers are dated after the evidence packet generation timestamp. No raw provider Admin API snapshots or credentials were included.",
+            "findings": [
+              {
+                "title": "Candidate set is populated but ranking still needs normalized workload evidence",
+                "severity": "medium",
+                "details": "The referenced Hugging Face candidate set hf-candidates-20260610T012449988Z contains five local-model candidates: meta-llama/Llama-3.1-8B-Instruct, Qwen/Qwen2.5-Coder-14B-Instruct, Qwen/Qwen2.5-Coder-32B-Instruct, Qwen/Qwen2.5-72B-Instruct, and Qwen/Qwen2.5-7B-Instruct-1M. This is sufficient for catalogue-aware screening, but the supplied evidence packet does not include normalized workload summaries needed to rank those candidates quantitatively.",
+                "evidenceRefs": [
+                  "hf-candidates-20260610T012449988Z",
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/evidence-packet.json"
+                ]
+              },
+              {
+                "title": "Candidate catalogue has mixed specialization and license posture",
+                "severity": "medium",
+                "details": "The candidate set mixes general chat, code-specialized, large-parameter, and long-context profiles with license values including llama3.1, apache-2.0, and other. Commercial local-model substitution should not treat the list as a single interchangeable pool; ranking should include task fit, license posture, deployability, and hardware envelope.",
+                "evidenceRefs": [
+                  "hf-candidates-20260610T012449988Z"
+                ]
+              },
+              {
+                "title": "Only one listed candidate is explicitly positioned for very large context screening",
+                "severity": "high",
+                "details": "Among the five candidates, Qwen/Qwen2.5-7B-Instruct-1M is the only candidate whose identifier explicitly indicates a 1M-token context target. The other candidates may still be useful for routed or compressed workloads, but direct substitution for high-context reviewer or agent sessions should remain provisional until context-window, throughput, and quality measurements are attached.",
+                "evidenceRefs": [
+                  "hf-candidates-20260610T012449988Z",
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/evidence-packet.json"
+                ]
+              },
+              {
+                "title": "Provider snapshot chronology needs attestation",
+                "severity": "medium",
+                "details": "The evidence packet was generated at 2026-06-10T01:24:49.558Z but includes Cursor and Codex provider snapshot identifiers dated 2026-06-11. Parent synthesis should confirm whether those identifiers reflect timezone boundaries, scheduled collection windows, pre-generated snapshot ids, or a chronology mismatch before treating the snapshots as contemporaneous evidence.",
+                "evidenceRefs": [
+                  "dynamic-usage-cursor-2026-06-11",
+                  "dynamic-usage-codex-2026-06-11",
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/evidence-packet.json"
+                ]
+              },
+              {
+                "title": "Primary usage snapshot is narrower than provider evidence set",
+                "severity": "medium",
+                "details": "The run usage snapshot id is dynamic-usage-github-copilot-2026-06-08 while the evidence packet also references Cursor, Claude, Claude Code, and Codex snapshots. Parent synthesis should clarify whether GitHub Copilot is the intended baseline or whether a normalized cross-provider aggregate should drive local-model migration conclusions.",
+                "evidenceRefs": [
+                  "dynamic-usage-github-copilot-2026-06-08",
+                  "dynamic-usage-cursor-2026-06-11",
+                  "dynamic-usage-claude-2026-06-10",
+                  "dynamic-usage-claude-code-2026-06-10",
+                  "dynamic-usage-codex-2026-06-11"
+                ]
+              },
+              {
+                "title": "Evidence packet preserves the redacted boundary",
+                "severity": "info",
+                "details": "The supplied evidence contains artifact metadata, snapshot identifiers, and generation metadata only. This preserves the boundary against raw provider Admin API snapshots and credentials, but limits this artifact to provenance, catalogue posture, chronology, and consistency checks rather than direct quantitative validation.",
+                "evidenceRefs": [
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/evidence-packet.json"
+                ]
+              },
+              {
+                "title": "Reviewer and bridge attribution should remain explicit",
+                "severity": "low",
+                "details": "This artifact represents a kimi reviewer model executed through the codex bridge provider kind. Downstream consumers should preserve both fields so reviewer perspective is not confused with bridge execution provenance.",
+                "evidenceRefs": [
+                  "dynamic-forensic-20260610T012449558Z",
+                  "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/evidence-packet.json"
+                ]
+              }
+            ],
+            "recommendations": [
+              "Proceed with candidate-aware local-model screening using hf-candidates-20260610T012449988Z, but do not publish a ranked migration recommendation until normalized provider usage summaries are attached.",
+              "Resolve or explicitly explain the 2026-06-11 Cursor and Codex snapshot ids before parent synthesis relies on them as contemporaneous forensic inputs.",
+              "Clarify whether dynamic-usage-github-copilot-2026-06-08 is the intended baseline usage snapshot or replace it with a normalized cross-provider aggregate snapshot.",
+              "Score candidates separately for code-specialized workloads, long-context workloads, license posture, hardware fit, and deployment risk rather than selecting from the candidate set by popularity alone.",
+              "Treat Qwen/Qwen2.5-7B-Instruct-1M as the primary long-context screening candidate, while requiring retrieval, compression, truncation, or routing strategies for smaller-context candidates.",
+              "Continue excluding raw provider Admin API snapshots and credentials from reviewer artifacts and persisted forensic outputs.",
+              "Preserve reviewerModel kimi and providerKind codex as separate provenance fields in downstream forensic synthesis."
+            ],
+            "sessionId": "019eaf26-70a5-74a2-ba4d-eaa3ac4240e8"
+          },
+          "artifactUri": "local://token-reporting/forensics/dynamic-forensic-20260610T012449558Z/reviewers/kimi.json",
+          "bridgeProviderKind": "codex",
+          "reviewerModel": "kimi",
+          "status": "completed"
+        }
+      ],
+      "reviewerModels": [
+        "sonnet",
+        "opus",
+        "gpt",
+        "grok",
+        "composer",
+        "gemini",
+        "kimi"
+      ],
+      "runId": "dynamic-forensic-20260610T012449558Z",
+      "status": "completed",
+      "updatedAt": "2026-06-10T01:24:49.558Z",
+      "usageSnapshotId": "dynamic-usage-github-copilot-2026-06-08"
     }
   }
 }

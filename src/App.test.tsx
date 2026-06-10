@@ -49,6 +49,30 @@ describe("App", () => {
 
   });
 
+  it("renders the local AI infrastructure sizing section", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: false
+      })
+    );
+
+    render(<App />);
+
+    expect(await screen.findByText("Local AI Infrastructure Sizing")).toBeInTheDocument();
+    expect(screen.getByText("Executive Hardware Decision Summary")).toBeInTheDocument();
+    expect(screen.getByText("Current workload baseline")).toBeInTheDocument();
+    expect(screen.getAllByText("Target first-server migration objective").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Estimated full-workload capacity").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Safe initial production routing").length).toBeGreaterThan(0);
+    expect(screen.getByText("First-server recommendation")).toBeInTheDocument();
+    expect(screen.getByText("Provider traffic normalized")).toBeInTheDocument();
+    expect(screen.getByText("Workload scope sizing")).toBeInTheDocument();
+    expect(screen.getByText("Route class migration plan")).toBeInTheDocument();
+    expect(screen.getByText("Financial payback model")).toBeInTheDocument();
+    expect(screen.getByText("Benchmark gates")).toBeInTheDocument();
+  });
+
   it("prefers accumulated provider snapshots before falling back to latest snapshots", async () => {
     const fetchStub = vi.fn().mockResolvedValue({ ok: false });
     vi.stubGlobal("fetch", fetchStub);
@@ -165,7 +189,7 @@ describe("App", () => {
     ).toBeInTheDocument();
     expect(screen.getAllByText(/dynamic-forensic-test/)).toHaveLength(2);
     expect(screen.getByText(/Applied forensic guidance/)).toBeInTheDocument();
-    expect(screen.getByText(/partial local migration/)).toBeInTheDocument();
+    expect(screen.getAllByText(/partial local migration/).length).toBeGreaterThan(0);
   });
 
   it("refresh button requests dynamic refresh before reloading snapshots", async () => {

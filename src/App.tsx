@@ -5,6 +5,7 @@ import { ClaudeReportCard } from "./components/ClaudeReportCard";
 import { CodexReportCard } from "./components/CodexReportCard";
 import { CursorReportCard } from "./components/CursorReportCard";
 import { GitHubCopilotReportCard } from "./components/GitHubCopilotReportCard";
+import { LocalInfrastructureSizingPanel } from "./components/LocalInfrastructureSizingPanel";
 import { ProviderComparisonSection } from "./components/ProviderComparisonSection";
 import { LocalModelMigrationPanel } from "./components/LocalModelMigrationPanel";
 import { SpendProjectionPanel } from "./components/SpendProjectionPanel";
@@ -329,6 +330,12 @@ export default function App() {
       <ProviderComparisonSection summaries={summaries} />
       <SpendProjectionPanel summaries={summaries} />
       <LocalModelMigrationPanel
+        summaries={summaries}
+        distribution={distribution}
+        forensicRun={forensicRun}
+        huggingFaceCandidateSet={huggingFaceCandidateSet}
+      />
+      <LocalInfrastructureSizingPanel
         summaries={summaries}
         distribution={distribution}
         forensicRun={forensicRun}

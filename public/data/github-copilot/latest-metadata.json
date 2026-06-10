@@ -1,20 +1,20 @@
 {
   "download_links": [
-    "https://copilot-reports.github.com/organization-users-28-day-report/etl_id=green/day_partition=2026-06-07/entity_id_partition=57124965/part-00049-e216453a-0137-4213-b79a-12bf4faee463.c000.json?rscd=attachment%3B+filename%3Dpart-00049-e216453a-0137-4213-b79a-12bf4faee463.c000.ndjson&rsct=application%2Foctet-stream&se=2026-06-09T00%3A44%3A57Z&sig=6fEb8q8kK9grRXR8U5T837Ah23o%2F7eGdyJtZHsGlK5E%3D&ske=2026-06-09T00%3A44%3A57Z&skoid=a857fba9-84e2-4e06-a5f6-5d62fcd5ad4b&sks=b&skt=2026-06-08T23%3A44%3A47Z&sktid=398a6654-997b-47e9-b12b-9515b896b4de&skv=2026-04-06&sp=r&spr=https&sr=b&st=2026-06-08T23%3A44%3A47Z&sv=2026-04-06"
+    "https://copilot-reports.github.com/organization-users-28-day-report/etl_id=green/day_partition=2026-06-08/entity_id_partition=57124965/part-00049-2a21dbb5-b3c9-4a80-ae01-1ebd7aff2783.c000.json?rscd=attachment%3B+filename%3Dpart-00049-2a21dbb5-b3c9-4a80-ae01-1ebd7aff2783.c000.ndjson&rsct=application%2Foctet-stream&se=2026-06-10T02%3A24%3A51Z&sig=8NdudiZovGhr9hPamaZLX0%2BMGZcAN4ujkM1pdDghEZE%3D&ske=2026-06-10T02%3A24%3A51Z&skoid=a857fba9-84e2-4e06-a5f6-5d62fcd5ad4b&sks=b&skt=2026-06-10T01%3A24%3A41Z&sktid=398a6654-997b-47e9-b12b-9515b896b4de&skv=2026-04-06&sp=r&spr=https&sr=b&st=2026-06-10T01%3A24%3A41Z&sv=2026-04-06"
   ],
-  "report_start_day": "2026-05-11",
-  "report_end_day": "2026-06-07",
+  "report_start_day": "2026-05-12",
+  "report_end_day": "2026-06-08",
   "usage_summary": {
-    "totalInteractions": 7419,
-    "totalCodeGenerations": 5634,
-    "totalAcceptances": 5413,
-    "totalLinesAdded": 174066,
+    "totalInteractions": 4490,
+    "totalCodeGenerations": 5206,
+    "totalAcceptances": 5019,
+    "totalLinesAdded": 150574,
     "totalLocSuggested": 0,
     "activeUserCount": 5,
-    "totalCliInputTokens": 7928278193,
-    "totalCliOutputTokens": 45711259,
-    "totalCliRequests": 97650,
-    "totalCliSessions": 5700,
+    "totalCliInputTokens": 7246201476,
+    "totalCliOutputTokens": 42282875,
+    "totalCliRequests": 88449,
+    "totalCliSessions": 2769,
     "cliModelsUsed": [
       "claude-haiku-4.5",
       "claude-opus-4.7",
@@ -29,22 +29,22 @@
       {
         "model": "claude-sonnet-4.6",
         "feature": "copilot_cli",
-        "interactionCount": 7232
+        "interactionCount": 4295
       },
       {
         "model": "gpt-5.2",
         "feature": "copilot_cli",
-        "interactionCount": 115
+        "interactionCount": 117
       },
       {
         "model": "gpt-5.3-codex",
         "feature": "copilot_cli",
-        "interactionCount": 26
+        "interactionCount": 28
       },
       {
         "model": "gpt-5.4",
         "feature": "copilot_cli",
-        "interactionCount": 22
+        "interactionCount": 26
       },
       {
         "model": "claude-haiku-4.5",
@@ -69,566 +69,6 @@
     ]
   },
   "usage_records": [
-    {
-      "day": "2026-05-20",
-      "user_id": 57125198,
-      "user_login": "chris-kreager",
-      "user_initiated_interaction_count": 0,
-      "code_generation_activity_count": 0,
-      "code_acceptance_activity_count": 0,
-      "loc_suggested_to_add_sum": 0,
-      "loc_added_sum": 0,
-      "totals_by_model_feature": [],
-      "used_cli": false,
-      "used_chat": false,
-      "used_agent": false,
-      "used_copilot_coding_agent": true,
-      "used_copilot_code_review_active": false
-    },
-    {
-      "day": "2026-06-07",
-      "user_id": 284792193,
-      "user_login": "sdlca-worker-copilot",
-      "user_initiated_interaction_count": 6,
-      "code_generation_activity_count": 12,
-      "code_acceptance_activity_count": 12,
-      "loc_suggested_to_add_sum": 0,
-      "loc_added_sum": 402,
-      "totals_by_cli": {
-        "session_count": 5,
-        "request_count": 133,
-        "prompt_count": 6,
-        "token_usage": {
-          "prompt_tokens_sum": 9531943,
-          "output_tokens_sum": 38410,
-          "avg_tokens_per_request": 71957.54
-        }
-      },
-      "totals_by_model_feature": [
-        {
-          "model": "claude-sonnet-4.6",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 6
-        }
-      ],
-      "used_cli": true,
-      "used_chat": false,
-      "used_agent": false,
-      "used_copilot_coding_agent": false,
-      "used_copilot_code_review_active": false
-    },
-    {
-      "day": "2026-05-17",
-      "user_id": 284792193,
-      "user_login": "sdlca-worker-copilot",
-      "user_initiated_interaction_count": 565,
-      "code_generation_activity_count": 170,
-      "code_acceptance_activity_count": 158,
-      "loc_suggested_to_add_sum": 0,
-      "loc_added_sum": 1935,
-      "totals_by_cli": {
-        "session_count": 46,
-        "request_count": 4598,
-        "prompt_count": 565,
-        "token_usage": {
-          "prompt_tokens_sum": 425526924,
-          "output_tokens_sum": 1432108,
-          "avg_tokens_per_request": 92857.55
-        }
-      },
-      "totals_by_model_feature": [
-        {
-          "model": "claude-sonnet-4.6",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 565
-        },
-        {
-          "model": "claude-haiku-4.5",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 0
-        },
-        {
-          "model": "gpt-4.1",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 0
-        },
-        {
-          "model": "gpt-5.4",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 0
-        }
-      ],
-      "used_cli": true,
-      "used_chat": false,
-      "used_agent": false,
-      "used_copilot_coding_agent": false,
-      "used_copilot_code_review_active": false
-    },
-    {
-      "day": "2026-05-15",
-      "user_id": 57125198,
-      "user_login": "chris-kreager",
-      "user_initiated_interaction_count": 150,
-      "code_generation_activity_count": 345,
-      "code_acceptance_activity_count": 332,
-      "loc_suggested_to_add_sum": 0,
-      "loc_added_sum": 5818,
-      "totals_by_cli": {
-        "session_count": 116,
-        "request_count": 6988,
-        "prompt_count": 150,
-        "token_usage": {
-          "prompt_tokens_sum": 571079543,
-          "output_tokens_sum": 3377698,
-          "avg_tokens_per_request": 82206.25
-        }
-      },
-      "totals_by_model_feature": [
-        {
-          "model": "claude-sonnet-4.6",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 150
-        },
-        {
-          "model": "claude-haiku-4.5",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 0
-        },
-        {
-          "model": "gpt-4.1",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 0
-        },
-        {
-          "model": "gpt-5.4",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 0
-        }
-      ],
-      "used_cli": true,
-      "used_chat": false,
-      "used_agent": false,
-      "used_copilot_coding_agent": false,
-      "used_copilot_code_review_active": true
-    },
-    {
-      "day": "2026-05-14",
-      "user_id": 8487,
-      "user_login": "ckreager",
-      "user_initiated_interaction_count": 0,
-      "code_generation_activity_count": 0,
-      "code_acceptance_activity_count": 0,
-      "loc_suggested_to_add_sum": 0,
-      "loc_added_sum": 0,
-      "totals_by_model_feature": [],
-      "used_cli": false,
-      "used_chat": false,
-      "used_agent": false,
-      "used_copilot_coding_agent": true,
-      "used_copilot_code_review_active": true
-    },
-    {
-      "day": "2026-06-01",
-      "user_id": 57125198,
-      "user_login": "chris-kreager",
-      "user_initiated_interaction_count": 7,
-      "code_generation_activity_count": 4,
-      "code_acceptance_activity_count": 4,
-      "loc_suggested_to_add_sum": 0,
-      "loc_added_sum": 33,
-      "totals_by_cli": {
-        "session_count": 1,
-        "request_count": 86,
-        "prompt_count": 7,
-        "token_usage": {
-          "prompt_tokens_sum": 6101843,
-          "output_tokens_sum": 68388,
-          "avg_tokens_per_request": 71746.87
-        }
-      },
-      "totals_by_model_feature": [
-        {
-          "model": "claude-sonnet-4.6",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 7
-        },
-        {
-          "model": "claude-haiku-4.5",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 0
-        }
-      ],
-      "used_cli": true,
-      "used_chat": false,
-      "used_agent": false,
-      "used_copilot_coding_agent": false,
-      "used_copilot_code_review_active": false
-    },
-    {
-      "day": "2026-06-03",
-      "user_id": 8487,
-      "user_login": "ckreager",
-      "user_initiated_interaction_count": 5,
-      "code_generation_activity_count": 0,
-      "code_acceptance_activity_count": 0,
-      "loc_suggested_to_add_sum": 0,
-      "loc_added_sum": 0,
-      "totals_by_cli": {
-        "session_count": 5,
-        "request_count": 77,
-        "prompt_count": 5,
-        "token_usage": {
-          "prompt_tokens_sum": 4265080,
-          "output_tokens_sum": 58659,
-          "avg_tokens_per_request": 56152.45
-        }
-      },
-      "totals_by_model_feature": [
-        {
-          "model": "gpt-5.2",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 5
-        }
-      ],
-      "used_cli": true,
-      "used_chat": false,
-      "used_agent": false,
-      "used_copilot_coding_agent": true,
-      "used_copilot_code_review_active": false
-    },
-    {
-      "day": "2026-05-23",
-      "user_id": 8487,
-      "user_login": "ckreager",
-      "user_initiated_interaction_count": 18,
-      "code_generation_activity_count": 10,
-      "code_acceptance_activity_count": 10,
-      "loc_suggested_to_add_sum": 0,
-      "loc_added_sum": 169,
-      "totals_by_cli": {
-        "session_count": 17,
-        "request_count": 280,
-        "prompt_count": 18,
-        "token_usage": {
-          "prompt_tokens_sum": 18258402,
-          "output_tokens_sum": 153965,
-          "avg_tokens_per_request": 65758.45
-        }
-      },
-      "totals_by_model_feature": [
-        {
-          "model": "gpt-5.3-codex",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 2
-        },
-        {
-          "model": "gpt-5.2",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 16
-        }
-      ],
-      "used_cli": true,
-      "used_chat": false,
-      "used_agent": false,
-      "used_copilot_coding_agent": true,
-      "used_copilot_code_review_active": true
-    },
-    {
-      "day": "2026-05-16",
-      "user_id": 274143375,
-      "user_login": "projectit-ai-repo-orchestrator[bot]",
-      "user_initiated_interaction_count": 0,
-      "code_generation_activity_count": 0,
-      "code_acceptance_activity_count": 0,
-      "loc_suggested_to_add_sum": 0,
-      "loc_added_sum": 0,
-      "totals_by_model_feature": [],
-      "used_cli": false,
-      "used_chat": false,
-      "used_agent": false,
-      "used_copilot_coding_agent": false,
-      "used_copilot_code_review_active": false
-    },
-    {
-      "day": "2026-06-04",
-      "user_id": 284792193,
-      "user_login": "sdlca-worker-copilot",
-      "user_initiated_interaction_count": 2,
-      "code_generation_activity_count": 0,
-      "code_acceptance_activity_count": 0,
-      "loc_suggested_to_add_sum": 0,
-      "loc_added_sum": 0,
-      "totals_by_cli": {
-        "session_count": 2,
-        "request_count": 34,
-        "prompt_count": 2,
-        "token_usage": {
-          "prompt_tokens_sum": 1445199,
-          "output_tokens_sum": 20209,
-          "avg_tokens_per_request": 43100.24
-        }
-      },
-      "totals_by_model_feature": [
-        {
-          "model": "gpt-5.2",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 2
-        }
-      ],
-      "used_cli": true,
-      "used_chat": false,
-      "used_agent": false,
-      "used_copilot_coding_agent": true,
-      "used_copilot_code_review_active": false
-    },
-    {
-      "day": "2026-06-06",
-      "user_id": 8487,
-      "user_login": "ckreager",
-      "user_initiated_interaction_count": 17,
-      "code_generation_activity_count": 3,
-      "code_acceptance_activity_count": 2,
-      "loc_suggested_to_add_sum": 0,
-      "loc_added_sum": 9,
-      "totals_by_cli": {
-        "session_count": 12,
-        "request_count": 243,
-        "prompt_count": 17,
-        "token_usage": {
-          "prompt_tokens_sum": 14702749,
-          "output_tokens_sum": 120352,
-          "avg_tokens_per_request": 61000.42
-        }
-      },
-      "totals_by_model_feature": [
-        {
-          "model": "claude-sonnet-4.6",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 4
-        },
-        {
-          "model": "gpt-5.2",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 9
-        },
-        {
-          "model": "gpt-5.3-codex",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 4
-        }
-      ],
-      "used_cli": true,
-      "used_chat": false,
-      "used_agent": false,
-      "used_copilot_coding_agent": true,
-      "used_copilot_code_review_active": false
-    },
-    {
-      "day": "2026-05-28",
-      "user_id": 284792193,
-      "user_login": "sdlca-worker-copilot",
-      "user_initiated_interaction_count": 514,
-      "code_generation_activity_count": 0,
-      "code_acceptance_activity_count": 0,
-      "loc_suggested_to_add_sum": 0,
-      "loc_added_sum": 0,
-      "totals_by_cli": {
-        "session_count": 5,
-        "request_count": 515,
-        "prompt_count": 514,
-        "token_usage": {
-          "prompt_tokens_sum": 64651248,
-          "output_tokens_sum": 85683,
-          "avg_tokens_per_request": 125702.78
-        }
-      },
-      "totals_by_model_feature": [
-        {
-          "model": "claude-sonnet-4.6",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 514
-        }
-      ],
-      "used_cli": true,
-      "used_chat": false,
-      "used_agent": false,
-      "used_copilot_coding_agent": false,
-      "used_copilot_code_review_active": false
-    },
-    {
-      "day": "2026-05-24",
-      "user_id": 284792193,
-      "user_login": "sdlca-worker-copilot",
-      "user_initiated_interaction_count": 145,
-      "code_generation_activity_count": 680,
-      "code_acceptance_activity_count": 672,
-      "loc_suggested_to_add_sum": 0,
-      "loc_added_sum": 23995,
-      "totals_by_cli": {
-        "session_count": 124,
-        "request_count": 4739,
-        "prompt_count": 145,
-        "token_usage": {
-          "prompt_tokens_sum": 392448088,
-          "output_tokens_sum": 2181040,
-          "avg_tokens_per_request": 83272.66
-        }
-      },
-      "totals_by_model_feature": [
-        {
-          "model": "claude-sonnet-4.6",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 145
-        }
-      ],
-      "used_cli": true,
-      "used_chat": false,
-      "used_agent": false,
-      "used_copilot_coding_agent": false,
-      "used_copilot_code_review_active": false
-    },
-    {
-      "day": "2026-06-05",
-      "user_id": 8487,
-      "user_login": "ckreager",
-      "user_initiated_interaction_count": 10,
-      "code_generation_activity_count": 0,
-      "code_acceptance_activity_count": 0,
-      "loc_suggested_to_add_sum": 0,
-      "loc_added_sum": 0,
-      "totals_by_cli": {
-        "session_count": 9,
-        "request_count": 154,
-        "prompt_count": 10,
-        "token_usage": {
-          "prompt_tokens_sum": 8037123,
-          "output_tokens_sum": 72645,
-          "avg_tokens_per_request": 52660.83
-        }
-      },
-      "totals_by_model_feature": [
-        {
-          "model": "gpt-5.2",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 8
-        },
-        {
-          "model": "gpt-5.4",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 2
-        }
-      ],
-      "used_cli": true,
-      "used_chat": false,
-      "used_agent": false,
-      "used_copilot_coding_agent": true,
-      "used_copilot_code_review_active": false
-    },
-    {
-      "day": "2026-06-01",
-      "user_id": 8487,
-      "user_login": "ckreager",
-      "user_initiated_interaction_count": 4,
-      "code_generation_activity_count": 0,
-      "code_acceptance_activity_count": 0,
-      "loc_suggested_to_add_sum": 0,
-      "loc_added_sum": 0,
-      "totals_by_cli": {
-        "session_count": 3,
-        "request_count": 100,
-        "prompt_count": 4,
-        "token_usage": {
-          "prompt_tokens_sum": 5750685,
-          "output_tokens_sum": 20682,
-          "avg_tokens_per_request": 57713.67
-        }
-      },
-      "totals_by_model_feature": [
-        {
-          "model": "gpt-5.4",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 2
-        },
-        {
-          "model": "claude-opus-4.7",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 1
-        },
-        {
-          "model": "gpt-5.5",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 1
-        }
-      ],
-      "used_cli": true,
-      "used_chat": false,
-      "used_agent": false,
-      "used_copilot_coding_agent": true,
-      "used_copilot_code_review_active": false
-    },
-    {
-      "day": "2026-05-13",
-      "user_id": 57125198,
-      "user_login": "chris-kreager",
-      "user_initiated_interaction_count": 222,
-      "code_generation_activity_count": 564,
-      "code_acceptance_activity_count": 532,
-      "loc_suggested_to_add_sum": 0,
-      "loc_added_sum": 17205,
-      "totals_by_cli": {
-        "session_count": 191,
-        "request_count": 8019,
-        "prompt_count": 222,
-        "token_usage": {
-          "prompt_tokens_sum": 681174091,
-          "output_tokens_sum": 2847092,
-          "avg_tokens_per_request": 85300.06
-        }
-      },
-      "totals_by_model_feature": [
-        {
-          "model": "claude-sonnet-4.6",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 222
-        },
-        {
-          "model": "claude-haiku-4.5",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 0
-        },
-        {
-          "model": "gpt-4.1",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 0
-        },
-        {
-          "model": "gpt-5.4",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 0
-        }
-      ],
-      "used_cli": true,
-      "used_chat": false,
-      "used_agent": false,
-      "used_copilot_coding_agent": false,
-      "used_copilot_code_review_active": true
-    },
-    {
-      "day": "2026-05-13",
-      "user_id": 274143375,
-      "user_login": "projectit-ai-repo-orchestrator[bot]",
-      "user_initiated_interaction_count": 0,
-      "code_generation_activity_count": 0,
-      "code_acceptance_activity_count": 0,
-      "loc_suggested_to_add_sum": 0,
-      "loc_added_sum": 0,
-      "totals_by_model_feature": [],
-      "used_cli": false,
-      "used_chat": false,
-      "used_agent": false,
-      "used_copilot_coding_agent": false,
-      "used_copilot_code_review_active": false
-    },
     {
       "day": "2026-05-26",
       "user_id": 284792193,
@@ -705,28 +145,373 @@
     },
     {
       "day": "2026-05-27",
-      "user_id": 8487,
-      "user_login": "ckreager",
-      "user_initiated_interaction_count": 18,
-      "code_generation_activity_count": 1,
-      "code_acceptance_activity_count": 1,
+      "user_id": 284791894,
+      "user_login": "sdlca-reviewer-copilot",
+      "user_initiated_interaction_count": 1,
+      "code_generation_activity_count": 0,
+      "code_acceptance_activity_count": 0,
       "loc_suggested_to_add_sum": 0,
       "loc_added_sum": 0,
       "totals_by_cli": {
-        "session_count": 9,
-        "request_count": 161,
-        "prompt_count": 18,
+        "session_count": 1,
+        "request_count": 1,
+        "prompt_count": 1,
         "token_usage": {
-          "prompt_tokens_sum": 6614244,
-          "output_tokens_sum": 70423,
-          "avg_tokens_per_request": 41519.67
+          "prompt_tokens_sum": 21145,
+          "output_tokens_sum": 506,
+          "avg_tokens_per_request": 21651
+        }
+      },
+      "totals_by_model_feature": [
+        {
+          "model": "claude-sonnet-4.6",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 1
+        }
+      ],
+      "used_cli": true,
+      "used_chat": false,
+      "used_agent": false,
+      "used_copilot_coding_agent": false,
+      "used_copilot_code_review_active": false
+    },
+    {
+      "day": "2026-05-13",
+      "user_id": 274143375,
+      "user_login": "projectit-ai-repo-orchestrator[bot]",
+      "user_initiated_interaction_count": 0,
+      "code_generation_activity_count": 0,
+      "code_acceptance_activity_count": 0,
+      "loc_suggested_to_add_sum": 0,
+      "loc_added_sum": 0,
+      "totals_by_model_feature": [],
+      "used_cli": false,
+      "used_chat": false,
+      "used_agent": false,
+      "used_copilot_coding_agent": false,
+      "used_copilot_code_review_active": false
+    },
+    {
+      "day": "2026-05-26",
+      "user_id": 8487,
+      "user_login": "ckreager",
+      "user_initiated_interaction_count": 0,
+      "code_generation_activity_count": 0,
+      "code_acceptance_activity_count": 0,
+      "loc_suggested_to_add_sum": 0,
+      "loc_added_sum": 0,
+      "totals_by_model_feature": [],
+      "used_cli": false,
+      "used_chat": false,
+      "used_agent": false,
+      "used_copilot_coding_agent": true,
+      "used_copilot_code_review_active": false
+    },
+    {
+      "day": "2026-06-07",
+      "user_id": 57125198,
+      "user_login": "chris-kreager",
+      "user_initiated_interaction_count": 5,
+      "code_generation_activity_count": 0,
+      "code_acceptance_activity_count": 0,
+      "loc_suggested_to_add_sum": 0,
+      "loc_added_sum": 0,
+      "totals_by_cli": {
+        "session_count": 5,
+        "request_count": 73,
+        "prompt_count": 5,
+        "token_usage": {
+          "prompt_tokens_sum": 5185047,
+          "output_tokens_sum": 69900,
+          "avg_tokens_per_request": 71985.58
+        }
+      },
+      "totals_by_model_feature": [
+        {
+          "model": "claude-sonnet-4.6",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 5
+        }
+      ],
+      "used_cli": true,
+      "used_chat": false,
+      "used_agent": false,
+      "used_copilot_coding_agent": false,
+      "used_copilot_code_review_active": false
+    },
+    {
+      "day": "2026-05-13",
+      "user_id": 57125198,
+      "user_login": "chris-kreager",
+      "user_initiated_interaction_count": 222,
+      "code_generation_activity_count": 564,
+      "code_acceptance_activity_count": 532,
+      "loc_suggested_to_add_sum": 0,
+      "loc_added_sum": 17205,
+      "totals_by_cli": {
+        "session_count": 191,
+        "request_count": 8019,
+        "prompt_count": 222,
+        "token_usage": {
+          "prompt_tokens_sum": 681174091,
+          "output_tokens_sum": 2847092,
+          "avg_tokens_per_request": 85300.06
+        }
+      },
+      "totals_by_model_feature": [
+        {
+          "model": "claude-sonnet-4.6",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 222
+        },
+        {
+          "model": "claude-haiku-4.5",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 0
+        },
+        {
+          "model": "gpt-4.1",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 0
+        },
+        {
+          "model": "gpt-5.4",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 0
+        }
+      ],
+      "used_cli": true,
+      "used_chat": false,
+      "used_agent": false,
+      "used_copilot_coding_agent": false,
+      "used_copilot_code_review_active": true
+    },
+    {
+      "day": "2026-05-14",
+      "user_id": 8487,
+      "user_login": "ckreager",
+      "user_initiated_interaction_count": 0,
+      "code_generation_activity_count": 0,
+      "code_acceptance_activity_count": 0,
+      "loc_suggested_to_add_sum": 0,
+      "loc_added_sum": 0,
+      "totals_by_model_feature": [],
+      "used_cli": false,
+      "used_chat": false,
+      "used_agent": false,
+      "used_copilot_coding_agent": true,
+      "used_copilot_code_review_active": true
+    },
+    {
+      "day": "2026-06-04",
+      "user_id": 284791894,
+      "user_login": "sdlca-reviewer-copilot",
+      "user_initiated_interaction_count": 77,
+      "code_generation_activity_count": 0,
+      "code_acceptance_activity_count": 0,
+      "loc_suggested_to_add_sum": 0,
+      "loc_added_sum": 0,
+      "totals_by_cli": {
+        "session_count": 47,
+        "request_count": 740,
+        "prompt_count": 77,
+        "token_usage": {
+          "prompt_tokens_sum": 52618467,
+          "output_tokens_sum": 578904,
+          "avg_tokens_per_request": 71888.34
+        }
+      },
+      "totals_by_model_feature": [
+        {
+          "model": "claude-sonnet-4.6",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 77
+        }
+      ],
+      "used_cli": true,
+      "used_chat": false,
+      "used_agent": false,
+      "used_copilot_coding_agent": false,
+      "used_copilot_code_review_active": false
+    },
+    {
+      "day": "2026-06-08",
+      "user_id": 284791894,
+      "user_login": "sdlca-reviewer-copilot",
+      "user_initiated_interaction_count": 36,
+      "code_generation_activity_count": 0,
+      "code_acceptance_activity_count": 0,
+      "loc_suggested_to_add_sum": 0,
+      "loc_added_sum": 0,
+      "totals_by_cli": {
+        "session_count": 26,
+        "request_count": 467,
+        "prompt_count": 36,
+        "token_usage": {
+          "prompt_tokens_sum": 34198884,
+          "output_tokens_sum": 306085,
+          "avg_tokens_per_request": 73886.44
+        }
+      },
+      "totals_by_model_feature": [
+        {
+          "model": "claude-sonnet-4.6",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 36
+        }
+      ],
+      "used_cli": true,
+      "used_chat": false,
+      "used_agent": false,
+      "used_copilot_coding_agent": false,
+      "used_copilot_code_review_active": false
+    },
+    {
+      "day": "2026-06-04",
+      "user_id": 284792193,
+      "user_login": "sdlca-worker-copilot",
+      "user_initiated_interaction_count": 2,
+      "code_generation_activity_count": 0,
+      "code_acceptance_activity_count": 0,
+      "loc_suggested_to_add_sum": 0,
+      "loc_added_sum": 0,
+      "totals_by_cli": {
+        "session_count": 2,
+        "request_count": 34,
+        "prompt_count": 2,
+        "token_usage": {
+          "prompt_tokens_sum": 1445199,
+          "output_tokens_sum": 20209,
+          "avg_tokens_per_request": 43100.24
+        }
+      },
+      "totals_by_model_feature": [
+        {
+          "model": "gpt-5.2",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 2
+        }
+      ],
+      "used_cli": true,
+      "used_chat": false,
+      "used_agent": false,
+      "used_copilot_coding_agent": true,
+      "used_copilot_code_review_active": false
+    },
+    {
+      "day": "2026-05-19",
+      "user_id": 57125198,
+      "user_login": "chris-kreager",
+      "user_initiated_interaction_count": 0,
+      "code_generation_activity_count": 0,
+      "code_acceptance_activity_count": 0,
+      "loc_suggested_to_add_sum": 0,
+      "loc_added_sum": 0,
+      "totals_by_model_feature": [],
+      "used_cli": false,
+      "used_chat": false,
+      "used_agent": false,
+      "used_copilot_coding_agent": true,
+      "used_copilot_code_review_active": false
+    },
+    {
+      "day": "2026-06-06",
+      "user_id": 284792193,
+      "user_login": "sdlca-worker-copilot",
+      "user_initiated_interaction_count": 31,
+      "code_generation_activity_count": 82,
+      "code_acceptance_activity_count": 81,
+      "loc_suggested_to_add_sum": 0,
+      "loc_added_sum": 3976,
+      "totals_by_cli": {
+        "session_count": 16,
+        "request_count": 798,
+        "prompt_count": 31,
+        "token_usage": {
+          "prompt_tokens_sum": 77571203,
+          "output_tokens_sum": 329687,
+          "avg_tokens_per_request": 97620.16
+        }
+      },
+      "totals_by_model_feature": [
+        {
+          "model": "claude-sonnet-4.6",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 31
+        }
+      ],
+      "used_cli": true,
+      "used_chat": false,
+      "used_agent": false,
+      "used_copilot_coding_agent": false,
+      "used_copilot_code_review_active": false
+    },
+    {
+      "day": "2026-06-08",
+      "user_id": 57125198,
+      "user_login": "chris-kreager",
+      "user_initiated_interaction_count": 36,
+      "code_generation_activity_count": 11,
+      "code_acceptance_activity_count": 11,
+      "loc_suggested_to_add_sum": 0,
+      "loc_added_sum": 43,
+      "totals_by_cli": {
+        "session_count": 14,
+        "request_count": 190,
+        "prompt_count": 36,
+        "token_usage": {
+          "prompt_tokens_sum": 12214067,
+          "output_tokens_sum": 67235,
+          "avg_tokens_per_request": 64638.43
+        }
+      },
+      "totals_by_model_feature": [
+        {
+          "model": "claude-sonnet-4.6",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 36
+        }
+      ],
+      "used_cli": true,
+      "used_chat": false,
+      "used_agent": false,
+      "used_copilot_coding_agent": false,
+      "used_copilot_code_review_active": false
+    },
+    {
+      "day": "2026-06-08",
+      "user_id": 8487,
+      "user_login": "ckreager",
+      "user_initiated_interaction_count": 8,
+      "code_generation_activity_count": 3,
+      "code_acceptance_activity_count": 3,
+      "loc_suggested_to_add_sum": 0,
+      "loc_added_sum": 157,
+      "totals_by_cli": {
+        "session_count": 5,
+        "request_count": 189,
+        "prompt_count": 8,
+        "token_usage": {
+          "prompt_tokens_sum": 10045495,
+          "output_tokens_sum": 74452,
+          "avg_tokens_per_request": 53544.69
         }
       },
       "totals_by_model_feature": [
         {
           "model": "gpt-5.4",
           "feature": "copilot_cli",
-          "user_initiated_interaction_count": 18
+          "user_initiated_interaction_count": 4
+        },
+        {
+          "model": "gpt-5.2",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 2
+        },
+        {
+          "model": "gpt-5.3-codex",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 2
         }
       ],
       "used_cli": true,
@@ -768,29 +553,156 @@
       "used_copilot_code_review_active": false
     },
     {
-      "day": "2026-06-06",
-      "user_id": 284791894,
-      "user_login": "sdlca-reviewer-copilot",
-      "user_initiated_interaction_count": 21,
+      "day": "2026-06-02",
+      "user_id": 8487,
+      "user_login": "ckreager",
+      "user_initiated_interaction_count": 47,
       "code_generation_activity_count": 0,
       "code_acceptance_activity_count": 0,
       "loc_suggested_to_add_sum": 0,
       "loc_added_sum": 0,
       "totals_by_cli": {
-        "session_count": 6,
-        "request_count": 62,
-        "prompt_count": 21,
+        "session_count": 47,
+        "request_count": 471,
+        "prompt_count": 47,
         "token_usage": {
-          "prompt_tokens_sum": 4443763,
-          "output_tokens_sum": 44816,
-          "avg_tokens_per_request": 72396.44
+          "prompt_tokens_sum": 17696815,
+          "output_tokens_sum": 305191,
+          "avg_tokens_per_request": 38220.82
+        }
+      },
+      "totals_by_model_feature": [
+        {
+          "model": "gpt-5.2",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 41
+        },
+        {
+          "model": "claude-opus-4.7",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 6
+        }
+      ],
+      "used_cli": true,
+      "used_chat": false,
+      "used_agent": false,
+      "used_copilot_coding_agent": true,
+      "used_copilot_code_review_active": false
+    },
+    {
+      "day": "2026-05-26",
+      "user_id": 57125198,
+      "user_login": "chris-kreager",
+      "user_initiated_interaction_count": 3,
+      "code_generation_activity_count": 0,
+      "code_acceptance_activity_count": 0,
+      "loc_suggested_to_add_sum": 0,
+      "loc_added_sum": 0,
+      "totals_by_cli": {
+        "session_count": 3,
+        "request_count": 43,
+        "prompt_count": 3,
+        "token_usage": {
+          "prompt_tokens_sum": 2383364,
+          "output_tokens_sum": 38249,
+          "avg_tokens_per_request": 56316.58
+        }
+      },
+      "totals_by_model_feature": [
+        {
+          "model": "gpt-5.2",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 3
+        }
+      ],
+      "used_cli": true,
+      "used_chat": false,
+      "used_agent": false,
+      "used_copilot_coding_agent": true,
+      "used_copilot_code_review_active": false
+    },
+    {
+      "day": "2026-05-16",
+      "user_id": 274143375,
+      "user_login": "projectit-ai-repo-orchestrator[bot]",
+      "user_initiated_interaction_count": 0,
+      "code_generation_activity_count": 0,
+      "code_acceptance_activity_count": 0,
+      "loc_suggested_to_add_sum": 0,
+      "loc_added_sum": 0,
+      "totals_by_model_feature": [],
+      "used_cli": false,
+      "used_chat": false,
+      "used_agent": false,
+      "used_copilot_coding_agent": false,
+      "used_copilot_code_review_active": false
+    },
+    {
+      "day": "2026-05-22",
+      "user_id": 8487,
+      "user_login": "ckreager",
+      "user_initiated_interaction_count": 6,
+      "code_generation_activity_count": 0,
+      "code_acceptance_activity_count": 0,
+      "loc_suggested_to_add_sum": 0,
+      "loc_added_sum": 0,
+      "totals_by_cli": {
+        "session_count": 3,
+        "request_count": 80,
+        "prompt_count": 6,
+        "token_usage": {
+          "prompt_tokens_sum": 3367075,
+          "output_tokens_sum": 26386,
+          "avg_tokens_per_request": 42418.26
         }
       },
       "totals_by_model_feature": [
         {
           "model": "claude-sonnet-4.6",
           "feature": "copilot_cli",
-          "user_initiated_interaction_count": 21
+          "user_initiated_interaction_count": 4
+        },
+        {
+          "model": "gpt-5.2",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 2
+        }
+      ],
+      "used_cli": true,
+      "used_chat": false,
+      "used_agent": false,
+      "used_copilot_coding_agent": true,
+      "used_copilot_code_review_active": false
+    },
+    {
+      "day": "2026-06-01",
+      "user_id": 57125198,
+      "user_login": "chris-kreager",
+      "user_initiated_interaction_count": 7,
+      "code_generation_activity_count": 4,
+      "code_acceptance_activity_count": 4,
+      "loc_suggested_to_add_sum": 0,
+      "loc_added_sum": 33,
+      "totals_by_cli": {
+        "session_count": 1,
+        "request_count": 86,
+        "prompt_count": 7,
+        "token_usage": {
+          "prompt_tokens_sum": 6101843,
+          "output_tokens_sum": 68388,
+          "avg_tokens_per_request": 71746.87
+        }
+      },
+      "totals_by_model_feature": [
+        {
+          "model": "claude-sonnet-4.6",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 7
+        },
+        {
+          "model": "claude-haiku-4.5",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 0
         }
       ],
       "used_cli": true,
@@ -800,29 +712,71 @@
       "used_copilot_code_review_active": false
     },
     {
-      "day": "2026-05-11",
+      "day": "2026-06-01",
+      "user_id": 8487,
+      "user_login": "ckreager",
+      "user_initiated_interaction_count": 4,
+      "code_generation_activity_count": 0,
+      "code_acceptance_activity_count": 0,
+      "loc_suggested_to_add_sum": 0,
+      "loc_added_sum": 0,
+      "totals_by_cli": {
+        "session_count": 3,
+        "request_count": 100,
+        "prompt_count": 4,
+        "token_usage": {
+          "prompt_tokens_sum": 5750685,
+          "output_tokens_sum": 20682,
+          "avg_tokens_per_request": 57713.67
+        }
+      },
+      "totals_by_model_feature": [
+        {
+          "model": "gpt-5.4",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 2
+        },
+        {
+          "model": "claude-opus-4.7",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 1
+        },
+        {
+          "model": "gpt-5.5",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 1
+        }
+      ],
+      "used_cli": true,
+      "used_chat": false,
+      "used_agent": false,
+      "used_copilot_coding_agent": true,
+      "used_copilot_code_review_active": false
+    },
+    {
+      "day": "2026-05-12",
       "user_id": 57125198,
       "user_login": "chris-kreager",
-      "user_initiated_interaction_count": 3042,
-      "code_generation_activity_count": 568,
-      "code_acceptance_activity_count": 532,
+      "user_initiated_interaction_count": 922,
+      "code_generation_activity_count": 301,
+      "code_acceptance_activity_count": 279,
       "loc_suggested_to_add_sum": 0,
-      "loc_added_sum": 26112,
+      "loc_added_sum": 18889,
       "totals_by_cli": {
-        "session_count": 3001,
-        "request_count": 11039,
-        "prompt_count": 3042,
+        "session_count": 887,
+        "request_count": 9849,
+        "prompt_count": 922,
         "token_usage": {
-          "prompt_tokens_sum": 819320518,
-          "output_tokens_sum": 4265316,
-          "avg_tokens_per_request": 74606.92
+          "prompt_tokens_sum": 793639863,
+          "output_tokens_sum": 4178504,
+          "avg_tokens_per_request": 81005.01
         }
       },
       "totals_by_model_feature": [
         {
           "model": "claude-sonnet-4.6",
           "feature": "copilot_cli",
-          "user_initiated_interaction_count": 3042
+          "user_initiated_interaction_count": 922
         },
         {
           "model": "claude-haiku-4.5",
@@ -844,6 +798,578 @@
       "used_chat": false,
       "used_agent": false,
       "used_copilot_coding_agent": false,
+      "used_copilot_code_review_active": false
+    },
+    {
+      "day": "2026-06-08",
+      "user_id": 284792193,
+      "user_login": "sdlca-worker-copilot",
+      "user_initiated_interaction_count": 33,
+      "code_generation_activity_count": 126,
+      "code_acceptance_activity_count": 124,
+      "loc_suggested_to_add_sum": 0,
+      "loc_added_sum": 2420,
+      "totals_by_cli": {
+        "session_count": 25,
+        "request_count": 992,
+        "prompt_count": 33,
+        "token_usage": {
+          "prompt_tokens_sum": 80785355,
+          "output_tokens_sum": 389160,
+          "avg_tokens_per_request": 81829.15
+        }
+      },
+      "totals_by_model_feature": [
+        {
+          "model": "claude-sonnet-4.6",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 33
+        },
+        {
+          "model": "gpt-5.2",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 0
+        }
+      ],
+      "used_cli": true,
+      "used_chat": false,
+      "used_agent": false,
+      "used_copilot_coding_agent": true,
+      "used_copilot_code_review_active": false
+    },
+    {
+      "day": "2026-05-27",
+      "user_id": 8487,
+      "user_login": "ckreager",
+      "user_initiated_interaction_count": 18,
+      "code_generation_activity_count": 1,
+      "code_acceptance_activity_count": 1,
+      "loc_suggested_to_add_sum": 0,
+      "loc_added_sum": 0,
+      "totals_by_cli": {
+        "session_count": 9,
+        "request_count": 161,
+        "prompt_count": 18,
+        "token_usage": {
+          "prompt_tokens_sum": 6614244,
+          "output_tokens_sum": 70423,
+          "avg_tokens_per_request": 41519.67
+        }
+      },
+      "totals_by_model_feature": [
+        {
+          "model": "gpt-5.4",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 18
+        }
+      ],
+      "used_cli": true,
+      "used_chat": false,
+      "used_agent": false,
+      "used_copilot_coding_agent": true,
+      "used_copilot_code_review_active": false
+    },
+    {
+      "day": "2026-05-19",
+      "user_id": 284792193,
+      "user_login": "sdlca-worker-copilot",
+      "user_initiated_interaction_count": 19,
+      "code_generation_activity_count": 115,
+      "code_acceptance_activity_count": 106,
+      "loc_suggested_to_add_sum": 0,
+      "loc_added_sum": 1610,
+      "totals_by_cli": {
+        "session_count": 18,
+        "request_count": 750,
+        "prompt_count": 19,
+        "token_usage": {
+          "prompt_tokens_sum": 67992713,
+          "output_tokens_sum": 419810,
+          "avg_tokens_per_request": 91216.7
+        }
+      },
+      "totals_by_model_feature": [
+        {
+          "model": "claude-sonnet-4.6",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 19
+        }
+      ],
+      "used_cli": true,
+      "used_chat": false,
+      "used_agent": false,
+      "used_copilot_coding_agent": false,
+      "used_copilot_code_review_active": false
+    },
+    {
+      "day": "2026-05-18",
+      "user_id": 8487,
+      "user_login": "ckreager",
+      "user_initiated_interaction_count": 2,
+      "code_generation_activity_count": 0,
+      "code_acceptance_activity_count": 0,
+      "loc_suggested_to_add_sum": 0,
+      "loc_added_sum": 0,
+      "totals_by_cli": {
+        "session_count": 2,
+        "request_count": 43,
+        "prompt_count": 2,
+        "token_usage": {
+          "prompt_tokens_sum": 1884319,
+          "output_tokens_sum": 17093,
+          "avg_tokens_per_request": 44218.88
+        }
+      },
+      "totals_by_model_feature": [
+        {
+          "model": "gpt-5.2",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 1
+        },
+        {
+          "model": "gpt-5.5",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 1
+        }
+      ],
+      "used_cli": true,
+      "used_chat": false,
+      "used_agent": false,
+      "used_copilot_coding_agent": true,
+      "used_copilot_code_review_active": false
+    },
+    {
+      "day": "2026-06-04",
+      "user_id": 8487,
+      "user_login": "ckreager",
+      "user_initiated_interaction_count": 12,
+      "code_generation_activity_count": 0,
+      "code_acceptance_activity_count": 0,
+      "loc_suggested_to_add_sum": 0,
+      "loc_added_sum": 0,
+      "totals_by_cli": {
+        "session_count": 9,
+        "request_count": 206,
+        "prompt_count": 12,
+        "token_usage": {
+          "prompt_tokens_sum": 12335169,
+          "output_tokens_sum": 98049,
+          "avg_tokens_per_request": 60355.43
+        }
+      },
+      "totals_by_model_feature": [
+        {
+          "model": "gpt-5.2",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 6
+        },
+        {
+          "model": "gpt-5.3-codex",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 4
+        },
+        {
+          "model": "claude-sonnet-4.6",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 2
+        }
+      ],
+      "used_cli": true,
+      "used_chat": false,
+      "used_agent": false,
+      "used_copilot_coding_agent": true,
+      "used_copilot_code_review_active": false
+    },
+    {
+      "day": "2026-06-02",
+      "user_id": 284792193,
+      "user_login": "sdlca-worker-copilot",
+      "user_initiated_interaction_count": 0,
+      "code_generation_activity_count": 0,
+      "code_acceptance_activity_count": 0,
+      "loc_suggested_to_add_sum": 0,
+      "loc_added_sum": 0,
+      "totals_by_model_feature": [],
+      "used_cli": false,
+      "used_chat": false,
+      "used_agent": false,
+      "used_copilot_coding_agent": false,
+      "used_copilot_code_review_active": false
+    },
+    {
+      "day": "2026-06-05",
+      "user_id": 8487,
+      "user_login": "ckreager",
+      "user_initiated_interaction_count": 10,
+      "code_generation_activity_count": 0,
+      "code_acceptance_activity_count": 0,
+      "loc_suggested_to_add_sum": 0,
+      "loc_added_sum": 0,
+      "totals_by_cli": {
+        "session_count": 9,
+        "request_count": 154,
+        "prompt_count": 10,
+        "token_usage": {
+          "prompt_tokens_sum": 8037123,
+          "output_tokens_sum": 72645,
+          "avg_tokens_per_request": 52660.83
+        }
+      },
+      "totals_by_model_feature": [
+        {
+          "model": "gpt-5.2",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 8
+        },
+        {
+          "model": "gpt-5.4",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 2
+        }
+      ],
+      "used_cli": true,
+      "used_chat": false,
+      "used_agent": false,
+      "used_copilot_coding_agent": true,
+      "used_copilot_code_review_active": false
+    },
+    {
+      "day": "2026-05-28",
+      "user_id": 284792193,
+      "user_login": "sdlca-worker-copilot",
+      "user_initiated_interaction_count": 514,
+      "code_generation_activity_count": 0,
+      "code_acceptance_activity_count": 0,
+      "loc_suggested_to_add_sum": 0,
+      "loc_added_sum": 0,
+      "totals_by_cli": {
+        "session_count": 5,
+        "request_count": 515,
+        "prompt_count": 514,
+        "token_usage": {
+          "prompt_tokens_sum": 64651248,
+          "output_tokens_sum": 85683,
+          "avg_tokens_per_request": 125702.78
+        }
+      },
+      "totals_by_model_feature": [
+        {
+          "model": "claude-sonnet-4.6",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 514
+        }
+      ],
+      "used_cli": true,
+      "used_chat": false,
+      "used_agent": false,
+      "used_copilot_coding_agent": false,
+      "used_copilot_code_review_active": false
+    },
+    {
+      "day": "2026-06-06",
+      "user_id": 57125198,
+      "user_login": "chris-kreager",
+      "user_initiated_interaction_count": 1,
+      "code_generation_activity_count": 0,
+      "code_acceptance_activity_count": 0,
+      "loc_suggested_to_add_sum": 0,
+      "loc_added_sum": 0,
+      "totals_by_cli": {
+        "session_count": 1,
+        "request_count": 5,
+        "prompt_count": 1,
+        "token_usage": {
+          "prompt_tokens_sum": 147364,
+          "output_tokens_sum": 1223,
+          "avg_tokens_per_request": 29717.4
+        }
+      },
+      "totals_by_model_feature": [
+        {
+          "model": "claude-sonnet-4.6",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 1
+        }
+      ],
+      "used_cli": true,
+      "used_chat": false,
+      "used_agent": false,
+      "used_copilot_coding_agent": false,
+      "used_copilot_code_review_active": false
+    },
+    {
+      "day": "2026-06-06",
+      "user_id": 8487,
+      "user_login": "ckreager",
+      "user_initiated_interaction_count": 17,
+      "code_generation_activity_count": 3,
+      "code_acceptance_activity_count": 2,
+      "loc_suggested_to_add_sum": 0,
+      "loc_added_sum": 9,
+      "totals_by_cli": {
+        "session_count": 12,
+        "request_count": 243,
+        "prompt_count": 17,
+        "token_usage": {
+          "prompt_tokens_sum": 14702749,
+          "output_tokens_sum": 120352,
+          "avg_tokens_per_request": 61000.42
+        }
+      },
+      "totals_by_model_feature": [
+        {
+          "model": "claude-sonnet-4.6",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 4
+        },
+        {
+          "model": "gpt-5.2",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 9
+        },
+        {
+          "model": "gpt-5.3-codex",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 4
+        }
+      ],
+      "used_cli": true,
+      "used_chat": false,
+      "used_agent": false,
+      "used_copilot_coding_agent": true,
+      "used_copilot_code_review_active": false
+    },
+    {
+      "day": "2026-06-03",
+      "user_id": 57125198,
+      "user_login": "chris-kreager",
+      "user_initiated_interaction_count": 2,
+      "code_generation_activity_count": 0,
+      "code_acceptance_activity_count": 0,
+      "loc_suggested_to_add_sum": 0,
+      "loc_added_sum": 0,
+      "totals_by_cli": {
+        "session_count": 1,
+        "request_count": 2,
+        "prompt_count": 2,
+        "token_usage": {
+          "prompt_tokens_sum": 104561,
+          "output_tokens_sum": 312,
+          "avg_tokens_per_request": 52436.5
+        }
+      },
+      "totals_by_model_feature": [
+        {
+          "model": "claude-sonnet-4.6",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 2
+        }
+      ],
+      "used_cli": true,
+      "used_chat": false,
+      "used_agent": false,
+      "used_copilot_coding_agent": false,
+      "used_copilot_code_review_active": false
+    },
+    {
+      "day": "2026-05-23",
+      "user_id": 8487,
+      "user_login": "ckreager",
+      "user_initiated_interaction_count": 18,
+      "code_generation_activity_count": 10,
+      "code_acceptance_activity_count": 10,
+      "loc_suggested_to_add_sum": 0,
+      "loc_added_sum": 169,
+      "totals_by_cli": {
+        "session_count": 17,
+        "request_count": 280,
+        "prompt_count": 18,
+        "token_usage": {
+          "prompt_tokens_sum": 18258402,
+          "output_tokens_sum": 153965,
+          "avg_tokens_per_request": 65758.45
+        }
+      },
+      "totals_by_model_feature": [
+        {
+          "model": "gpt-5.3-codex",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 2
+        },
+        {
+          "model": "gpt-5.2",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 16
+        }
+      ],
+      "used_cli": true,
+      "used_chat": false,
+      "used_agent": false,
+      "used_copilot_coding_agent": true,
+      "used_copilot_code_review_active": true
+    },
+    {
+      "day": "2026-05-27",
+      "user_id": 284792193,
+      "user_login": "sdlca-worker-copilot",
+      "user_initiated_interaction_count": 2,
+      "code_generation_activity_count": 4,
+      "code_acceptance_activity_count": 4,
+      "loc_suggested_to_add_sum": 0,
+      "loc_added_sum": 987,
+      "totals_by_cli": {
+        "session_count": 2,
+        "request_count": 34,
+        "prompt_count": 2,
+        "token_usage": {
+          "prompt_tokens_sum": 2925660,
+          "output_tokens_sum": 28686,
+          "avg_tokens_per_request": 86892.53
+        }
+      },
+      "totals_by_model_feature": [
+        {
+          "model": "claude-sonnet-4.6",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 2
+        }
+      ],
+      "used_cli": true,
+      "used_chat": false,
+      "used_agent": false,
+      "used_copilot_coding_agent": false,
+      "used_copilot_code_review_active": false
+    },
+    {
+      "day": "2026-05-21",
+      "user_id": 8487,
+      "user_login": "ckreager",
+      "user_initiated_interaction_count": 4,
+      "code_generation_activity_count": 0,
+      "code_acceptance_activity_count": 0,
+      "loc_suggested_to_add_sum": 0,
+      "loc_added_sum": 0,
+      "totals_by_cli": {
+        "session_count": 3,
+        "request_count": 57,
+        "prompt_count": 4,
+        "token_usage": {
+          "prompt_tokens_sum": 2966174,
+          "output_tokens_sum": 23173,
+          "avg_tokens_per_request": 52444.68
+        }
+      },
+      "totals_by_model_feature": [
+        {
+          "model": "gpt-5.2",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 2
+        },
+        {
+          "model": "gpt-5.3-codex",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 2
+        }
+      ],
+      "used_cli": true,
+      "used_chat": false,
+      "used_agent": false,
+      "used_copilot_coding_agent": true,
+      "used_copilot_code_review_active": false
+    },
+    {
+      "day": "2026-05-15",
+      "user_id": 8487,
+      "user_login": "ckreager",
+      "user_initiated_interaction_count": 0,
+      "code_generation_activity_count": 0,
+      "code_acceptance_activity_count": 0,
+      "loc_suggested_to_add_sum": 0,
+      "loc_added_sum": 0,
+      "totals_by_model_feature": [],
+      "used_cli": false,
+      "used_chat": false,
+      "used_agent": false,
+      "used_copilot_coding_agent": false,
+      "used_copilot_code_review_active": true
+    },
+    {
+      "day": "2026-05-17",
+      "user_id": 284792193,
+      "user_login": "sdlca-worker-copilot",
+      "user_initiated_interaction_count": 565,
+      "code_generation_activity_count": 170,
+      "code_acceptance_activity_count": 158,
+      "loc_suggested_to_add_sum": 0,
+      "loc_added_sum": 1935,
+      "totals_by_cli": {
+        "session_count": 46,
+        "request_count": 4598,
+        "prompt_count": 565,
+        "token_usage": {
+          "prompt_tokens_sum": 425526924,
+          "output_tokens_sum": 1432108,
+          "avg_tokens_per_request": 92857.55
+        }
+      },
+      "totals_by_model_feature": [
+        {
+          "model": "claude-sonnet-4.6",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 565
+        },
+        {
+          "model": "claude-haiku-4.5",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 0
+        },
+        {
+          "model": "gpt-4.1",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 0
+        },
+        {
+          "model": "gpt-5.4",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 0
+        }
+      ],
+      "used_cli": true,
+      "used_chat": false,
+      "used_agent": false,
+      "used_copilot_coding_agent": false,
+      "used_copilot_code_review_active": false
+    },
+    {
+      "day": "2026-05-24",
+      "user_id": 57125198,
+      "user_login": "chris-kreager",
+      "user_initiated_interaction_count": 2,
+      "code_generation_activity_count": 0,
+      "code_acceptance_activity_count": 0,
+      "loc_suggested_to_add_sum": 0,
+      "loc_added_sum": 0,
+      "totals_by_cli": {
+        "session_count": 2,
+        "request_count": 41,
+        "prompt_count": 2,
+        "token_usage": {
+          "prompt_tokens_sum": 3844291,
+          "output_tokens_sum": 24453,
+          "avg_tokens_per_request": 94359.61
+        }
+      },
+      "totals_by_model_feature": [
+        {
+          "model": "gpt-5.2",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 2
+        }
+      ],
+      "used_cli": true,
+      "used_chat": false,
+      "used_agent": false,
+      "used_copilot_coding_agent": true,
       "used_copilot_code_review_active": false
     },
     {
@@ -876,6 +1402,159 @@
       "used_chat": false,
       "used_agent": false,
       "used_copilot_coding_agent": true,
+      "used_copilot_code_review_active": false
+    },
+    {
+      "day": "2026-05-22",
+      "user_id": 284792193,
+      "user_login": "sdlca-worker-copilot",
+      "user_initiated_interaction_count": 109,
+      "code_generation_activity_count": 182,
+      "code_acceptance_activity_count": 175,
+      "loc_suggested_to_add_sum": 0,
+      "loc_added_sum": 5422,
+      "totals_by_cli": {
+        "session_count": 101,
+        "request_count": 4529,
+        "prompt_count": 109,
+        "token_usage": {
+          "prompt_tokens_sum": 383786945,
+          "output_tokens_sum": 2518974,
+          "avg_tokens_per_request": 85296.07
+        }
+      },
+      "totals_by_model_feature": [
+        {
+          "model": "claude-sonnet-4.6",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 109
+        },
+        {
+          "model": "claude-haiku-4.5",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 0
+        },
+        {
+          "model": "gpt-5.4",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 0
+        }
+      ],
+      "used_cli": true,
+      "used_chat": false,
+      "used_agent": false,
+      "used_copilot_coding_agent": false,
+      "used_copilot_code_review_active": false
+    },
+    {
+      "day": "2026-06-06",
+      "user_id": 284791894,
+      "user_login": "sdlca-reviewer-copilot",
+      "user_initiated_interaction_count": 21,
+      "code_generation_activity_count": 0,
+      "code_acceptance_activity_count": 0,
+      "loc_suggested_to_add_sum": 0,
+      "loc_added_sum": 0,
+      "totals_by_cli": {
+        "session_count": 6,
+        "request_count": 62,
+        "prompt_count": 21,
+        "token_usage": {
+          "prompt_tokens_sum": 4443763,
+          "output_tokens_sum": 44816,
+          "avg_tokens_per_request": 72396.44
+        }
+      },
+      "totals_by_model_feature": [
+        {
+          "model": "claude-sonnet-4.6",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 21
+        }
+      ],
+      "used_cli": true,
+      "used_chat": false,
+      "used_agent": false,
+      "used_copilot_coding_agent": false,
+      "used_copilot_code_review_active": false
+    },
+    {
+      "day": "2026-05-15",
+      "user_id": 57125198,
+      "user_login": "chris-kreager",
+      "user_initiated_interaction_count": 150,
+      "code_generation_activity_count": 345,
+      "code_acceptance_activity_count": 332,
+      "loc_suggested_to_add_sum": 0,
+      "loc_added_sum": 5818,
+      "totals_by_cli": {
+        "session_count": 116,
+        "request_count": 6988,
+        "prompt_count": 150,
+        "token_usage": {
+          "prompt_tokens_sum": 571079543,
+          "output_tokens_sum": 3377698,
+          "avg_tokens_per_request": 82206.25
+        }
+      },
+      "totals_by_model_feature": [
+        {
+          "model": "claude-sonnet-4.6",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 150
+        },
+        {
+          "model": "claude-haiku-4.5",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 0
+        },
+        {
+          "model": "gpt-4.1",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 0
+        },
+        {
+          "model": "gpt-5.4",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 0
+        }
+      ],
+      "used_cli": true,
+      "used_chat": false,
+      "used_agent": false,
+      "used_copilot_coding_agent": false,
+      "used_copilot_code_review_active": true
+    },
+    {
+      "day": "2026-05-24",
+      "user_id": 284792193,
+      "user_login": "sdlca-worker-copilot",
+      "user_initiated_interaction_count": 145,
+      "code_generation_activity_count": 680,
+      "code_acceptance_activity_count": 672,
+      "loc_suggested_to_add_sum": 0,
+      "loc_added_sum": 23995,
+      "totals_by_cli": {
+        "session_count": 124,
+        "request_count": 4739,
+        "prompt_count": 145,
+        "token_usage": {
+          "prompt_tokens_sum": 392448088,
+          "output_tokens_sum": 2181040,
+          "avg_tokens_per_request": 83272.66
+        }
+      },
+      "totals_by_model_feature": [
+        {
+          "model": "claude-sonnet-4.6",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 145
+        }
+      ],
+      "used_cli": true,
+      "used_chat": false,
+      "used_agent": false,
+      "used_copilot_coding_agent": false,
       "used_copilot_code_review_active": false
     },
     {
@@ -916,29 +1595,29 @@
       "used_copilot_code_review_active": true
     },
     {
-      "day": "2026-05-27",
+      "day": "2026-06-05",
       "user_id": 284791894,
       "user_login": "sdlca-reviewer-copilot",
-      "user_initiated_interaction_count": 1,
+      "user_initiated_interaction_count": 68,
       "code_generation_activity_count": 0,
       "code_acceptance_activity_count": 0,
       "loc_suggested_to_add_sum": 0,
       "loc_added_sum": 0,
       "totals_by_cli": {
-        "session_count": 1,
-        "request_count": 1,
-        "prompt_count": 1,
+        "session_count": 45,
+        "request_count": 628,
+        "prompt_count": 68,
         "token_usage": {
-          "prompt_tokens_sum": 21145,
-          "output_tokens_sum": 506,
-          "avg_tokens_per_request": 21651
+          "prompt_tokens_sum": 45896281,
+          "output_tokens_sum": 605677,
+          "avg_tokens_per_request": 74047.7
         }
       },
       "totals_by_model_feature": [
         {
           "model": "claude-sonnet-4.6",
           "feature": "copilot_cli",
-          "user_initiated_interaction_count": 1
+          "user_initiated_interaction_count": 68
         }
       ],
       "used_cli": true,
@@ -948,32 +1627,37 @@
       "used_copilot_code_review_active": false
     },
     {
-      "day": "2026-05-23",
-      "user_id": 284792193,
-      "user_login": "sdlca-worker-copilot",
-      "user_initiated_interaction_count": 49,
-      "code_generation_activity_count": 79,
-      "code_acceptance_activity_count": 74,
+      "day": "2026-05-14",
+      "user_id": 57125198,
+      "user_login": "chris-kreager",
+      "user_initiated_interaction_count": 118,
+      "code_generation_activity_count": 176,
+      "code_acceptance_activity_count": 172,
       "loc_suggested_to_add_sum": 0,
-      "loc_added_sum": 2130,
+      "loc_added_sum": 4259,
       "totals_by_cli": {
-        "session_count": 51,
-        "request_count": 2671,
-        "prompt_count": 49,
+        "session_count": 83,
+        "request_count": 3281,
+        "prompt_count": 118,
         "token_usage": {
-          "prompt_tokens_sum": 231790576,
-          "output_tokens_sum": 2044629,
-          "avg_tokens_per_request": 87545.94
+          "prompt_tokens_sum": 251143979,
+          "output_tokens_sum": 1225731,
+          "avg_tokens_per_request": 76918.53
         }
       },
       "totals_by_model_feature": [
         {
           "model": "claude-sonnet-4.6",
           "feature": "copilot_cli",
-          "user_initiated_interaction_count": 49
+          "user_initiated_interaction_count": 118
         },
         {
           "model": "claude-haiku-4.5",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 0
+        },
+        {
+          "model": "gpt-4.1",
           "feature": "copilot_cli",
           "user_initiated_interaction_count": 0
         },
@@ -990,32 +1674,59 @@
       "used_copilot_code_review_active": true
     },
     {
-      "day": "2026-05-18",
-      "user_id": 284791894,
-      "user_login": "sdlca-reviewer-copilot",
-      "user_initiated_interaction_count": 3,
+      "day": "2026-05-17",
+      "user_id": 8487,
+      "user_login": "ckreager",
+      "user_initiated_interaction_count": 0,
+      "code_generation_activity_count": 0,
+      "code_acceptance_activity_count": 0,
+      "loc_suggested_to_add_sum": 0,
+      "loc_added_sum": 0,
+      "totals_by_model_feature": [],
+      "used_cli": false,
+      "used_chat": false,
+      "used_agent": false,
+      "used_copilot_coding_agent": false,
+      "used_copilot_code_review_active": false
+    },
+    {
+      "day": "2026-05-16",
+      "user_id": 8487,
+      "user_login": "ckreager",
+      "user_initiated_interaction_count": 0,
+      "code_generation_activity_count": 0,
+      "code_acceptance_activity_count": 0,
+      "loc_suggested_to_add_sum": 0,
+      "loc_added_sum": 0,
+      "totals_by_model_feature": [],
+      "used_cli": false,
+      "used_chat": false,
+      "used_agent": false,
+      "used_copilot_coding_agent": false,
+      "used_copilot_code_review_active": false
+    },
+    {
+      "day": "2026-05-22",
+      "user_id": 57125198,
+      "user_login": "chris-kreager",
+      "user_initiated_interaction_count": 1,
       "code_generation_activity_count": 0,
       "code_acceptance_activity_count": 0,
       "loc_suggested_to_add_sum": 0,
       "loc_added_sum": 0,
       "totals_by_cli": {
-        "session_count": 3,
-        "request_count": 3,
-        "prompt_count": 3,
+        "session_count": 1,
+        "request_count": 1,
+        "prompt_count": 1,
         "token_usage": {
-          "prompt_tokens_sum": 141159,
-          "output_tokens_sum": 139,
-          "avg_tokens_per_request": 47099.33
+          "prompt_tokens_sum": 51061,
+          "output_tokens_sum": 450,
+          "avg_tokens_per_request": 51511
         }
       },
       "totals_by_model_feature": [
         {
           "model": "claude-sonnet-4.6",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 2
-        },
-        {
-          "model": "claude-haiku-4.5",
           "feature": "copilot_cli",
           "user_initiated_interaction_count": 1
         }
@@ -1023,7 +1734,7 @@
       "used_cli": true,
       "used_chat": false,
       "used_agent": false,
-      "used_copilot_coding_agent": false,
+      "used_copilot_coding_agent": true,
       "used_copilot_code_review_active": false
     },
     {
@@ -1106,29 +1817,77 @@
       "used_copilot_code_review_active": false
     },
     {
-      "day": "2026-05-24",
+      "day": "2026-05-20",
+      "user_id": 57125198,
+      "user_login": "chris-kreager",
+      "user_initiated_interaction_count": 0,
+      "code_generation_activity_count": 0,
+      "code_acceptance_activity_count": 0,
+      "loc_suggested_to_add_sum": 0,
+      "loc_added_sum": 0,
+      "totals_by_model_feature": [],
+      "used_cli": false,
+      "used_chat": false,
+      "used_agent": false,
+      "used_copilot_coding_agent": true,
+      "used_copilot_code_review_active": false
+    },
+    {
+      "day": "2026-06-07",
+      "user_id": 284792193,
+      "user_login": "sdlca-worker-copilot",
+      "user_initiated_interaction_count": 6,
+      "code_generation_activity_count": 12,
+      "code_acceptance_activity_count": 12,
+      "loc_suggested_to_add_sum": 0,
+      "loc_added_sum": 402,
+      "totals_by_cli": {
+        "session_count": 5,
+        "request_count": 133,
+        "prompt_count": 6,
+        "token_usage": {
+          "prompt_tokens_sum": 9531943,
+          "output_tokens_sum": 38410,
+          "avg_tokens_per_request": 71957.54
+        }
+      },
+      "totals_by_model_feature": [
+        {
+          "model": "claude-sonnet-4.6",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 6
+        }
+      ],
+      "used_cli": true,
+      "used_chat": false,
+      "used_agent": false,
+      "used_copilot_coding_agent": false,
+      "used_copilot_code_review_active": false
+    },
+    {
+      "day": "2026-06-03",
       "user_id": 8487,
       "user_login": "ckreager",
-      "user_initiated_interaction_count": 2,
+      "user_initiated_interaction_count": 5,
       "code_generation_activity_count": 0,
       "code_acceptance_activity_count": 0,
       "loc_suggested_to_add_sum": 0,
       "loc_added_sum": 0,
       "totals_by_cli": {
-        "session_count": 2,
-        "request_count": 23,
-        "prompt_count": 2,
+        "session_count": 5,
+        "request_count": 77,
+        "prompt_count": 5,
         "token_usage": {
-          "prompt_tokens_sum": 1121570,
-          "output_tokens_sum": 14401,
-          "avg_tokens_per_request": 49390.04
+          "prompt_tokens_sum": 4265080,
+          "output_tokens_sum": 58659,
+          "avg_tokens_per_request": 56152.45
         }
       },
       "totals_by_model_feature": [
         {
           "model": "gpt-5.2",
           "feature": "copilot_cli",
-          "user_initiated_interaction_count": 2
+          "user_initiated_interaction_count": 5
         }
       ],
       "used_cli": true,
@@ -1138,9 +1897,41 @@
       "used_copilot_code_review_active": false
     },
     {
-      "day": "2026-05-15",
-      "user_id": 8487,
-      "user_login": "ckreager",
+      "day": "2026-05-17",
+      "user_id": 57125198,
+      "user_login": "chris-kreager",
+      "user_initiated_interaction_count": 30,
+      "code_generation_activity_count": 0,
+      "code_acceptance_activity_count": 0,
+      "loc_suggested_to_add_sum": 0,
+      "loc_added_sum": 0,
+      "totals_by_cli": {
+        "session_count": 2,
+        "request_count": 30,
+        "prompt_count": 30,
+        "token_usage": {
+          "prompt_tokens_sum": 2252085,
+          "output_tokens_sum": 7629,
+          "avg_tokens_per_request": 75323.8
+        }
+      },
+      "totals_by_model_feature": [
+        {
+          "model": "claude-sonnet-4.6",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 30
+        }
+      ],
+      "used_cli": true,
+      "used_chat": false,
+      "used_agent": false,
+      "used_copilot_coding_agent": false,
+      "used_copilot_code_review_active": false
+    },
+    {
+      "day": "2026-06-08",
+      "user_id": 274143375,
+      "user_login": "projectit-ai-repo-orchestrator[bot]",
       "user_initiated_interaction_count": 0,
       "code_generation_activity_count": 0,
       "code_acceptance_activity_count": 0,
@@ -1151,7 +1942,7 @@
       "used_chat": false,
       "used_agent": false,
       "used_copilot_coding_agent": false,
-      "used_copilot_code_review_active": true
+      "used_copilot_code_review_active": false
     },
     {
       "day": "2026-05-25",
@@ -1177,6 +1968,112 @@
           "model": "claude-sonnet-4.6",
           "feature": "copilot_cli",
           "user_initiated_interaction_count": 135
+        }
+      ],
+      "used_cli": true,
+      "used_chat": false,
+      "used_agent": false,
+      "used_copilot_coding_agent": false,
+      "used_copilot_code_review_active": false
+    },
+    {
+      "day": "2026-05-18",
+      "user_id": 284791894,
+      "user_login": "sdlca-reviewer-copilot",
+      "user_initiated_interaction_count": 3,
+      "code_generation_activity_count": 0,
+      "code_acceptance_activity_count": 0,
+      "loc_suggested_to_add_sum": 0,
+      "loc_added_sum": 0,
+      "totals_by_cli": {
+        "session_count": 3,
+        "request_count": 3,
+        "prompt_count": 3,
+        "token_usage": {
+          "prompt_tokens_sum": 141159,
+          "output_tokens_sum": 139,
+          "avg_tokens_per_request": 47099.33
+        }
+      },
+      "totals_by_model_feature": [
+        {
+          "model": "claude-sonnet-4.6",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 2
+        },
+        {
+          "model": "claude-haiku-4.5",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 1
+        }
+      ],
+      "used_cli": true,
+      "used_chat": false,
+      "used_agent": false,
+      "used_copilot_coding_agent": false,
+      "used_copilot_code_review_active": false
+    },
+    {
+      "day": "2026-06-07",
+      "user_id": 8487,
+      "user_login": "ckreager",
+      "user_initiated_interaction_count": 6,
+      "code_generation_activity_count": 0,
+      "code_acceptance_activity_count": 0,
+      "loc_suggested_to_add_sum": 0,
+      "loc_added_sum": 0,
+      "totals_by_cli": {
+        "session_count": 4,
+        "request_count": 82,
+        "prompt_count": 6,
+        "token_usage": {
+          "prompt_tokens_sum": 4057512,
+          "output_tokens_sum": 33480,
+          "avg_tokens_per_request": 49890.15
+        }
+      },
+      "totals_by_model_feature": [
+        {
+          "model": "gpt-5.3-codex",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 4
+        },
+        {
+          "model": "gpt-5.2",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 2
+        }
+      ],
+      "used_cli": true,
+      "used_chat": false,
+      "used_agent": false,
+      "used_copilot_coding_agent": true,
+      "used_copilot_code_review_active": false
+    },
+    {
+      "day": "2026-05-24",
+      "user_id": 284791894,
+      "user_login": "sdlca-reviewer-copilot",
+      "user_initiated_interaction_count": 11,
+      "code_generation_activity_count": 0,
+      "code_acceptance_activity_count": 0,
+      "loc_suggested_to_add_sum": 0,
+      "loc_added_sum": 0,
+      "totals_by_cli": {
+        "session_count": 7,
+        "request_count": 16,
+        "prompt_count": 11,
+        "token_usage": {
+          "prompt_tokens_sum": 290594,
+          "output_tokens_sum": 2903,
+          "avg_tokens_per_request": 18343.56
+        }
+      },
+      "totals_by_model_feature": [
+        {
+          "model": "claude-sonnet-4.6",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 11
         }
       ],
       "used_cli": true,
@@ -1234,870 +2131,6 @@
     },
     {
       "day": "2026-05-21",
-      "user_id": 8487,
-      "user_login": "ckreager",
-      "user_initiated_interaction_count": 4,
-      "code_generation_activity_count": 0,
-      "code_acceptance_activity_count": 0,
-      "loc_suggested_to_add_sum": 0,
-      "loc_added_sum": 0,
-      "totals_by_cli": {
-        "session_count": 3,
-        "request_count": 57,
-        "prompt_count": 4,
-        "token_usage": {
-          "prompt_tokens_sum": 2966174,
-          "output_tokens_sum": 23173,
-          "avg_tokens_per_request": 52444.68
-        }
-      },
-      "totals_by_model_feature": [
-        {
-          "model": "gpt-5.2",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 2
-        },
-        {
-          "model": "gpt-5.3-codex",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 2
-        }
-      ],
-      "used_cli": true,
-      "used_chat": false,
-      "used_agent": false,
-      "used_copilot_coding_agent": true,
-      "used_copilot_code_review_active": false
-    },
-    {
-      "day": "2026-06-01",
-      "user_id": 284792193,
-      "user_login": "sdlca-worker-copilot",
-      "user_initiated_interaction_count": 0,
-      "code_generation_activity_count": 0,
-      "code_acceptance_activity_count": 0,
-      "loc_suggested_to_add_sum": 0,
-      "loc_added_sum": 0,
-      "totals_by_model_feature": [],
-      "used_cli": false,
-      "used_chat": false,
-      "used_agent": false,
-      "used_copilot_coding_agent": false,
-      "used_copilot_code_review_active": false
-    },
-    {
-      "day": "2026-05-28",
-      "user_id": 8487,
-      "user_login": "ckreager",
-      "user_initiated_interaction_count": 1,
-      "code_generation_activity_count": 0,
-      "code_acceptance_activity_count": 0,
-      "loc_suggested_to_add_sum": 0,
-      "loc_added_sum": 0,
-      "totals_by_cli": {
-        "session_count": 1,
-        "request_count": 22,
-        "prompt_count": 1,
-        "token_usage": {
-          "prompt_tokens_sum": 1156762,
-          "output_tokens_sum": 10809,
-          "avg_tokens_per_request": 53071.41
-        }
-      },
-      "totals_by_model_feature": [
-        {
-          "model": "gpt-5.2",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 1
-        }
-      ],
-      "used_cli": true,
-      "used_chat": false,
-      "used_agent": false,
-      "used_copilot_coding_agent": true,
-      "used_copilot_code_review_active": false
-    },
-    {
-      "day": "2026-05-18",
-      "user_id": 284792193,
-      "user_login": "sdlca-worker-copilot",
-      "user_initiated_interaction_count": 75,
-      "code_generation_activity_count": 183,
-      "code_acceptance_activity_count": 172,
-      "loc_suggested_to_add_sum": 0,
-      "loc_added_sum": 8301,
-      "totals_by_cli": {
-        "session_count": 60,
-        "request_count": 1583,
-        "prompt_count": 75,
-        "token_usage": {
-          "prompt_tokens_sum": 113785075,
-          "output_tokens_sum": 855278,
-          "avg_tokens_per_request": 72419.68
-        }
-      },
-      "totals_by_model_feature": [
-        {
-          "model": "claude-sonnet-4.6",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 73
-        },
-        {
-          "model": "claude-haiku-4.5",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 2
-        }
-      ],
-      "used_cli": true,
-      "used_chat": false,
-      "used_agent": false,
-      "used_copilot_coding_agent": false,
-      "used_copilot_code_review_active": false
-    },
-    {
-      "day": "2026-05-25",
-      "user_id": 57125198,
-      "user_login": "chris-kreager",
-      "user_initiated_interaction_count": 2,
-      "code_generation_activity_count": 0,
-      "code_acceptance_activity_count": 0,
-      "loc_suggested_to_add_sum": 0,
-      "loc_added_sum": 0,
-      "totals_by_cli": {
-        "session_count": 2,
-        "request_count": 38,
-        "prompt_count": 2,
-        "token_usage": {
-          "prompt_tokens_sum": 2391142,
-          "output_tokens_sum": 26604,
-          "avg_tokens_per_request": 63624.89
-        }
-      },
-      "totals_by_model_feature": [
-        {
-          "model": "gpt-5.2",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 2
-        }
-      ],
-      "used_cli": true,
-      "used_chat": false,
-      "used_agent": false,
-      "used_copilot_coding_agent": true,
-      "used_copilot_code_review_active": false
-    },
-    {
-      "day": "2026-06-07",
-      "user_id": 274143375,
-      "user_login": "projectit-ai-repo-orchestrator[bot]",
-      "user_initiated_interaction_count": 0,
-      "code_generation_activity_count": 0,
-      "code_acceptance_activity_count": 0,
-      "loc_suggested_to_add_sum": 0,
-      "loc_added_sum": 0,
-      "totals_by_model_feature": [],
-      "used_cli": false,
-      "used_chat": false,
-      "used_agent": false,
-      "used_copilot_coding_agent": false,
-      "used_copilot_code_review_active": true
-    },
-    {
-      "day": "2026-05-14",
-      "user_id": 57125198,
-      "user_login": "chris-kreager",
-      "user_initiated_interaction_count": 118,
-      "code_generation_activity_count": 176,
-      "code_acceptance_activity_count": 172,
-      "loc_suggested_to_add_sum": 0,
-      "loc_added_sum": 4259,
-      "totals_by_cli": {
-        "session_count": 83,
-        "request_count": 3281,
-        "prompt_count": 118,
-        "token_usage": {
-          "prompt_tokens_sum": 251143979,
-          "output_tokens_sum": 1225731,
-          "avg_tokens_per_request": 76918.53
-        }
-      },
-      "totals_by_model_feature": [
-        {
-          "model": "claude-sonnet-4.6",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 118
-        },
-        {
-          "model": "claude-haiku-4.5",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 0
-        },
-        {
-          "model": "gpt-4.1",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 0
-        },
-        {
-          "model": "gpt-5.4",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 0
-        }
-      ],
-      "used_cli": true,
-      "used_chat": false,
-      "used_agent": false,
-      "used_copilot_coding_agent": false,
-      "used_copilot_code_review_active": true
-    },
-    {
-      "day": "2026-06-05",
-      "user_id": 284791894,
-      "user_login": "sdlca-reviewer-copilot",
-      "user_initiated_interaction_count": 68,
-      "code_generation_activity_count": 0,
-      "code_acceptance_activity_count": 0,
-      "loc_suggested_to_add_sum": 0,
-      "loc_added_sum": 0,
-      "totals_by_cli": {
-        "session_count": 45,
-        "request_count": 628,
-        "prompt_count": 68,
-        "token_usage": {
-          "prompt_tokens_sum": 45896281,
-          "output_tokens_sum": 605677,
-          "avg_tokens_per_request": 74047.7
-        }
-      },
-      "totals_by_model_feature": [
-        {
-          "model": "claude-sonnet-4.6",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 68
-        }
-      ],
-      "used_cli": true,
-      "used_chat": false,
-      "used_agent": false,
-      "used_copilot_coding_agent": false,
-      "used_copilot_code_review_active": false
-    },
-    {
-      "day": "2026-05-22",
-      "user_id": 57125198,
-      "user_login": "chris-kreager",
-      "user_initiated_interaction_count": 1,
-      "code_generation_activity_count": 0,
-      "code_acceptance_activity_count": 0,
-      "loc_suggested_to_add_sum": 0,
-      "loc_added_sum": 0,
-      "totals_by_cli": {
-        "session_count": 1,
-        "request_count": 1,
-        "prompt_count": 1,
-        "token_usage": {
-          "prompt_tokens_sum": 51061,
-          "output_tokens_sum": 450,
-          "avg_tokens_per_request": 51511
-        }
-      },
-      "totals_by_model_feature": [
-        {
-          "model": "claude-sonnet-4.6",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 1
-        }
-      ],
-      "used_cli": true,
-      "used_chat": false,
-      "used_agent": false,
-      "used_copilot_coding_agent": true,
-      "used_copilot_code_review_active": false
-    },
-    {
-      "day": "2026-06-06",
-      "user_id": 57125198,
-      "user_login": "chris-kreager",
-      "user_initiated_interaction_count": 1,
-      "code_generation_activity_count": 0,
-      "code_acceptance_activity_count": 0,
-      "loc_suggested_to_add_sum": 0,
-      "loc_added_sum": 0,
-      "totals_by_cli": {
-        "session_count": 1,
-        "request_count": 5,
-        "prompt_count": 1,
-        "token_usage": {
-          "prompt_tokens_sum": 147364,
-          "output_tokens_sum": 1223,
-          "avg_tokens_per_request": 29717.4
-        }
-      },
-      "totals_by_model_feature": [
-        {
-          "model": "claude-sonnet-4.6",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 1
-        }
-      ],
-      "used_cli": true,
-      "used_chat": false,
-      "used_agent": false,
-      "used_copilot_coding_agent": false,
-      "used_copilot_code_review_active": false
-    },
-    {
-      "day": "2026-06-02",
-      "user_id": 8487,
-      "user_login": "ckreager",
-      "user_initiated_interaction_count": 47,
-      "code_generation_activity_count": 0,
-      "code_acceptance_activity_count": 0,
-      "loc_suggested_to_add_sum": 0,
-      "loc_added_sum": 0,
-      "totals_by_cli": {
-        "session_count": 47,
-        "request_count": 471,
-        "prompt_count": 47,
-        "token_usage": {
-          "prompt_tokens_sum": 17696815,
-          "output_tokens_sum": 305191,
-          "avg_tokens_per_request": 38220.82
-        }
-      },
-      "totals_by_model_feature": [
-        {
-          "model": "gpt-5.2",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 41
-        },
-        {
-          "model": "claude-opus-4.7",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 6
-        }
-      ],
-      "used_cli": true,
-      "used_chat": false,
-      "used_agent": false,
-      "used_copilot_coding_agent": true,
-      "used_copilot_code_review_active": false
-    },
-    {
-      "day": "2026-05-26",
-      "user_id": 57125198,
-      "user_login": "chris-kreager",
-      "user_initiated_interaction_count": 3,
-      "code_generation_activity_count": 0,
-      "code_acceptance_activity_count": 0,
-      "loc_suggested_to_add_sum": 0,
-      "loc_added_sum": 0,
-      "totals_by_cli": {
-        "session_count": 3,
-        "request_count": 43,
-        "prompt_count": 3,
-        "token_usage": {
-          "prompt_tokens_sum": 2383364,
-          "output_tokens_sum": 38249,
-          "avg_tokens_per_request": 56316.58
-        }
-      },
-      "totals_by_model_feature": [
-        {
-          "model": "gpt-5.2",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 3
-        }
-      ],
-      "used_cli": true,
-      "used_chat": false,
-      "used_agent": false,
-      "used_copilot_coding_agent": true,
-      "used_copilot_code_review_active": false
-    },
-    {
-      "day": "2026-05-26",
-      "user_id": 8487,
-      "user_login": "ckreager",
-      "user_initiated_interaction_count": 0,
-      "code_generation_activity_count": 0,
-      "code_acceptance_activity_count": 0,
-      "loc_suggested_to_add_sum": 0,
-      "loc_added_sum": 0,
-      "totals_by_model_feature": [],
-      "used_cli": false,
-      "used_chat": false,
-      "used_agent": false,
-      "used_copilot_coding_agent": true,
-      "used_copilot_code_review_active": false
-    },
-    {
-      "day": "2026-05-12",
-      "user_id": 57125198,
-      "user_login": "chris-kreager",
-      "user_initiated_interaction_count": 922,
-      "code_generation_activity_count": 301,
-      "code_acceptance_activity_count": 279,
-      "loc_suggested_to_add_sum": 0,
-      "loc_added_sum": 18889,
-      "totals_by_cli": {
-        "session_count": 887,
-        "request_count": 9849,
-        "prompt_count": 922,
-        "token_usage": {
-          "prompt_tokens_sum": 793639863,
-          "output_tokens_sum": 4178504,
-          "avg_tokens_per_request": 81005.01
-        }
-      },
-      "totals_by_model_feature": [
-        {
-          "model": "claude-sonnet-4.6",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 922
-        },
-        {
-          "model": "claude-haiku-4.5",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 0
-        },
-        {
-          "model": "gpt-4.1",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 0
-        },
-        {
-          "model": "gpt-5.4",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 0
-        }
-      ],
-      "used_cli": true,
-      "used_chat": false,
-      "used_agent": false,
-      "used_copilot_coding_agent": false,
-      "used_copilot_code_review_active": false
-    },
-    {
-      "day": "2026-05-19",
-      "user_id": 284792193,
-      "user_login": "sdlca-worker-copilot",
-      "user_initiated_interaction_count": 19,
-      "code_generation_activity_count": 115,
-      "code_acceptance_activity_count": 106,
-      "loc_suggested_to_add_sum": 0,
-      "loc_added_sum": 1610,
-      "totals_by_cli": {
-        "session_count": 18,
-        "request_count": 750,
-        "prompt_count": 19,
-        "token_usage": {
-          "prompt_tokens_sum": 67992713,
-          "output_tokens_sum": 419810,
-          "avg_tokens_per_request": 91216.7
-        }
-      },
-      "totals_by_model_feature": [
-        {
-          "model": "claude-sonnet-4.6",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 19
-        }
-      ],
-      "used_cli": true,
-      "used_chat": false,
-      "used_agent": false,
-      "used_copilot_coding_agent": false,
-      "used_copilot_code_review_active": false
-    },
-    {
-      "day": "2026-05-18",
-      "user_id": 8487,
-      "user_login": "ckreager",
-      "user_initiated_interaction_count": 2,
-      "code_generation_activity_count": 0,
-      "code_acceptance_activity_count": 0,
-      "loc_suggested_to_add_sum": 0,
-      "loc_added_sum": 0,
-      "totals_by_cli": {
-        "session_count": 2,
-        "request_count": 43,
-        "prompt_count": 2,
-        "token_usage": {
-          "prompt_tokens_sum": 1884319,
-          "output_tokens_sum": 17093,
-          "avg_tokens_per_request": 44218.88
-        }
-      },
-      "totals_by_model_feature": [
-        {
-          "model": "gpt-5.2",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 1
-        },
-        {
-          "model": "gpt-5.5",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 1
-        }
-      ],
-      "used_cli": true,
-      "used_chat": false,
-      "used_agent": false,
-      "used_copilot_coding_agent": true,
-      "used_copilot_code_review_active": false
-    },
-    {
-      "day": "2026-06-03",
-      "user_id": 57125198,
-      "user_login": "chris-kreager",
-      "user_initiated_interaction_count": 2,
-      "code_generation_activity_count": 0,
-      "code_acceptance_activity_count": 0,
-      "loc_suggested_to_add_sum": 0,
-      "loc_added_sum": 0,
-      "totals_by_cli": {
-        "session_count": 1,
-        "request_count": 2,
-        "prompt_count": 2,
-        "token_usage": {
-          "prompt_tokens_sum": 104561,
-          "output_tokens_sum": 312,
-          "avg_tokens_per_request": 52436.5
-        }
-      },
-      "totals_by_model_feature": [
-        {
-          "model": "claude-sonnet-4.6",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 2
-        }
-      ],
-      "used_cli": true,
-      "used_chat": false,
-      "used_agent": false,
-      "used_copilot_coding_agent": false,
-      "used_copilot_code_review_active": false
-    },
-    {
-      "day": "2026-05-17",
-      "user_id": 8487,
-      "user_login": "ckreager",
-      "user_initiated_interaction_count": 0,
-      "code_generation_activity_count": 0,
-      "code_acceptance_activity_count": 0,
-      "loc_suggested_to_add_sum": 0,
-      "loc_added_sum": 0,
-      "totals_by_model_feature": [],
-      "used_cli": false,
-      "used_chat": false,
-      "used_agent": false,
-      "used_copilot_coding_agent": false,
-      "used_copilot_code_review_active": false
-    },
-    {
-      "day": "2026-05-17",
-      "user_id": 57125198,
-      "user_login": "chris-kreager",
-      "user_initiated_interaction_count": 30,
-      "code_generation_activity_count": 0,
-      "code_acceptance_activity_count": 0,
-      "loc_suggested_to_add_sum": 0,
-      "loc_added_sum": 0,
-      "totals_by_cli": {
-        "session_count": 2,
-        "request_count": 30,
-        "prompt_count": 30,
-        "token_usage": {
-          "prompt_tokens_sum": 2252085,
-          "output_tokens_sum": 7629,
-          "avg_tokens_per_request": 75323.8
-        }
-      },
-      "totals_by_model_feature": [
-        {
-          "model": "claude-sonnet-4.6",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 30
-        }
-      ],
-      "used_cli": true,
-      "used_chat": false,
-      "used_agent": false,
-      "used_copilot_coding_agent": false,
-      "used_copilot_code_review_active": false
-    },
-    {
-      "day": "2026-05-19",
-      "user_id": 57125198,
-      "user_login": "chris-kreager",
-      "user_initiated_interaction_count": 0,
-      "code_generation_activity_count": 0,
-      "code_acceptance_activity_count": 0,
-      "loc_suggested_to_add_sum": 0,
-      "loc_added_sum": 0,
-      "totals_by_model_feature": [],
-      "used_cli": false,
-      "used_chat": false,
-      "used_agent": false,
-      "used_copilot_coding_agent": true,
-      "used_copilot_code_review_active": false
-    },
-    {
-      "day": "2026-05-22",
-      "user_id": 8487,
-      "user_login": "ckreager",
-      "user_initiated_interaction_count": 6,
-      "code_generation_activity_count": 0,
-      "code_acceptance_activity_count": 0,
-      "loc_suggested_to_add_sum": 0,
-      "loc_added_sum": 0,
-      "totals_by_cli": {
-        "session_count": 3,
-        "request_count": 80,
-        "prompt_count": 6,
-        "token_usage": {
-          "prompt_tokens_sum": 3367075,
-          "output_tokens_sum": 26386,
-          "avg_tokens_per_request": 42418.26
-        }
-      },
-      "totals_by_model_feature": [
-        {
-          "model": "claude-sonnet-4.6",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 4
-        },
-        {
-          "model": "gpt-5.2",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 2
-        }
-      ],
-      "used_cli": true,
-      "used_chat": false,
-      "used_agent": false,
-      "used_copilot_coding_agent": true,
-      "used_copilot_code_review_active": false
-    },
-    {
-      "day": "2026-06-07",
-      "user_id": 8487,
-      "user_login": "ckreager",
-      "user_initiated_interaction_count": 6,
-      "code_generation_activity_count": 0,
-      "code_acceptance_activity_count": 0,
-      "loc_suggested_to_add_sum": 0,
-      "loc_added_sum": 0,
-      "totals_by_cli": {
-        "session_count": 4,
-        "request_count": 82,
-        "prompt_count": 6,
-        "token_usage": {
-          "prompt_tokens_sum": 4057512,
-          "output_tokens_sum": 33480,
-          "avg_tokens_per_request": 49890.15
-        }
-      },
-      "totals_by_model_feature": [
-        {
-          "model": "gpt-5.3-codex",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 4
-        },
-        {
-          "model": "gpt-5.2",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 2
-        }
-      ],
-      "used_cli": true,
-      "used_chat": false,
-      "used_agent": false,
-      "used_copilot_coding_agent": true,
-      "used_copilot_code_review_active": false
-    },
-    {
-      "day": "2026-05-22",
-      "user_id": 284792193,
-      "user_login": "sdlca-worker-copilot",
-      "user_initiated_interaction_count": 109,
-      "code_generation_activity_count": 182,
-      "code_acceptance_activity_count": 175,
-      "loc_suggested_to_add_sum": 0,
-      "loc_added_sum": 5422,
-      "totals_by_cli": {
-        "session_count": 101,
-        "request_count": 4529,
-        "prompt_count": 109,
-        "token_usage": {
-          "prompt_tokens_sum": 383786945,
-          "output_tokens_sum": 2518974,
-          "avg_tokens_per_request": 85296.07
-        }
-      },
-      "totals_by_model_feature": [
-        {
-          "model": "claude-sonnet-4.6",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 109
-        },
-        {
-          "model": "claude-haiku-4.5",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 0
-        },
-        {
-          "model": "gpt-5.4",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 0
-        }
-      ],
-      "used_cli": true,
-      "used_chat": false,
-      "used_agent": false,
-      "used_copilot_coding_agent": false,
-      "used_copilot_code_review_active": false
-    },
-    {
-      "day": "2026-06-04",
-      "user_id": 8487,
-      "user_login": "ckreager",
-      "user_initiated_interaction_count": 12,
-      "code_generation_activity_count": 0,
-      "code_acceptance_activity_count": 0,
-      "loc_suggested_to_add_sum": 0,
-      "loc_added_sum": 0,
-      "totals_by_cli": {
-        "session_count": 9,
-        "request_count": 206,
-        "prompt_count": 12,
-        "token_usage": {
-          "prompt_tokens_sum": 12335169,
-          "output_tokens_sum": 98049,
-          "avg_tokens_per_request": 60355.43
-        }
-      },
-      "totals_by_model_feature": [
-        {
-          "model": "gpt-5.2",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 6
-        },
-        {
-          "model": "gpt-5.3-codex",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 4
-        },
-        {
-          "model": "claude-sonnet-4.6",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 2
-        }
-      ],
-      "used_cli": true,
-      "used_chat": false,
-      "used_agent": false,
-      "used_copilot_coding_agent": true,
-      "used_copilot_code_review_active": false
-    },
-    {
-      "day": "2026-06-02",
-      "user_id": 284792193,
-      "user_login": "sdlca-worker-copilot",
-      "user_initiated_interaction_count": 0,
-      "code_generation_activity_count": 0,
-      "code_acceptance_activity_count": 0,
-      "loc_suggested_to_add_sum": 0,
-      "loc_added_sum": 0,
-      "totals_by_model_feature": [],
-      "used_cli": false,
-      "used_chat": false,
-      "used_agent": false,
-      "used_copilot_coding_agent": false,
-      "used_copilot_code_review_active": false
-    },
-    {
-      "day": "2026-05-27",
-      "user_id": 284792193,
-      "user_login": "sdlca-worker-copilot",
-      "user_initiated_interaction_count": 2,
-      "code_generation_activity_count": 4,
-      "code_acceptance_activity_count": 4,
-      "loc_suggested_to_add_sum": 0,
-      "loc_added_sum": 987,
-      "totals_by_cli": {
-        "session_count": 2,
-        "request_count": 34,
-        "prompt_count": 2,
-        "token_usage": {
-          "prompt_tokens_sum": 2925660,
-          "output_tokens_sum": 28686,
-          "avg_tokens_per_request": 86892.53
-        }
-      },
-      "totals_by_model_feature": [
-        {
-          "model": "claude-sonnet-4.6",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 2
-        }
-      ],
-      "used_cli": true,
-      "used_chat": false,
-      "used_agent": false,
-      "used_copilot_coding_agent": false,
-      "used_copilot_code_review_active": false
-    },
-    {
-      "day": "2026-05-16",
-      "user_id": 8487,
-      "user_login": "ckreager",
-      "user_initiated_interaction_count": 0,
-      "code_generation_activity_count": 0,
-      "code_acceptance_activity_count": 0,
-      "loc_suggested_to_add_sum": 0,
-      "loc_added_sum": 0,
-      "totals_by_model_feature": [],
-      "used_cli": false,
-      "used_chat": false,
-      "used_agent": false,
-      "used_copilot_coding_agent": false,
-      "used_copilot_code_review_active": false
-    },
-    {
-      "day": "2026-06-07",
-      "user_id": 57125198,
-      "user_login": "chris-kreager",
-      "user_initiated_interaction_count": 5,
-      "code_generation_activity_count": 0,
-      "code_acceptance_activity_count": 0,
-      "loc_suggested_to_add_sum": 0,
-      "loc_added_sum": 0,
-      "totals_by_cli": {
-        "session_count": 5,
-        "request_count": 73,
-        "prompt_count": 5,
-        "token_usage": {
-          "prompt_tokens_sum": 5185047,
-          "output_tokens_sum": 69900,
-          "avg_tokens_per_request": 71985.58
-        }
-      },
-      "totals_by_model_feature": [
-        {
-          "model": "claude-sonnet-4.6",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 5
-        }
-      ],
-      "used_cli": true,
-      "used_chat": false,
-      "used_agent": false,
-      "used_copilot_coding_agent": false,
-      "used_copilot_code_review_active": false
-    },
-    {
-      "day": "2026-05-21",
       "user_id": 284792193,
       "user_login": "sdlca-worker-copilot",
       "user_initiated_interaction_count": 421,
@@ -2144,29 +2177,34 @@
       "used_copilot_code_review_active": false
     },
     {
-      "day": "2026-06-06",
+      "day": "2026-05-18",
       "user_id": 284792193,
       "user_login": "sdlca-worker-copilot",
-      "user_initiated_interaction_count": 31,
-      "code_generation_activity_count": 82,
-      "code_acceptance_activity_count": 81,
+      "user_initiated_interaction_count": 75,
+      "code_generation_activity_count": 183,
+      "code_acceptance_activity_count": 172,
       "loc_suggested_to_add_sum": 0,
-      "loc_added_sum": 3976,
+      "loc_added_sum": 8301,
       "totals_by_cli": {
-        "session_count": 16,
-        "request_count": 798,
-        "prompt_count": 31,
+        "session_count": 60,
+        "request_count": 1583,
+        "prompt_count": 75,
         "token_usage": {
-          "prompt_tokens_sum": 77571203,
-          "output_tokens_sum": 329687,
-          "avg_tokens_per_request": 97620.16
+          "prompt_tokens_sum": 113785075,
+          "output_tokens_sum": 855278,
+          "avg_tokens_per_request": 72419.68
         }
       },
       "totals_by_model_feature": [
         {
           "model": "claude-sonnet-4.6",
           "feature": "copilot_cli",
-          "user_initiated_interaction_count": 31
+          "user_initiated_interaction_count": 73
+        },
+        {
+          "model": "claude-haiku-4.5",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 2
         }
       ],
       "used_cli": true,
@@ -2174,6 +2212,48 @@
       "used_agent": false,
       "used_copilot_coding_agent": false,
       "used_copilot_code_review_active": false
+    },
+    {
+      "day": "2026-05-23",
+      "user_id": 284792193,
+      "user_login": "sdlca-worker-copilot",
+      "user_initiated_interaction_count": 49,
+      "code_generation_activity_count": 79,
+      "code_acceptance_activity_count": 74,
+      "loc_suggested_to_add_sum": 0,
+      "loc_added_sum": 2130,
+      "totals_by_cli": {
+        "session_count": 51,
+        "request_count": 2671,
+        "prompt_count": 49,
+        "token_usage": {
+          "prompt_tokens_sum": 231790576,
+          "output_tokens_sum": 2044629,
+          "avg_tokens_per_request": 87545.94
+        }
+      },
+      "totals_by_model_feature": [
+        {
+          "model": "claude-sonnet-4.6",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 49
+        },
+        {
+          "model": "claude-haiku-4.5",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 0
+        },
+        {
+          "model": "gpt-5.4",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 0
+        }
+      ],
+      "used_cli": true,
+      "used_chat": false,
+      "used_agent": false,
+      "used_copilot_coding_agent": false,
+      "used_copilot_code_review_active": true
     },
     {
       "day": "2026-06-03",
@@ -2208,32 +2288,16 @@
       "used_copilot_code_review_active": false
     },
     {
-      "day": "2026-06-04",
-      "user_id": 284791894,
-      "user_login": "sdlca-reviewer-copilot",
-      "user_initiated_interaction_count": 77,
+      "day": "2026-06-01",
+      "user_id": 284792193,
+      "user_login": "sdlca-worker-copilot",
+      "user_initiated_interaction_count": 0,
       "code_generation_activity_count": 0,
       "code_acceptance_activity_count": 0,
       "loc_suggested_to_add_sum": 0,
       "loc_added_sum": 0,
-      "totals_by_cli": {
-        "session_count": 47,
-        "request_count": 740,
-        "prompt_count": 77,
-        "token_usage": {
-          "prompt_tokens_sum": 52618467,
-          "output_tokens_sum": 578904,
-          "avg_tokens_per_request": 71888.34
-        }
-      },
-      "totals_by_model_feature": [
-        {
-          "model": "claude-sonnet-4.6",
-          "feature": "copilot_cli",
-          "user_initiated_interaction_count": 77
-        }
-      ],
-      "used_cli": true,
+      "totals_by_model_feature": [],
+      "used_cli": false,
       "used_chat": false,
       "used_agent": false,
       "used_copilot_coding_agent": false,
@@ -2241,38 +2305,86 @@
     },
     {
       "day": "2026-05-24",
-      "user_id": 284791894,
-      "user_login": "sdlca-reviewer-copilot",
-      "user_initiated_interaction_count": 11,
+      "user_id": 8487,
+      "user_login": "ckreager",
+      "user_initiated_interaction_count": 2,
       "code_generation_activity_count": 0,
       "code_acceptance_activity_count": 0,
       "loc_suggested_to_add_sum": 0,
       "loc_added_sum": 0,
       "totals_by_cli": {
-        "session_count": 7,
-        "request_count": 16,
-        "prompt_count": 11,
+        "session_count": 2,
+        "request_count": 23,
+        "prompt_count": 2,
         "token_usage": {
-          "prompt_tokens_sum": 290594,
-          "output_tokens_sum": 2903,
-          "avg_tokens_per_request": 18343.56
+          "prompt_tokens_sum": 1121570,
+          "output_tokens_sum": 14401,
+          "avg_tokens_per_request": 49390.04
         }
       },
       "totals_by_model_feature": [
         {
-          "model": "claude-sonnet-4.6",
+          "model": "gpt-5.2",
           "feature": "copilot_cli",
-          "user_initiated_interaction_count": 11
+          "user_initiated_interaction_count": 2
         }
       ],
       "used_cli": true,
       "used_chat": false,
       "used_agent": false,
-      "used_copilot_coding_agent": false,
+      "used_copilot_coding_agent": true,
       "used_copilot_code_review_active": false
     },
     {
-      "day": "2026-05-24",
+      "day": "2026-06-07",
+      "user_id": 274143375,
+      "user_login": "projectit-ai-repo-orchestrator[bot]",
+      "user_initiated_interaction_count": 0,
+      "code_generation_activity_count": 0,
+      "code_acceptance_activity_count": 0,
+      "loc_suggested_to_add_sum": 0,
+      "loc_added_sum": 0,
+      "totals_by_model_feature": [],
+      "used_cli": false,
+      "used_chat": false,
+      "used_agent": false,
+      "used_copilot_coding_agent": false,
+      "used_copilot_code_review_active": true
+    },
+    {
+      "day": "2026-05-28",
+      "user_id": 8487,
+      "user_login": "ckreager",
+      "user_initiated_interaction_count": 1,
+      "code_generation_activity_count": 0,
+      "code_acceptance_activity_count": 0,
+      "loc_suggested_to_add_sum": 0,
+      "loc_added_sum": 0,
+      "totals_by_cli": {
+        "session_count": 1,
+        "request_count": 22,
+        "prompt_count": 1,
+        "token_usage": {
+          "prompt_tokens_sum": 1156762,
+          "output_tokens_sum": 10809,
+          "avg_tokens_per_request": 53071.41
+        }
+      },
+      "totals_by_model_feature": [
+        {
+          "model": "gpt-5.2",
+          "feature": "copilot_cli",
+          "user_initiated_interaction_count": 1
+        }
+      ],
+      "used_cli": true,
+      "used_chat": false,
+      "used_agent": false,
+      "used_copilot_coding_agent": true,
+      "used_copilot_code_review_active": false
+    },
+    {
+      "day": "2026-05-25",
       "user_id": 57125198,
       "user_login": "chris-kreager",
       "user_initiated_interaction_count": 2,
@@ -2282,12 +2394,12 @@
       "loc_added_sum": 0,
       "totals_by_cli": {
         "session_count": 2,
-        "request_count": 41,
+        "request_count": 38,
         "prompt_count": 2,
         "token_usage": {
-          "prompt_tokens_sum": 3844291,
-          "output_tokens_sum": 24453,
-          "avg_tokens_per_request": 94359.61
+          "prompt_tokens_sum": 2391142,
+          "output_tokens_sum": 26604,
+          "avg_tokens_per_request": 63624.89
         }
       },
       "totals_by_model_feature": [
@@ -2308,5 +2420,5 @@
     "total_seats": 4,
     "plan": "business"
   },
-  "generatedAt": "2026-06-09T00:24:02.380Z"
+  "generatedAt": "2026-06-10T01:24:52.099Z"
 }
