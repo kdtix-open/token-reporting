@@ -13,6 +13,10 @@ Use the devcontainer in `.devcontainer/devcontainer.json` for a reproducible Nod
 5. For projectit.ai subpath testing, run `npm run build:projectit` and
    `npm run serve:production`, then open
    `http://127.0.0.1:8080/tools/token-reporting`.
+6. For the mac-local projectit.ai operator host, run
+   `TOKEN_REPORTING_NODE_BIN=/opt/homebrew/bin/node npm run startup:install:macos`.
+   The LaunchAgent listens on `8095`, which is the upstream used by the SDLCA
+   Docker Caddy route.
 
 ## Environment variables
 
@@ -28,6 +32,30 @@ Use the devcontainer in `.devcontainer/devcontainer.json` for a reproducible Nod
 - `TOKEN_REPORTING_DIST_ROOT`: Vite build output root, defaults to `dist`
 - `TOKEN_REPORTING_ADMIN_ENV_FILE`: optional local env file, defaults to `.env.admin.credentials`
 - `TOKEN_REPORTING_LOG_ROOT`: structured log directory, defaults to `logs`
+- `TOKEN_REPORTING_REFRESH_ASYNC`: set to `true` for published routes so refresh POSTs return a job immediately and the UI polls status.
+- `TOKEN_REPORTING_NODE_BIN`: absolute Node executable pinned into macOS launchd or WSL systemd-user startup units.
+- `TOKEN_REPORTING_PORT`: local production port, `8095` for the SDLCA Caddy route.
+- `TOKEN_REPORTING_HOST`: bind address, normally `0.0.0.0` so Docker Desktop can reach the host service through `host.docker.internal`.
+
+## Startup and tenancy notes
+
+- mac-local / KDTIX operations: use `npm run startup:install:macos` and keep
+  KDTIX provider Admin/API credentials only in `.env.admin.credentials` on the
+  KDTIX operator host.
+- WSL Ubuntu UAT: use `npm run startup:install:wsl` inside WSL with sandbox or
+  mock-client credentials. Do not reuse the KDTIX admin credential file.
+- Customer installs: do not expose shared hosted reports until OIDC tenant
+  scoping exists. The intended shape is customer-owned local Admin/API tokens,
+  a customer KDTIX App OIDC identity, and server-side report filtering so each
+  tenant can only see its own snapshots.
+
+Useful probes:
+
+```bash
+launchctl print gui/$(id -u)/com.kdtix.token-reporting
+curl http://127.0.0.1:8095/tools/token-reporting/api/integration/contract
+curl https://dev.projectit.ai/tools/token-reporting
+```
 
 ## Deployment lanes
 
