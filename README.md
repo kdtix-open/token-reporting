@@ -55,14 +55,29 @@ docker compose -f deploy/hybrid-cloudflare/docker-compose.yml up --build
 # Build only, with projectit.ai asset paths
 npm run build:projectit
 
+# macOS LaunchAgent on the port SDLCA Caddy already proxies
+npm run startup:install:macos
+
 # WSL/systemd-user service on the port SDLCA Caddy already proxies
 npm run startup:install:wsl
 ```
 
-The WSL installer pins the exact `node` binary resolved inside Ubuntu and runs
-Token Reporting on `TOKEN_REPORTING_PORT=8095` by default, which matches the
-current SDLCA Caddy upstream at `host.docker.internal:8095`. It also removes the
-stale production PID file before each start.
+The macOS and WSL startup installers pin the exact `node` binary resolved on the
+local machine and run Token Reporting on `TOKEN_REPORTING_PORT=8095` by default,
+which matches the current SDLCA Caddy upstream at `host.docker.internal:8095`.
+They also remove the stale production PID file before each start. The startup
+unit stores only non-secret runtime settings; provider Admin/API credentials stay
+in `TOKEN_REPORTING_ADMIN_ENV_FILE`, normally `.env.admin.credentials` on the
+operator host.
+
+For the KDTIX `mac-local` bridge, `dev.projectit.ai/tools/token-reporting` is an
+operator view over KDTIX-owned provider Admin/API credentials and KDTIX paid
+provider usage. For WSL Ubuntu UAT, run a separate local Token Reporting service
+inside the WSL environment with sandbox/mock credentials. Do not point WSL UAT at
+the KDTIX admin credential file. Customer-facing installs must add an OIDC-backed
+tenant boundary before exposing hosted reports: customers authenticate with their
+own KDTIX App identity, see only their tenant reports, and provider admin tokens
+remain local to the customer's installation.
 
 The post-hybrid Cloudflare-native scaffold is in `deploy/cloudflare`. It is
 read-only until stateful provider refresh, artifact storage, scheduling, and
