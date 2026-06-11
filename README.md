@@ -54,7 +54,15 @@ docker compose -f deploy/hybrid-cloudflare/docker-compose.yml up --build
 
 # Build only, with projectit.ai asset paths
 npm run build:projectit
+
+# WSL/systemd-user service on the port SDLCA Caddy already proxies
+npm run startup:install:wsl
 ```
+
+The WSL installer pins the exact `node` binary resolved inside Ubuntu and runs
+Token Reporting on `TOKEN_REPORTING_PORT=8095` by default, which matches the
+current SDLCA Caddy upstream at `host.docker.internal:8095`. It also removes the
+stale production PID file before each start.
 
 The post-hybrid Cloudflare-native scaffold is in `deploy/cloudflare`. It is
 read-only until stateful provider refresh, artifact storage, scheduling, and
