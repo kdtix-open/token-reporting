@@ -89,6 +89,35 @@ describe("dynamicRefreshExecutor", () => {
     ]);
   });
 
+  it("createProviderScriptRefreshExecutor_SpawnFailure_ReturnsActionablePathDiagnostic", async () => {
+    const runScript = vi.fn().mockResolvedValue({
+      failureReason: "npm_not_found_or_path_missing",
+      ok: false
+    });
+    const executor = createProviderScriptRefreshExecutor({
+      env: {
+        OPENAI_ADMIN_API_KEY: "codex-admin"
+      },
+      runScript
+    });
+
+    const result = await executor({
+      includeForensicModelProfiles: false,
+      includeHuggingFaceRefresh: false,
+      mode: "incremental",
+      providers: ["codex"],
+      reviewerModels: []
+    });
+
+    expect(result.providerResults).toEqual([
+      expect.objectContaining({
+        degradedReason: "npm_not_found_or_path_missing",
+        providerId: "codex",
+        status: "failed"
+      })
+    ]);
+  });
+
   it("createProviderScriptRefreshExecutor_HuggingFaceRefreshRequested_RunsCandidateScript", async () => {
     const runScript = vi.fn().mockResolvedValue({
       ok: true,

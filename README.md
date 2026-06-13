@@ -65,10 +65,19 @@ npm run startup:install:wsl
 The macOS and WSL startup installers pin the exact `node` binary resolved on the
 local machine and run Token Reporting on `TOKEN_REPORTING_PORT=8095` by default,
 which matches the current SDLCA Caddy upstream at `host.docker.internal:8095`.
-They also remove the stale production PID file before each start. The startup
-unit stores only non-secret runtime settings; provider Admin/API credentials stay
-in `TOKEN_REPORTING_ADMIN_ENV_FILE`, normally `.env.admin.credentials` on the
-operator host.
+They also remove the stale production PID file before each start. The macOS
+LaunchAgent persists a launchd-safe `PATH` so provider refresh scripts can find
+`npm` after reboot. The startup unit stores only non-secret runtime settings;
+provider Admin/API credentials stay in `TOKEN_REPORTING_ADMIN_ENV_FILE`,
+normally `.env.admin.credentials` on the operator host.
+
+For bridge-backed local model forensics, repair the Token Reporting bridge
+connection from the SDLCA local bridge env without printing the token:
+
+```bash
+npm run startup:repair-bridge-env
+curl http://127.0.0.1:8095/tools/token-reporting/api/operational-status
+```
 
 For the KDTIX `mac-local` bridge, `dev.projectit.ai/tools/token-reporting` is an
 operator view over KDTIX-owned provider Admin/API credentials and KDTIX paid
