@@ -550,6 +550,7 @@ describe("integrationContractDynamic", () => {
           artifactUri:
             "local://token-reporting/forensics/dynamic-forensic-20260607T172000000Z/reviewers/gpt.json",
           bridgeProviderKind: "codex",
+          completedAt: "2026-06-07T17:21:05.000Z",
           reviewerModel: "gpt",
           status: "completed"
         }
@@ -592,13 +593,15 @@ describe("integrationContractDynamic", () => {
       })
     );
     expect(response.body).toMatchObject({
+      completedAt: "2026-06-07T17:21:05.000Z",
       forensicRun: {
         parentSynthesis: {
           recommendation: "Refresh-triggered forensic review completed."
         },
         huggingFaceCandidateSetId: "hf-candidates-20260607T172000123Z",
         runId: "dynamic-forensic-20260607T172000000Z",
-        status: "completed"
+        status: "completed",
+        updatedAt: "2026-06-07T17:21:05.000Z"
       },
       status: "completed"
     });

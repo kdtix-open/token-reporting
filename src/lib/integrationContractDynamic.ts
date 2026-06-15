@@ -54,9 +54,11 @@ export interface DynamicForensicReviewerArtifact {
   artifact?: Record<string, unknown>;
   artifactUri: string;
   bridgeProviderKind?: string;
+  completedAt?: string;
   degradedReason?: string;
   diagnostics?: Record<string, unknown>;
   reviewerModel: string;
+  startedAt?: string;
   status: "queued" | "running" | "completed" | "failed";
 }
 
@@ -491,7 +493,6 @@ async function executeDynamicRefreshJob(args: {
       status: result.status
     };
   });
-  const completedAt = latestCompletedAt(providerResults) ?? generatedAt.toISOString();
   const refreshStatus = refreshJobStatus(providerResults);
   const refreshHuggingFaceCandidateSetId =
     readStringField(body, "huggingFaceCandidateSetId") ??
@@ -543,6 +544,11 @@ async function executeDynamicRefreshJob(args: {
         }
       })
     : undefined;
+  const completedAt =
+    latestTimestamp([
+      ...providerResults.map((result) => result.completedAt),
+      readStringField(forensicRun, "updatedAt")
+    ]) ?? generatedAt.toISOString();
   const status = combinedRefreshStatus(refreshStatus, readStringField(forensicRun, "status"));
   const job = {
     completedAt,
@@ -561,10 +567,9 @@ async function executeDynamicRefreshJob(args: {
   return job;
 }
 
-function latestCompletedAt(providerResults: Array<{ completedAt?: string }>): string | undefined {
-  return providerResults
-    .map((result) => result.completedAt)
-    .filter((completedAt): completedAt is string => Boolean(completedAt))
+function latestTimestamp(values: Array<string | undefined | null>): string | undefined {
+  return values
+    .filter((value): value is string => Boolean(value))
     .sort()
     .at(-1);
 }
@@ -710,6 +715,7 @@ async function createDynamicForensicRun(args: {
         ),
         status: "degraded" as const
       };
+  const updatedAt = forensicRunUpdatedAt(executionResult.reviewerArtifacts, createdAt);
   const parentSynthesis = buildParentSynthesis(executionResult.reviewerArtifacts);
 
   const run = {
@@ -730,7 +736,7 @@ async function createDynamicForensicRun(args: {
     reviewerModels,
     runId,
     status: executionResult.status,
-    updatedAt: createdAt,
+    updatedAt,
     usageSnapshotId
   };
 
@@ -783,6 +789,7 @@ function buildProgressForensicRunRecord(args: {
   status: "queued" | "running" | "completed" | "degraded" | "failed";
   usageSnapshotId?: string | null;
 }): Record<string, unknown> {
+  const updatedAt = forensicRunUpdatedAt(args.reviewerArtifacts, args.createdAt);
   return {
     bridgeDispatch: {
       executionKind: "forensic",
@@ -796,9 +803,16 @@ function buildProgressForensicRunRecord(args: {
     reviewerModels: args.reviewerModels,
     runId: args.runId,
     status: args.status,
-    updatedAt: args.createdAt,
+    updatedAt,
     usageSnapshotId: args.usageSnapshotId
   };
+}
+
+function forensicRunUpdatedAt(
+  reviewerArtifacts: DynamicForensicReviewerArtifact[],
+  fallback: string
+): string {
+  return latestTimestamp(reviewerArtifacts.map((artifact) => artifact.completedAt)) ?? fallback;
 }
 
 async function dynamicLatestLocalModelProfileResponse(

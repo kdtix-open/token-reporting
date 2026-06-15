@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { requestReportRefresh } from "../integrationApiClient";
+import { pollReportRefreshJob, requestReportRefresh } from "../integrationApiClient";
 
 describe("integrationApiClient", () => {
   it("requestReportRefresh_DefaultBrowserOrigin_PostsToSameOriginApi", async () => {
@@ -106,4 +106,80 @@ describe("integrationApiClient", () => {
     });
     vi.useRealTimers();
   });
+
+  it("pollReportRefreshJob_RunningThenCompleted_ReturnsCompletedJob", async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce({
+        json: async () => ({
+          jobId: "dynamic-refresh-001",
+          status: "running"
+        }),
+        ok: true,
+        status: 200
+      })
+      .mockResolvedValueOnce({
+        json: async () => ({
+          jobId: "dynamic-refresh-001",
+          status: "completed"
+        }),
+        ok: true,
+        status: 200
+      });
+
+    const result = await pollReportRefreshJob("dynamic-refresh-001", {
+      apiBaseUrl: "http://127.0.0.1:8788",
+      fetcher,
+      intervalMs: 0,
+      timeoutMs: 1000
+    });
+
+    expect(fetcher).toHaveBeenCalledWith("http://127.0.0.1:8788/api/refresh/dynamic-refresh-001", {
+      method: "GET",
+      signal: expect.any(AbortSignal)
+    });
+    expect(result).toEqual({
+      job: {
+        jobId: "dynamic-refresh-001",
+        status: "completed"
+      },
+      outcome: "accepted"
+    });
+  });
+
+  it("pollReportRefreshJob_DefaultTimeout_AllowsFullSequentialForensicReviewerWindow", async () => {
+    vi.useFakeTimers();
+    const fetcher = vi.fn().mockResolvedValue({
+      json: async () => ({
+        forensicRun: {
+          reviewerArtifacts: [{ reviewerModel: "kimi", status: "running" }],
+          status: "running"
+        },
+        jobId: "dynamic-refresh-long-forensics",
+        providerResults: [{ providerId: "codex", status: "completed" }],
+        status: "running"
+      }),
+      ok: true,
+      status: 200
+    });
+
+    const resultPromise = pollReportRefreshJob("dynamic-refresh-long-forensics", {
+      apiBaseUrl: "http://127.0.0.1:8788",
+      fetcher,
+      intervalMs: 60_000
+    });
+
+    for (let tick = 0; tick < 21; tick += 1) {
+      await vi.advanceTimersByTimeAsync(60_000);
+    }
+    await vi.advanceTimersByTimeAsync(1);
+
+    await expect(resultPromise).resolves.toEqual({
+      message:
+        "Refresh is still running after 1200 seconds. Check the refresh status or try a narrower provider refresh.",
+      outcome: "failed"
+    });
+    expect(fetcher).toHaveBeenCalledTimes(21);
+    vi.useRealTimers();
+  }, 10_000);
 });
