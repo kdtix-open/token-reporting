@@ -490,7 +490,11 @@ function buildFailedRefreshJob(args: {
     completedAt,
     contractVersion: dynamicContractVersion,
     degradedReason,
-    forensicRun: isRecord(previousJob?.forensicRun) ? previousJob.forensicRun : undefined,
+    forensicRun: reconcileAbandonedForensicRun(
+      previousJob?.forensicRun,
+      completedAt,
+      degradedReason
+    ),
     includeForensicModelProfiles: refreshRequest.includeForensicModelProfiles,
     includeHuggingFaceRefresh: refreshRequest.includeHuggingFaceRefresh,
     jobId,
@@ -875,15 +879,20 @@ async function createDynamicForensicRun(args: {
         reviewerModels,
         runId,
         usageSnapshotId
-      }).catch((error) => ({
-        degradedReason: error instanceof Error ? error.message : String(error),
-        reviewerArtifacts: queuedArtifacts.map((artifact) => ({
-          ...artifact,
-          degradedReason: error instanceof Error ? error.message : String(error),
+      }).catch((error) => {
+        const failedAt = new Date().toISOString();
+        const degradedReason = error instanceof Error ? error.message : String(error);
+        return {
+          degradedReason,
+          reviewerArtifacts: queuedArtifacts.map((artifact) => ({
+            ...artifact,
+            completedAt: failedAt,
+            degradedReason,
+            status: "failed" as const
+          })),
           status: "failed" as const
-        })),
-        status: "failed" as const
-      }))
+        };
+      })
     : {
         degradedReason: "bridge_forensic_executor_not_configured",
         reviewerArtifacts: terminalArtifacts(

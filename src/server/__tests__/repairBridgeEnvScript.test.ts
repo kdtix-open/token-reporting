@@ -94,6 +94,10 @@ describe("repair-bridge-env", () => {
     const backupFile = files.find((file) => file.startsWith(".env.admin.credentials.bak-"));
     expect(JSON.parse(result.stdout)).toMatchObject({ changed: true });
     expect(backupFile).toBeDefined();
+    expect(files.filter((file) => file.includes(".tmp-"))).toEqual([]);
+    await expect(fs.readFile(adminEnvPath, "utf8")).resolves.toContain(
+      "TOKEN_REPORTING_SDLCA_BRIDGE_TOKEN=bridge-token\n"
+    );
     expect((await fs.stat(adminEnvPath)).mode & 0o777).toBe(0o600);
     expect((await fs.stat(path.join(tempDir, backupFile ?? ""))).mode & 0o777).toBe(0o600);
   });

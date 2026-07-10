@@ -683,8 +683,10 @@ describe("integrationContractDynamic", () => {
         }
       ]
     });
+    const forensicExecutor = vi.fn();
     const handler = createDynamicIntegrationContractHandler({
       asyncRefresh: true,
+      forensicExecutor,
       loadSummaries: async () => summaries,
       now: () => new Date("2026-06-07T16:45:00.000Z"),
       refreshExecutor,
@@ -693,6 +695,8 @@ describe("integrationContractDynamic", () => {
 
     await handler({
       body: {
+        includeForensicModelProfiles: true,
+        reviewerModels: ["sonnet"],
         providers: ["codex"]
       },
       method: "POST",
@@ -706,6 +710,19 @@ describe("integrationContractDynamic", () => {
       });
       expect(completedResponse.body).toMatchObject({
         degradedReason: "refresh progress store failed",
+        forensicRun: {
+          degradedReason: "refresh progress store failed",
+          reviewerArtifacts: [
+            expect.objectContaining({
+              completedAt: expect.any(String),
+              degradedReason: "refresh progress store failed",
+              reviewerModel: "sonnet",
+              status: "failed"
+            })
+          ],
+          status: "failed",
+          updatedAt: expect.any(String)
+        },
         providerResults: [
           expect.objectContaining({
             accumulatedThrough: "2026-06-07",
@@ -716,6 +733,7 @@ describe("integrationContractDynamic", () => {
         status: "degraded"
       });
     });
+    expect(forensicExecutor).not.toHaveBeenCalled();
   });
 
   it("createDynamicIntegrationContractHandler_RefreshEndpoint_AsyncModeHandlesFailedRecoveryStoreWrite", async () => {
@@ -1058,6 +1076,45 @@ describe("integrationContractDynamic", () => {
       runId: "dynamic-forensic-20260607T173000000Z",
       status: "completed"
     });
+  });
+
+  it("createDynamicIntegrationContractHandler_ForensicRunEndpoint_ExecutorRejectionStampsFailedArtifacts", async () => {
+    const forensicExecutor = vi.fn().mockRejectedValue(new Error("bridge dispatch crashed"));
+    const handler = createDynamicIntegrationContractHandler({
+      forensicExecutor,
+      loadSummaries: async () => summaries,
+      now: () => new Date("2026-06-07T17:30:00.000Z")
+    });
+
+    const response = await handler({
+      body: {
+        reviewerModels: ["gpt"],
+        usageSnapshotId: "dynamic-usage-codex-2026-06-07"
+      },
+      method: "POST",
+      path: "/api/local-model-profiles/forensic-runs"
+    });
+    const body = response.body as {
+      reviewerArtifacts: Array<{ completedAt?: string }>;
+      updatedAt?: string;
+    };
+
+    expect(response.status).toBe(202);
+    expect(response.body).toMatchObject({
+      degradedReason: "bridge dispatch crashed",
+      reviewerArtifacts: [
+        expect.objectContaining({
+          completedAt: expect.any(String),
+          degradedReason: "bridge dispatch crashed",
+          reviewerModel: "gpt",
+          status: "failed"
+        })
+      ],
+      status: "failed",
+      updatedAt: expect.any(String)
+    });
+    expect(body.updatedAt).toBe(body.reviewerArtifacts[0]?.completedAt);
+    expect(body.updatedAt).not.toBe("2026-06-07T17:30:00.000Z");
   });
 
   it("createDynamicIntegrationContractHandler_ForensicRunEndpoint_ReportsDegradedBridgeDispatch", async () => {
