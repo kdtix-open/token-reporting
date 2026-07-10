@@ -41,7 +41,6 @@ describe("repair-bridge-env", () => {
       "TOKEN_REPORTING_SDLCA_BRIDGE_TOKEN=bridge-token",
       `TOKEN_REPORTING_SDLCA_BRIDGE_WORKING_DIRECTORY=${tempDir}`,
       "TOKEN_REPORTING_SDLCA_BRIDGE_TIMEOUT_MS=120000",
-      "",
       ""
     ].join("\n");
     await fs.writeFile(adminEnvPath, adminEnvText, { mode: 0o644 });

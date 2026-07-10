@@ -584,6 +584,65 @@ describe("sdlcaBridgeForensics", () => {
     expect(serializedTraceContexts).not.toContain("delta echo");
   });
 
+  it("createSdlcaBridgeForensicExecutor_CurrentSchemaArtifact_PreservesLargeArtifactShape", async () => {
+    const longSummary = "A".repeat(2_500);
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse({
+          result: [
+            {
+              forensicCapabilities,
+              kind: "claude",
+              providerId: "claude-reviewer",
+              providerName: "Claude Reviewer",
+              resolvedExecutable: "/usr/bin/claude"
+            }
+          ]
+        })
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({
+          result: {
+            ...forensicArtifact("claude", longSummary),
+            api_key: "sk-test_1234567890abcdef",
+            findings: Array.from({ length: 105 }, (_, index) => ({
+              details: index === 104 ? "token=super-secret" : `evidence ${index}`,
+              severity: "info",
+              title: `Finding ${index}`
+            })),
+            recommendations: ["Keep all 105 findings for forensic review."]
+          }
+        })
+      );
+
+    const executor = createSdlcaBridgeForensicExecutor({
+      bridgeToken: "bridge-token",
+      bridgeUrl: "http://127.0.0.1:4818",
+      fetcher,
+      workingDirectory: "/Users/ckreager/repos/kdtix/token_reporting"
+    });
+
+    const result = await executor({
+      createdAt: "2026-06-07T17:30:00.000Z",
+      evidencePacket,
+      huggingFaceCandidateSetId: "hf-candidates-test",
+      reviewerModels: ["sonnet"],
+      runId: "dynamic-forensic-20260607T173000000Z",
+      usageSnapshotId: "dynamic-usage-codex-2026-06-07"
+    });
+    const artifact = result.reviewerArtifacts[0]?.artifact as
+      | { api_key?: string; findings?: unknown[]; summary?: string }
+      | undefined;
+
+    expect(result.status).toBe("completed");
+    expect(artifact?.summary).toHaveLength(2_500);
+    expect(artifact?.findings).toHaveLength(105);
+    expect(artifact?.api_key).toBe("[REDACTED]");
+    expect(JSON.stringify(artifact)).not.toContain("super-secret");
+    expect(JSON.stringify(artifact)).not.toContain("sk-test_1234567890abcdef");
+  });
+
   it("createSdlcaBridgeForensicExecutor_LegacyBridgeResult_IsNotNormalized", async () => {
     const fetcher = vi
       .fn()

@@ -586,9 +586,9 @@ function statusFromRecords(
 ): RefreshStepStatus {
   const statuses = records.map((record) => readStatus(record.status)).filter(Boolean);
   if (statuses.includes("failed")) return "failed";
-  if (statuses.includes("degraded") || statuses.includes("queued") || statuses.includes("running")) {
-    return "degraded";
-  }
+  if (statuses.includes("degraded")) return "degraded";
+  if (statuses.includes("running")) return "running";
+  if (statuses.includes("queued")) return "queued";
   if (statuses.length > 0 && statuses.every((status) => status === "completed")) {
     return "completed";
   }

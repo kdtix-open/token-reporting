@@ -387,17 +387,29 @@ describe("integrationContractDynamic", () => {
     });
 
     const first = await handler({
-      body: { providers: ["codex"] },
+      body: {
+        includeForensicModelProfiles: true,
+        providers: ["codex"],
+        reviewerModels: ["sonnet"]
+      },
       method: "POST",
       path: "/api/refresh"
     });
     const second = await handler({
-      body: { providers: ["codex"] },
+      body: {
+        includeForensicModelProfiles: true,
+        providers: ["codex"],
+        reviewerModels: ["sonnet"]
+      },
       method: "POST",
       path: "/api/refresh"
     });
     const firstBody = first.body as Record<string, unknown>;
     const secondBody = second.body as Record<string, unknown>;
+    const secondForensicRun = secondBody.forensicRun as {
+      reviewerArtifacts: Array<{ artifactUri: string }>;
+      runId: string;
+    };
 
     expect(firstBody).toMatchObject({
       jobId: "dynamic-refresh-20260607T164500000Z"
@@ -406,6 +418,12 @@ describe("integrationContractDynamic", () => {
       jobId: expect.stringMatching(/^dynamic-refresh-20260607T164500000Z-[a-f0-9]{8}$/)
     });
     expect(secondBody.jobId).not.toBe(firstBody.jobId);
+    expect(secondForensicRun.runId).toBe(
+      String(secondBody.jobId).replace("dynamic-refresh-", "dynamic-forensic-")
+    );
+    expect(secondForensicRun.reviewerArtifacts[0]?.artifactUri).toContain(
+      secondForensicRun.runId
+    );
   });
 
   it("createDynamicIntegrationContractHandler_RefreshStatus_ReconcilesPersistedRunningJobAfterRestart", async () => {
@@ -466,6 +484,36 @@ describe("integrationContractDynamic", () => {
       "dynamic-refresh-abandoned",
       expect.objectContaining({ status: "failed" })
     );
+  });
+
+  it("createDynamicIntegrationContractHandler_RefreshStatus_ReadOnlyModeSkipsReconciliationWrite", async () => {
+    const refreshJobStore = {
+      get: vi.fn(async () => ({
+        jobId: "dynamic-refresh-read-only-abandoned",
+        providerResults: [{ providerId: "codex", status: "running" }],
+        status: "running"
+      })),
+      set: vi.fn()
+    };
+    const handler = createDynamicIntegrationContractHandler({
+      env: {
+        TOKEN_REPORTING_READ_ONLY: "true"
+      },
+      loadSummaries: async () => summaries,
+      refreshJobStore
+    });
+
+    const response = await handler({
+      method: "GET",
+      path: "/api/refresh/dynamic-refresh-read-only-abandoned"
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      persistenceWarning: "refresh_job_reconciliation_not_persisted_read_only",
+      status: "failed"
+    });
+    expect(refreshJobStore.set).not.toHaveBeenCalled();
   });
 
   it("createDynamicIntegrationContractHandler_RefreshEndpoint_AsyncModePublishesProviderAndReviewerProgress", async () => {

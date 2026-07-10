@@ -82,7 +82,11 @@ function writeDotenvKeys(text: string, values: Record<TokenReportingBridgeKey, s
     .map((key) => `${key}=${escapeDotenvValue(values[key])}`);
 
   const trimmedOutput = output.join("\n").replace(/\n*$/u, "");
-  return `${trimmedOutput}${trimmedOutput ? "\n" : ""}${missingLines.join("\n")}\n`;
+  const outputWithMissing =
+    missingLines.length > 0
+      ? `${trimmedOutput}${trimmedOutput ? "\n" : ""}${missingLines.join("\n")}`
+      : trimmedOutput;
+  return outputWithMissing ? `${outputWithMissing}\n` : "";
 }
 
 function parseDotenvLine(line: string): { key: string; value: string } | null {

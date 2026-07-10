@@ -6,6 +6,8 @@ import type {
 import { redactLogValue, type ObservabilityLogger } from "./observabilityLogger";
 
 type SdlcaBridgeProviderKind = "claude" | "codex" | "copilot" | "cursor";
+const bridgeSensitiveKeyPattern =
+  /(?:api[_-]?key|authorization|bearer|credential|password|secret|token)/i;
 
 interface SdlcaBridgeProvider {
   forensicCapabilities?: {
@@ -365,6 +367,25 @@ function redactBridgeStrings(value: unknown): unknown {
   );
 }
 
+function redactBridgeArtifactValue(
+  value: unknown,
+  seen = new WeakSet<object>()
+): unknown {
+  if (typeof value === "string") return redactFreeText(value);
+  if (typeof value !== "object" || value === null) return value;
+  if (seen.has(value)) return "[Circular]";
+
+  seen.add(value);
+  if (Array.isArray(value)) return value.map((item) => redactBridgeArtifactValue(item, seen));
+
+  return Object.fromEntries(
+    Object.entries(value).map(([key, child]) => [
+      key,
+      bridgeSensitiveKeyPattern.test(key) ? "[REDACTED]" : redactBridgeArtifactValue(child, seen)
+    ])
+  );
+}
+
 function redactFreeText(value: string): string {
   return value
     .replace(
@@ -381,7 +402,7 @@ function redactFreeText(value: string): string {
 }
 
 function sanitizeForensicArtifact(artifact: Record<string, unknown>): Record<string, unknown> {
-  return redactBridgeValue(artifact) as Record<string, unknown>;
+  return redactBridgeArtifactValue(artifact) as Record<string, unknown>;
 }
 
 async function readBridgeErrorSummary(response: Response): Promise<string | undefined> {
