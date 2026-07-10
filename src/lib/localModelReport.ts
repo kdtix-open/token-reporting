@@ -126,6 +126,7 @@ export interface TokenObservedProvider {
   requestCount: number | null;
   cacheReadTokens: number;
   cacheCreationTokens: number;
+  windowDays?: number | null;
 }
 
 export interface RequestOnlyProvider {
@@ -592,7 +593,8 @@ export function buildLocalModelReport(
         outputTokens: getNum(s, "outputTokens"),
         requestCount: "requestCount" in s ? getNum(s, "requestCount") : null,
         cacheReadTokens: getNum(s, "cacheReadTokens"),
-        cacheCreationTokens: getNum(s, "cacheCreationTokens")
+        cacheCreationTokens: getNum(s, "cacheCreationTokens"),
+        windowDays: reportWindowDays(s)
       });
     } else if (s.providerId === "cursor") {
       const totalReqs =
@@ -623,7 +625,8 @@ export function buildLocalModelReport(
           outputTokens: cliOutput,
           requestCount: cliReqs > 0 ? cliReqs : null,
           cacheReadTokens: 0,
-          cacheCreationTokens: 0
+          cacheCreationTokens: 0,
+          windowDays: reportWindowDays(s)
         });
       } else if (interactions > 0) {
         rawRequestOnlyProviders.push({
@@ -699,17 +702,12 @@ export function buildLocalModelReport(
   }
 
   // ── Throughput ────────────────────────────────────────────────────────────
-  // Infer window days from the first summary with a concrete report window
-  const first = summaries[0];
-  let windowDays = 28;
-  if (first?.reportStartDay && first?.reportEndDay) {
-    const start = new Date(first.reportStartDay + "T00:00:00Z").getTime();
-    const end = new Date(first.reportEndDay + "T00:00:00Z").getTime();
-    const computed = Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1;
-    if (computed > 0) windowDays = computed;
-  }
-
-  const dailyAvgComputeTokens = windowDays > 0 ? totalPureComputeTokens / windowDays : 0;
+  const windowDays =
+    Math.max(0, ...tokenObservedProviders.map((provider) => provider.windowDays ?? 0)) || 28;
+  const dailyAvgComputeTokens = tokenObservedProviders.reduce((total, provider) => {
+    const providerWindowDays = provider.windowDays && provider.windowDays > 0 ? provider.windowDays : windowDays;
+    return total + (provider.inputTokens + provider.outputTokens + provider.cacheCreationTokens) / providerWindowDays;
+  }, 0);
   // Assume 8-hour active development window per day
   const requiredTokensPerSec = dailyAvgComputeTokens / (8 * 3600);
 
@@ -878,6 +876,14 @@ function readForensicFindings(
 
 function readString(value: unknown): string {
   return typeof value === "string" && value.trim() ? value : "unknown";
+}
+
+function reportWindowDays(summary: ProviderReportSummary): number | null {
+  if (!summary.reportStartDay || !summary.reportEndDay) return null;
+  const start = new Date(`${summary.reportStartDay}T00:00:00Z`).getTime();
+  const end = new Date(`${summary.reportEndDay}T00:00:00Z`).getTime();
+  const computed = Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1;
+  return computed > 0 ? computed : null;
 }
 
 function huggingFaceProfileMetadata(

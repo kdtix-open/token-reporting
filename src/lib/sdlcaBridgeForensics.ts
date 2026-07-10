@@ -319,7 +319,33 @@ async function executeReviewer(args: {
     );
   }
 
-  const payload = (await response.json()) as SdlcaBridgeExecuteResponse;
+  let payload: SdlcaBridgeExecuteResponse;
+  try {
+    payload = (await response.json()) as SdlcaBridgeExecuteResponse;
+  } catch (error) {
+    const diagnostics = {
+      bridgeErrorSummary: sanitizeDiagnosticString(error instanceof Error ? error.message : String(error)),
+      bridgeHttpStatus: response.status,
+      bridgeProviderKind: args.providerKind,
+      durationMs
+    };
+    args.logger?.error("SDLCA bridge reviewer response JSON parse failed", {
+      bridgeProviderKind: args.providerKind,
+      diagnostics,
+      durationMs,
+      reviewerModel: args.reviewerModel,
+      runId: args.request.runId,
+      status: response.status
+    });
+    return failedReviewerArtifact(
+      args.request.runId,
+      args.reviewerModel,
+      args.providerKind,
+      "sdlca_bridge_forensic_output_parse_failed",
+      diagnostics,
+      args.startedAtIso
+    );
+  }
   args.logger?.trace("SDLCA bridge reviewer response received", {
     bridgeProviderKind: args.providerKind,
     durationMs,
@@ -634,7 +660,13 @@ function stringifyRedacted(value: unknown): string {
 function redactFreeText(value: string): string {
   return value
     .replace(
-      /\b([A-Za-z0-9_.-]*(?:api[_-]?key|authorization|bearer|credential|password|secret|token)[A-Za-z0-9_.-]*\s*[:=]\s*)(["']?)[^\s"',;]+(\2)/giu,
+      /(^|[{\s,])("?[A-Za-z0-9_.-]*(?:api[_-]?key|authorization|bearer|credential|password|secret|token)[A-Za-z0-9_.-]*"?\s*[:=]\s*)(["'])[^"'\r\n]*(\3)/giu,
+      "$1$2$3[REDACTED]$4"
+    )
+    .replace(/\b(authorization\s*:\s*(?:bearer\s+)?)[^\s"',;]+/giu, "$1[REDACTED]")
+    .replace(/\b(bearer\s+)[^\s"',;]+/giu, "$1[REDACTED]")
+    .replace(
+      /\b([A-Za-z0-9_.-]*(?:api[_-]?key|credential|password|secret|token)[A-Za-z0-9_.-]*\s*[:=]\s*)(["']?)[^\s"',;]+(\2)/giu,
       "$1[REDACTED]"
     )
     .replace(/\bsk-[A-Za-z0-9_-]{12,}\b/gu, "[REDACTED]");

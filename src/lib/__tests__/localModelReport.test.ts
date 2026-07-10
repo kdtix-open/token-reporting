@@ -399,6 +399,41 @@ describe("buildLocalModelReport", () => {
     );
   });
 
+  it("scoped throughput uses each included provider window instead of the first summary window", () => {
+    const shortWindowCodex = {
+      ...codexSummary,
+      inputTokens: 10_000,
+      outputTokens: 0,
+      reportEndDay: "2026-03-28",
+      reportStartDay: "2026-03-28"
+    } as unknown as ProviderReportSummary;
+    const longWindowCopilotCli = {
+      ...copilotCliSummary,
+      cliInputTokens: 2_800_000,
+      cliOutputTokens: 0,
+      reportEndDay: "2026-03-28",
+      reportStartDay: "2026-03-01"
+    } as unknown as ProviderReportSummary;
+
+    const report = buildLocalModelReport(
+      [shortWindowCodex, longWindowCopilotCli],
+      null,
+      null,
+      null,
+      { workloadScopeId: "copilot_cli" }
+    );
+
+    expect(report.windowDays).toBe(28);
+    expect(report.tokenObservedProviders).toEqual([
+      expect.objectContaining({
+        providerId: "github-copilot",
+        windowDays: 28
+      })
+    ]);
+    expect(report.dailyAvgComputeTokens).toBe(100_000);
+    expect(report.requiredTokensPerSec).toBeCloseTo(100_000 / 28_800, 3);
+  });
+
   it("downgrades scoped context confidence when only global local-session evidence is available", () => {
     const globalDistribution = {
       generatedAt: "2025-01-01T00:00:00.000Z",

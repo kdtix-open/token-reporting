@@ -364,6 +364,83 @@ describe("App", () => {
     expect(screen.getByText("Snapshots reloaded after refresh response.")).toBeInTheDocument();
   });
 
+  it("refresh activity panel uses top-level Hugging Face candidate status for completed jobs", async () => {
+    const fetchStub = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url === sameOriginRefreshUrl) {
+        return Promise.resolve({
+          json: async () => ({
+            huggingFaceCandidateSetId: "hf-candidates-top-level",
+            includeHuggingFaceRefresh: true,
+            jobId: "dynamic-refresh-hf",
+            providerResults: [{ providerId: "github-copilot", status: "completed" }],
+            status: "completed"
+          }),
+          ok: true,
+          status: 202
+        });
+      }
+
+      return Promise.resolve({ ok: false });
+    });
+    vi.stubGlobal("fetch", fetchStub);
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(fetchStub).toHaveBeenCalledWith(
+        expect.stringContaining("/data/github-copilot/accumulated-metadata.json")
+      );
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /Refresh Report/i }));
+
+    expect(await screen.findByText("Refresh job dynamic-refresh-hf completed")).toBeInTheDocument();
+    expect(screen.getByText("Candidate refresh request completed.")).toBeInTheDocument();
+    expect(
+      screen.queryByText("Candidate refresh has not reported a candidate set yet.")
+    ).not.toBeInTheDocument();
+  });
+
+  it("refresh activity panel marks missing Hugging Face candidates degraded after terminal refresh", async () => {
+    const fetchStub = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url === sameOriginRefreshUrl) {
+        return Promise.resolve({
+          json: async () => ({
+            includeHuggingFaceRefresh: true,
+            jobId: "dynamic-refresh-hf-missing",
+            providerResults: [{ providerId: "github-copilot", status: "completed" }],
+            status: "completed"
+          }),
+          ok: true,
+          status: 202
+        });
+      }
+
+      return Promise.resolve({ ok: false });
+    });
+    vi.stubGlobal("fetch", fetchStub);
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(fetchStub).toHaveBeenCalledWith(
+        expect.stringContaining("/data/github-copilot/accumulated-metadata.json")
+      );
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /Refresh Report/i }));
+
+    expect(
+      await screen.findByText("Refresh job dynamic-refresh-hf-missing completed")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Candidate refresh has not reported a candidate set yet.")
+    ).toBeInTheDocument();
+    expect(screen.getAllByText("Degraded").length).toBeGreaterThan(0);
+  });
+
   it("refresh activity panel polls accepted background refresh jobs", async () => {
     let pollCount = 0;
     const fetchStub = vi.fn().mockImplementation((input: RequestInfo | URL) => {

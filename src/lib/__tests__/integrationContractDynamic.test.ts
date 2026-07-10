@@ -494,6 +494,68 @@ describe("integrationContractDynamic", () => {
     });
   });
 
+  it("createDynamicIntegrationContractHandler_RefreshEndpoint_AsyncModeSuppressesRejectedBackgroundFailureWrites", async () => {
+    const unhandledRejections: unknown[] = [];
+    const onUnhandledRejection = (reason: unknown) => {
+      unhandledRejections.push(reason);
+    };
+    process.on("unhandledRejection", onUnhandledRejection);
+
+    try {
+      let getJob: Record<string, unknown> | undefined;
+      let setCalls = 0;
+      const refreshJobStore = {
+        async get() {
+          return getJob;
+        },
+        async set(_jobId: string, job: Record<string, unknown>) {
+          setCalls += 1;
+          if (setCalls === 1) {
+            getJob = job;
+            return;
+          }
+          throw new Error("disk full");
+        }
+      };
+      const refreshExecutor = vi.fn(async () => {
+        throw new Error("refresh exploded");
+      });
+      const handler = createDynamicIntegrationContractHandler({
+        asyncRefresh: true,
+        loadSummaries: async () => summaries,
+        now: () => new Date("2026-06-07T16:45:00.000Z"),
+        refreshExecutor,
+        refreshJobStore
+      });
+
+      const acceptedResponse = await handler({
+        body: {
+          providers: ["codex"]
+        },
+        method: "POST",
+        path: "/api/refresh"
+      });
+
+      expect(acceptedResponse.status).toBe(202);
+      await vi.waitFor(() => expect(setCalls).toBeGreaterThanOrEqual(2));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      const statusResponse = await handler({
+        method: "GET",
+        path: "/api/refresh/dynamic-refresh-20260607T164500000Z"
+      });
+
+      expect(statusResponse.status).toBe(200);
+      expect(statusResponse.body).toMatchObject({
+        jobId: "dynamic-refresh-20260607T164500000Z",
+        status: "running"
+      });
+      expect(unhandledRejections).toHaveLength(0);
+    } finally {
+      process.off("unhandledRejection", onUnhandledRejection);
+    }
+  });
+
   it("createDynamicIntegrationContractHandler_RefreshEndpoint_ReadOnlyModeBlocksMutation", async () => {
     const refreshExecutor = vi.fn();
     const handler = createDynamicIntegrationContractHandler({

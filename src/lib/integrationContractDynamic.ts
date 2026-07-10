@@ -318,23 +318,29 @@ async function dynamicRefreshResponse(
       startedAt
     });
     await refreshJobStore.set(jobId, acceptedJob);
+    let latestJob = acceptedJob;
     void executeDynamicRefreshJob({
       ...requestContext,
-      onProgress: (job) => refreshJobStore.set(jobId, job)
+      onProgress: (job) => {
+        latestJob = job;
+        return refreshJobStore.set(jobId, job);
+      }
     })
-      .then((job) => refreshJobStore.set(jobId, job))
-      .catch((error) =>
-        refreshJobStore.set(
+      .then((job) => {
+        latestJob = job;
+        return refreshJobStore.set(jobId, job);
+      })
+      .catch(async (error) => {
+        latestJob = buildFailedRefreshJob({
+          error,
+          generatedAt,
           jobId,
-          buildFailedRefreshJob({
-            error,
-            generatedAt,
-            jobId,
-            refreshRequest,
-            startedAt
-          })
-        )
-      );
+          previousJob: latestJob,
+          refreshRequest,
+          startedAt
+        });
+        await refreshJobStore.set(jobId, latestJob).catch(() => undefined);
+      });
 
     return jsonResponse(202, acceptedJob);
   }
@@ -407,12 +413,16 @@ function buildFailedRefreshJob(args: {
   error: unknown;
   generatedAt: Date;
   jobId: string;
+  previousJob?: Record<string, unknown>;
   refreshRequest: DynamicRefreshRequest;
   startedAt: string;
 }): Record<string, unknown> {
-  const { error, generatedAt, jobId, refreshRequest, startedAt } = args;
+  const { error, generatedAt, jobId, previousJob, refreshRequest, startedAt } = args;
   const completedAt = new Date().toISOString();
   const degradedReason = error instanceof Error ? error.message : String(error);
+  const previousProviderResults = Array.isArray(previousJob?.providerResults)
+    ? previousJob.providerResults.filter(isRecord)
+    : [];
 
   return {
     completedAt,
@@ -422,13 +432,16 @@ function buildFailedRefreshJob(args: {
     includeHuggingFaceRefresh: refreshRequest.includeHuggingFaceRefresh,
     jobId,
     mode: refreshRequest.mode,
-    providerResults: refreshRequest.providers.map((providerId) => ({
-      completedAt,
-      degradedReason,
-      providerId,
-      startedAt,
-      status: "failed"
-    })),
+    providerResults:
+      previousProviderResults.length > 0
+        ? previousProviderResults
+        : refreshRequest.providers.map((providerId) => ({
+            completedAt,
+            degradedReason,
+            providerId,
+            startedAt,
+            status: "failed"
+          })),
     startedAt: generatedAt.toISOString(),
     status: "failed"
   };

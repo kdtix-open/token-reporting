@@ -103,6 +103,7 @@ describe("reportExports", () => {
       expect(text).toContain("Local model migration sizing");
       expect(text).toContain("Tenant: KDTIX");
       expect(text).toContain("Pipeline scope: All KDTIX provider traffic");
+      expect(text).toContain("Context evidence source: global_local_session_distribution");
       expect(text).toContain("Server sizing heuristics");
       expect(text).toContain("On-prem model profiles");
       expect(text).toContain("Local AI Infrastructure Sizing");
@@ -251,6 +252,12 @@ describe("reportExports", () => {
     );
     const parsed = JSON.parse(result.payload as string) as {
       report: {
+        localInfrastructureSizing: {
+          workloadSummary: {
+            currentProjectLaneP95Context: number | null;
+            currentProjectLaneP99Context: number | null;
+          };
+        };
         localModelMigration: {
           requiredTokensPerSec: number;
           selectedWorkloadScope: {
@@ -282,6 +289,10 @@ describe("reportExports", () => {
       }
     });
     expect(parsed.report.localModelMigration.requiredTokensPerSec).toBeLessThan(100);
+    expect(parsed.report.localInfrastructureSizing.workloadSummary).toMatchObject({
+      currentProjectLaneP95Context: 835_000,
+      currentProjectLaneP99Context: 1_000_000
+    });
   });
 
   it("createReportExport_CsvAndYamlFormats_IncludeInfrastructureDecisionBreakdowns", () => {
@@ -300,6 +311,8 @@ describe("reportExports", () => {
     expect(csv).toContain("local_infrastructure_benchmark_gates");
     expect(csv).toContain("context_stats_warning");
     expect(csv).toContain("quote_priority");
+    expect(csv).toContain("context_evidence_source");
+    expect(csv).toContain("global_local_session_distribution");
 
     expect(yaml).toContain("localCoverageSummary:");
     expect(yaml).toContain("estimatedFullWorkloadCapacityPct:");
@@ -313,6 +326,7 @@ describe("reportExports", () => {
     expect(yaml).toContain("benchmarkGates:");
     expect(yaml).toContain("contextStatsWarning:");
     expect(yaml).toContain("quotePriority:");
+    expect(yaml).toContain('contextEvidenceSource: "global_local_session_distribution"');
   });
 
   it("createReportExport_XlsxFormat_IncludesReportBreakdownRows", () => {
@@ -323,6 +337,7 @@ describe("reportExports", () => {
     expect(workbookText).toContain("Spend projections");
     expect(workbookText).toContain("Local model migration sizing");
     expect(workbookText).toContain("Server sizing heuristics");
+    expect(workbookText).toContain("Context evidence source");
     expect(workbookText).toContain("On-prem model profiles");
     expect(workbookText).toContain("Local AI Infrastructure Sizing");
     expect(workbookText).toContain("Executive Hardware Decision Summary");

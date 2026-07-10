@@ -560,6 +560,7 @@ describe("sdlcaBridgeForensics", () => {
             findings: [
               {
                 details: "Observed TOKEN_REPORTING_SDLCA_BRIDGE_TOKEN=super-secret in output.",
+                evidenceRefs: ["Authorization: Bearer super-secret"],
                 severity: "high",
                 title: "secret leak"
               }
@@ -592,6 +593,60 @@ describe("sdlcaBridgeForensics", () => {
     expect(artifactText).toContain("[REDACTED]");
     expect(artifactText).not.toContain("super-secret");
     expect(artifactText).not.toContain("sk-test_1234567890abcd");
+  });
+
+  it("createSdlcaBridgeForensicExecutor_BridgeHttpOkJsonParseFailure_ReturnsFailedArtifact", async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse({
+          result: [
+            {
+              forensicCapabilities,
+              kind: "claude",
+              providerId: "claude-reviewer",
+              providerName: "Claude Reviewer",
+              resolvedExecutable: "/usr/bin/claude"
+            }
+          ]
+        })
+      )
+      .mockResolvedValueOnce({
+        json: async () => {
+          throw new SyntaxError("Unexpected token < in JSON");
+        },
+        ok: true,
+        status: 200
+      } as unknown as Response);
+
+    const executor = createSdlcaBridgeForensicExecutor({
+      bridgeToken: "bridge-token",
+      bridgeUrl: "http://127.0.0.1:4818",
+      fetcher,
+      workingDirectory: "/Users/ckreager/repos/kdtix/token_reporting"
+    });
+
+    const result = await executor({
+      createdAt: "2026-06-07T17:30:00.000Z",
+      evidencePacket,
+      huggingFaceCandidateSetId: "hf-candidates-test",
+      reviewerModels: ["sonnet"],
+      runId: "dynamic-forensic-20260607T173000000Z",
+      usageSnapshotId: "dynamic-usage-codex-2026-06-07"
+    });
+
+    expect(result.status).toBe("degraded");
+    expect(result.reviewerArtifacts[0]).toMatchObject({
+      bridgeProviderKind: "claude",
+      degradedReason: "sdlca_bridge_forensic_output_parse_failed",
+      diagnostics: expect.objectContaining({
+        bridgeErrorSummary: expect.stringContaining("Unexpected token"),
+        bridgeHttpStatus: 200,
+        bridgeProviderKind: "claude"
+      }),
+      reviewerModel: "sonnet",
+      status: "failed"
+    });
   });
 
   it("createSdlcaBridgeForensicExecutor_BridgeJsonParseFailure_LabelsReviewerOutputParseFailure", async () => {

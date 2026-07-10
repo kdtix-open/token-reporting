@@ -323,6 +323,13 @@ function buildReportExportBreakdowns(
     context.forensicRun ?? null,
     { workloadScopeId: context.localModelWorkloadScopeId }
   );
+  const infrastructureLocalModelReport = buildLocalModelReport(
+    context.summaries,
+    context.distribution ?? null,
+    context.huggingFaceCandidateSet ?? null,
+    context.forensicRun ?? null,
+    { workloadScopeId: "all_provider_traffic" }
+  );
 
   return {
     forensic: summarizeForensicRun(context.forensicRun ?? null),
@@ -370,7 +377,7 @@ function buildReportExportBreakdowns(
       distribution: context.distribution ?? null,
       forensicRun: context.forensicRun ?? null,
       huggingFaceCandidateSet: context.huggingFaceCandidateSet ?? null,
-      localModelReport,
+      localModelReport: infrastructureLocalModelReport,
       summaries: context.summaries
     }),
     providerSnapshots: rows,
@@ -573,6 +580,11 @@ function createCsv(rows: ReportExportRow[], report?: ReportExportBreakdowns): st
     );
     lines.push(
       ["local_model_migration", "sizing", "estimated_context_window_needed", report.localModelMigration.estimatedContextWindowNeeded]
+        .map(csvCell)
+        .join(",")
+    );
+    lines.push(
+      ["local_model_migration", "sizing", "context_evidence_source", report.localModelMigration.contextEvidenceSource]
         .map(csvCell)
         .join(",")
     );
@@ -1052,6 +1064,7 @@ function createYaml(rows: ReportExportRow[], report?: ReportExportBreakdowns): s
       `    huggingFaceCandidateSetId: ${yamlValue(report.localModelMigration.huggingFaceCandidateSetId)}`
     );
     lines.push(`    contextConfidence: ${yamlValue(report.localModelMigration.contextConfidence)}`);
+    lines.push(`    contextEvidenceSource: ${yamlValue(report.localModelMigration.contextEvidenceSource)}`);
     lines.push(
       `    estimatedContextWindowNeeded: ${yamlValue(report.localModelMigration.estimatedContextWindowNeeded)}`
     );
@@ -1412,6 +1425,7 @@ function buildTextReportLines(report: ReportExportBreakdowns): string[] {
         : `${formatNumber(report.localModelMigration.estimatedContextWindowNeeded)} tokens`
     }`,
     `Context confidence: ${report.localModelMigration.contextConfidence}`,
+    `Context evidence source: ${report.localModelMigration.contextEvidenceSource}`,
     ...localDistributionLines(report.localModelMigration.localDistribution),
     ...appliedForensicSizingLines(report.localModelMigration.appliedForensicGuidance),
     "",

@@ -23,6 +23,7 @@ NODE_BIN="${TOKEN_REPORTING_NODE_BIN:-$(command -v node || printf '/usr/bin/node
 if [[ ! "${NODE_BIN}" = /* ]]; then
   NODE_BIN="$(command -v "${NODE_BIN}")"
 fi
+NODE_BIN_DIR="${NODE_BIN%/*}"
 
 if [[ "${SKIP_PRECHECKS}" != "true" && ! -x "${NODE_BIN}" ]]; then
   echo "install-macos-launchagent: resolved node is not executable: ${NODE_BIN}" >&2
@@ -52,7 +53,7 @@ ADMIN_ENV_FILE="${TOKEN_REPORTING_ADMIN_ENV_FILE:-${REPO_ROOT}/.env.admin.creden
 REFRESH_ASYNC="${TOKEN_REPORTING_REFRESH_ASYNC:-true}"
 READ_ONLY="${TOKEN_REPORTING_READ_ONLY:-false}"
 PID_FILE="${TOKEN_REPORTING_PID_FILE:-${REPO_ROOT}/tmp/projectit-token-reporting-production.pid}"
-DEFAULT_LAUNCHD_PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:${HOME}/.local/bin"
+DEFAULT_LAUNCHD_PATH="${NODE_BIN_DIR}:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:${HOME}/.local/bin"
 LAUNCHD_PATH="${TOKEN_REPORTING_LAUNCHD_PATH:-${DEFAULT_LAUNCHD_PATH}}"
 PLIST_DIR="${TOKEN_REPORTING_LAUNCHD_PLIST_DIR:-${HOME}/Library/LaunchAgents}"
 PLIST_PATH="${PLIST_DIR}/${LABEL}.plist"

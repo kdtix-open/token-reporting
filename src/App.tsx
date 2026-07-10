@@ -525,13 +525,25 @@ function refreshStepsFromJob(job: Record<string, unknown>): RefreshProgressStep[
   const providerResults = readRecordArray(job.providerResults);
   const forensicRun = isRecord(job.forensicRun) ? job.forensicRun : null;
   const reviewerArtifacts = forensicRun ? readRecordArray(forensicRun.reviewerArtifacts) : [];
+  const jobStatus = readStatus(job.status);
+  const includeHuggingFaceRefresh = job.includeHuggingFaceRefresh !== false;
   const huggingFaceCandidateSetId =
     forensicRun && typeof forensicRun.huggingFaceCandidateSetId === "string"
       ? forensicRun.huggingFaceCandidateSetId
-      : null;
+      : readStringField(job, "huggingFaceCandidateSetId");
   const huggingFaceUnavailable = huggingFaceCandidateSetId?.includes("unavailable") ?? false;
   const huggingFaceStatus: RefreshStepStatus =
-    huggingFaceCandidateSetId === null ? "queued" : huggingFaceUnavailable ? "degraded" : "completed";
+    !includeHuggingFaceRefresh
+      ? "completed"
+      : huggingFaceCandidateSetId === null
+      ? jobStatus && isTerminalRefreshStatus(jobStatus)
+        ? jobStatus === "failed"
+          ? "failed"
+          : "degraded"
+        : "queued"
+      : huggingFaceUnavailable
+      ? "degraded"
+      : "completed";
 
   return [
     {
@@ -544,7 +556,9 @@ function refreshStepsFromJob(job: Record<string, unknown>): RefreshProgressStep[
     },
     {
       detail:
-        huggingFaceCandidateSetId === null
+        !includeHuggingFaceRefresh
+          ? "Candidate refresh was not requested."
+          : huggingFaceCandidateSetId === null
           ? "Candidate refresh has not reported a candidate set yet."
           : huggingFaceUnavailable
           ? "Candidate set unavailable for this refresh."
