@@ -256,6 +256,31 @@ describe("analyze-codegraph-token-usage", () => {
     );
   });
 
+  it("analyzeCodeGraphTokenUsage_MissingGhBinary_ReportsSpawnError", async () => {
+    const fixture = await createFixture();
+    const missingBinDir = path.join(fixture.root, "missing-bin");
+    await fs.mkdir(missingBinDir);
+    await writeSession(fixture.sessionsDir, "included.jsonl", [
+      sessionMeta(fixture.repoRoot),
+      tokenCount("2026-07-10T17:00:00.000Z", {
+        input_tokens: 100,
+        output_tokens: 30,
+        total_tokens: 130
+      })
+    ]);
+
+    await expect(
+      runAnalyzer(fixture, ["--repo-root", fixture.repoRoot, "--journal-issue", "kdtix-open/token-reporting#25"], {
+        PATH: missingBinDir
+      })
+    ).rejects.toMatchObject({
+      stderr: expect.stringContaining("spawnSync gh ENOENT")
+    });
+    await expect(pathExists(path.join(fixture.outDir, "latest-codegraph-token-usage.md"))).resolves.toBe(
+      true
+    );
+  });
+
   it("analyzeCodeGraphTokenUsage_JournalSuccess_UsesBodyFileContract", async () => {
     const fixture = await createFixture();
     const mockBinDir = path.join(fixture.root, "bin");

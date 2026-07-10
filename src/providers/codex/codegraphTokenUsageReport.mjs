@@ -574,7 +574,8 @@ function journalReport(issueRef, markdownPath) {
     { encoding: "utf8" }
   );
   if (result.status !== 0) {
-    throw new Error(`Failed to journal report to ${issueRef}: ${result.stderr || result.stdout}`);
+    const cause = result.stderr || result.stdout || result.error?.message || "unknown gh failure";
+    throw new Error(`Failed to journal report to ${issueRef}: ${cause}`);
   }
   console.log(`Journaled report to ${issueRef}`);
 }

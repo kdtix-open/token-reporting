@@ -8,12 +8,12 @@ The goal is to build a factual, longitudinal evidence set before making a projec
 
 - Cadence: daily
 - Intended runner: a dedicated Codex thread, not an ad hoc implementation thread
-- Workspace: `/Users/ckreager/repos/kdtix/token_reporting`
+- Workspace: the `token_reporting` repository root (`git rev-parse --show-toplevel`)
 - Journal destination: `kdtix-open/token-reporting#25`
 - Local memory/output directory:
 
 ```text
-/Users/ckreager/.codex/automations/codegraph-token-usage-heartbeat
+$HOME/.codex/automations/codegraph-token-usage-heartbeat
 ```
 
 ## Run Command
@@ -43,7 +43,7 @@ The read-only guard must run before any CodeGraph gate because `codegraph init` 
 The script reads Codex JSONL session logs from:
 
 ```text
-/Users/ckreager/.codex/sessions
+$HOME/.codex/sessions
 ```
 
 It measures:
@@ -83,7 +83,7 @@ Do not make a client-facing savings claim until paired fresh-thread trials show 
 ```text
 Run the CodeGraph token usage heartbeat for token_reporting.
 
-Use /Users/ckreager/repos/kdtix/token_reporting and load .agents/skills/codegraph-token-usage-heartbeat/SKILL.md first. If TOKEN_REPORTING_READ_ONLY is 1 or true, stop before running the CodeGraph gate or analyzer. Otherwise run the CodeGraph gate for that repo, then run:
+Start from the `token_reporting` repo root and load `.agents/skills/codegraph-token-usage-heartbeat/SKILL.md` first. If `TOKEN_REPORTING_READ_ONLY` is `1` or `true`, stop before running the CodeGraph gate or analyzer. Otherwise run the CodeGraph gate for that repo, then run:
 
 node scripts/analyze-codegraph-token-usage.mjs --journal-issue kdtix-open/token-reporting#25
 

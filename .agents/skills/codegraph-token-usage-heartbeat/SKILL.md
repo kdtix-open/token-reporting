@@ -47,7 +47,7 @@ CodeGraph Token Usage Heartbeat - <ISO timestamp>
 - Refresh the local automation memory under:
 
 ```text
-/Users/ckreager/.codex/automations/codegraph-token-usage-heartbeat/memory.md
+$HOME/.codex/automations/codegraph-token-usage-heartbeat/memory.md
 ```
 
 ## Interpretation Rules
