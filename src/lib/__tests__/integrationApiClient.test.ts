@@ -147,6 +147,31 @@ describe("integrationApiClient", () => {
     });
   });
 
+  it("pollReportRefreshJob_InvalidSuccessBody_ReturnsFailedOutcome", async () => {
+    const fetcher = vi.fn().mockResolvedValueOnce({
+      json: async () => ({
+        jobId: "different-job",
+        status: "mystery"
+      }),
+      ok: true,
+      status: 200
+    });
+
+    const result = await pollReportRefreshJob("dynamic-refresh-001", {
+      apiBaseUrl: "http://127.0.0.1:8788",
+      fetcher,
+      intervalMs: 0,
+      timeoutMs: 1000
+    });
+
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(result).toEqual({
+      httpStatus: 200,
+      message: "Refresh status response was invalid or did not match the requested job.",
+      outcome: "failed"
+    });
+  });
+
   it("pollReportRefreshJob_DefaultTimeout_AllowsFullSequentialForensicReviewerWindow", async () => {
     vi.useFakeTimers();
     const fetcher = vi.fn().mockResolvedValue({

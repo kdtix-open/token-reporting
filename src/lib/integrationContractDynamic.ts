@@ -330,19 +330,17 @@ async function dynamicRefreshResponse(
         latestJob = job;
         return refreshJobStore.set(jobId, job);
       })
-      .catch((error) =>
-        refreshJobStore.set(
+      .catch(async (error) => {
+        latestJob = buildFailedRefreshJob({
+          error,
+          generatedAt,
           jobId,
-          buildFailedRefreshJob({
-            error,
-            generatedAt,
-            jobId,
-            previousJob: latestJob,
-            refreshRequest,
-            startedAt
-          })
-        )
-      );
+          previousJob: latestJob,
+          refreshRequest,
+          startedAt
+        });
+        await refreshJobStore.set(jobId, latestJob).catch(() => undefined);
+      });
 
     return jsonResponse(202, acceptedJob);
   }

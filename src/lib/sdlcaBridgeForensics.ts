@@ -252,12 +252,7 @@ async function executeReviewer(args: {
     runId: args.request.runId,
     status: response.status
   });
-  const normalization = normalizeBridgeForensicArtifact(
-    payload.result,
-    args.providerKind,
-    args.request.createdAt
-  );
-  const validation = validateForensicArtifact(normalization.result, args.providerKind);
+  const validation = validateForensicArtifact(payload.result, args.providerKind);
   if (!validation.artifact) {
     const diagnostics = {
       bridgeHttpStatus: response.status,
@@ -292,16 +287,10 @@ async function executeReviewer(args: {
   });
 
   return {
-    artifact: validation.artifact,
+    artifact: sanitizeForensicArtifact(validation.artifact),
     artifactUri,
     bridgeProviderKind: args.providerKind,
     completedAt: new Date().toISOString(),
-    diagnostics: normalization.normalized
-      ? sanitizeDiagnostics({
-          normalizedFromBridgeResult: true,
-          originalResultSummary: summarizeBridgeResult(payload.result)
-        })
-      : undefined,
     reviewerModel: args.reviewerModel,
     startedAt: startedAtIso,
     status: "completed"
@@ -363,187 +352,6 @@ function validateForensicArtifact(
   return { artifact: raw, errors };
 }
 
-function normalizeBridgeForensicArtifact(
-  raw: unknown,
-  providerKind: SdlcaBridgeProviderKind,
-  fallbackGeneratedAt: string
-): { normalized: boolean; result: unknown } {
-  const currentValidation = validateForensicArtifact(raw, providerKind);
-  if (currentValidation.artifact || !isRecord(raw)) {
-    return { normalized: false, result: raw };
-  }
-
-  if (!isNormalizableBridgeResult(raw, providerKind)) {
-    return { normalized: false, result: raw };
-  }
-
-  const artifact = {
-    artifactKind: "local_model_forensic_review",
-    artifactSchemaVersion: "sdlca.bridge.forensic.v0",
-    findings: normalizeFindings(raw.findings),
-    generatedAt: readString(raw, "generatedAt") ?? fallbackGeneratedAt,
-    localModelAssessment: isRecord(raw.localModelAssessment)
-      ? redactBridgeValue(raw.localModelAssessment)
-      : undefined,
-    providerKind,
-    providerRole: "reviewer",
-    provenance: normalizeProvenance(raw),
-    recommendations: normalizeRecommendations(raw),
-    reviewer: isRecord(raw.reviewer) ? redactBridgeValue(raw.reviewer) : undefined,
-    runId: readString(raw, "runId"),
-    summary: normalizeArtifactSummary(raw)
-  };
-
-  return {
-    normalized: true,
-    result: removeUndefinedFields(artifact)
-  };
-}
-
-function normalizeFindings(rawFindings: unknown): Record<string, unknown>[] {
-  if (!Array.isArray(rawFindings)) {
-    return [
-      {
-        details: "Bridge reviewer returned structured output without itemized findings.",
-        severity: "info",
-        title: "Structured reviewer output received"
-      }
-    ];
-  }
-
-  const findings = rawFindings
-    .map(normalizeFinding)
-    .filter((finding): finding is Record<string, unknown> => finding !== null);
-
-  return findings.length > 0
-    ? findings
-    : [
-        {
-          details: "Bridge reviewer returned an empty findings array.",
-          severity: "info",
-          title: "No reviewer findings returned"
-        }
-      ];
-}
-
-function normalizeFinding(rawFinding: unknown): Record<string, unknown> | null {
-  if (typeof rawFinding === "string") {
-    return {
-      details: redactFreeText(rawFinding),
-      severity: "info",
-      title: "Bridge reviewer finding"
-    };
-  }
-  if (!isRecord(rawFinding)) return null;
-
-  const evidenceRefs = readStringArray(rawFinding.evidenceRefs).map(redactFreeText);
-  return removeUndefinedFields({
-    details: redactFreeText(
-      readString(rawFinding, "details") ??
-      readString(rawFinding, "detail") ??
-      readString(rawFinding, "description") ??
-      stringifyRedacted(rawFinding)
-    ),
-    evidenceRefs: evidenceRefs.length > 0 ? evidenceRefs : undefined,
-    severity: normalizeSeverity(rawFinding.severity),
-    title: redactFreeText(
-      readString(rawFinding, "title") ??
-      readString(rawFinding, "finding") ??
-      readString(rawFinding, "summary") ??
-      readString(rawFinding, "category") ??
-      "Bridge reviewer finding"
-    )
-  });
-}
-
-function normalizeRecommendations(raw: Record<string, unknown>): string[] {
-  const source = Array.isArray(raw.recommendations)
-    ? raw.recommendations
-    : Array.isArray(raw.nextActions)
-      ? raw.nextActions
-      : [];
-
-  return source
-    .map(recommendationToString)
-    .filter((recommendation): recommendation is string => recommendation !== null)
-    .slice(0, 20);
-}
-
-function recommendationToString(value: unknown): string | null {
-  if (typeof value === "string") return redactFreeText(value);
-  if (!isRecord(value)) return null;
-
-  const title = readString(value, "title") ?? readString(value, "action");
-  const details = readString(value, "details") ?? readString(value, "description");
-  if (title && details) return redactFreeText(`${title}: ${details}`);
-  return title || details ? redactFreeText(title ?? details ?? "") : null;
-}
-
-function normalizeArtifactSummary(raw: Record<string, unknown>): string {
-  const value = raw.summary;
-  if (typeof value === "string" && value.trim()) return redactFreeText(value);
-  if (isRecord(value)) {
-    return redactFreeText(
-      readString(value, "conclusion") ??
-      readString(value, "recommendation") ??
-      readString(value, "summary") ??
-      readString(value, "headline") ??
-      readString(value, "text") ??
-      stringifyRedacted(value)
-    );
-  }
-  if (isRecord(raw.verdict)) {
-    const status = readString(raw.verdict, "status");
-    const rationale = readString(raw.verdict, "rationale");
-    if (status && rationale) return redactFreeText(`${status}: ${rationale}`);
-    return redactFreeText(status ?? rationale ?? stringifyRedacted(raw.verdict));
-  }
-
-  return "Bridge reviewer returned structured findings without a string summary.";
-}
-
-function isNormalizableBridgeResult(
-  raw: Record<string, unknown>,
-  providerKind: SdlcaBridgeProviderKind
-): boolean {
-  const bridgeProviderKind = readString(raw, "bridgeProviderKind");
-  const explicitProviderKind = readString(raw, "providerKind") ?? bridgeProviderKind;
-  if (explicitProviderKind !== undefined && explicitProviderKind !== providerKind) return false;
-  const reviewerModel = readString(raw, "reviewerModel");
-  const hasForensicContent =
-    Array.isArray(raw.findings) ||
-    Array.isArray(raw.recommendations) ||
-    typeof raw.summary === "string" ||
-    isRecord(raw.provenance) ||
-    isRecord(raw.verdict);
-
-  if (raw.schemaVersion === "sdlca.bridge.forensic.v0") return hasForensicContent;
-
-  return bridgeProviderKind === providerKind && reviewerModel !== undefined && hasForensicContent;
-}
-
-function normalizeProvenance(raw: Record<string, unknown>): Record<string, unknown> {
-  const provenance = isRecord(raw.provenance) ? raw.provenance : {};
-  const evidenceIntegrity = isRecord(raw.evidenceIntegrity) ? raw.evidenceIntegrity : {};
-  const inputs = isRecord(raw.inputs) ? raw.inputs : {};
-  return removeUndefinedFields({
-    redacted: true,
-    snapshotId: redactFreeText(
-      readString(provenance, "snapshotId") ?? readString(inputs, "usageSnapshotId") ?? ""
-    ) || undefined,
-    source:
-      redactFreeText(
-        readString(provenance, "source") ??
-          readString(evidenceIntegrity, "source") ??
-          "sdlca_bridge_forensic_review"
-      )
-  });
-}
-
-function stringifyRedacted(value: unknown): string {
-  return redactFreeText(JSON.stringify(redactBridgeValue(value)));
-}
-
 function redactBridgeValue(value: unknown): unknown {
   return redactBridgeStrings(redactLogValue(value));
 }
@@ -559,6 +367,10 @@ function redactBridgeStrings(value: unknown): unknown {
 
 function redactFreeText(value: string): string {
   return value
+    .replace(
+      /(^|[{\s,])("?[A-Za-z0-9_.-]*(?:api[_-]?key|authorization|bearer|credential|password|secret|token)[A-Za-z0-9_.-]*"?\s*[:=]\s*)(["'])[^"'\r\n]*(\3)/giu,
+      "$1$2$3[REDACTED]$4"
+    )
     .replace(/\b(authorization\s*:\s*(?:bearer\s+)?)[^\s"',;]+/giu, "$1[REDACTED]")
     .replace(/\b(bearer\s+)[^\s"',;]+/giu, "$1[REDACTED]")
     .replace(
@@ -568,26 +380,8 @@ function redactFreeText(value: string): string {
     .replace(/\bsk-[A-Za-z0-9_-]{12,}\b/gu, "[REDACTED]");
 }
 
-function normalizeSeverity(value: unknown): "info" | "low" | "medium" | "high" {
-  if (value === "critical") return "high";
-  return value === "low" || value === "medium" || value === "high" ? value : "info";
-}
-
-function readString(record: Record<string, unknown>, field: string): string | undefined {
-  const value = record[field];
-  return typeof value === "string" && value.trim() ? value : undefined;
-}
-
-function readStringArray(value: unknown): string[] {
-  return Array.isArray(value)
-    ? value.filter((item): item is string => typeof item === "string" && item.trim().length > 0)
-    : [];
-}
-
-function removeUndefinedFields(value: Record<string, unknown>): Record<string, unknown> {
-  return Object.fromEntries(
-    Object.entries(value).filter((entry): entry is [string, unknown] => entry[1] !== undefined)
-  );
+function sanitizeForensicArtifact(artifact: Record<string, unknown>): Record<string, unknown> {
+  return redactBridgeValue(artifact) as Record<string, unknown>;
 }
 
 async function readBridgeErrorSummary(response: Response): Promise<string | undefined> {

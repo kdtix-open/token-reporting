@@ -554,6 +554,47 @@ describe("integrationContractDynamic", () => {
     });
   });
 
+  it("createDynamicIntegrationContractHandler_RefreshEndpoint_AsyncModeHandlesFailedRecoveryStoreWrite", async () => {
+    const jobs = new Map<string, Record<string, unknown>>();
+    const refreshJobStore = {
+      get: vi.fn(async (jobId: string) => jobs.get(jobId)),
+      set: vi.fn(async (jobId: string, job: Record<string, unknown>) => {
+        if (jobs.size > 0) {
+          throw new Error("refresh recovery store failed");
+        }
+        jobs.set(jobId, job);
+      })
+    };
+    const refreshExecutor = vi.fn().mockRejectedValue(new Error("refresh execution failed"));
+    const handler = createDynamicIntegrationContractHandler({
+      asyncRefresh: true,
+      loadSummaries: async () => summaries,
+      now: () => new Date("2026-06-07T16:45:00.000Z"),
+      refreshExecutor,
+      refreshJobStore
+    });
+
+    await handler({
+      body: {
+        providers: ["codex"]
+      },
+      method: "POST",
+      path: "/api/refresh"
+    });
+
+    await vi.waitFor(() => {
+      expect(refreshJobStore.set).toHaveBeenCalledTimes(3);
+    });
+    const response = await handler({
+      method: "GET",
+      path: "/api/refresh/dynamic-refresh-20260607T164500000Z"
+    });
+    expect(response.body).toMatchObject({
+      jobId: "dynamic-refresh-20260607T164500000Z",
+      status: "running"
+    });
+  });
+
   it("createDynamicIntegrationContractHandler_RefreshEndpoint_ReadOnlyModeBlocksMutation", async () => {
     const refreshExecutor = vi.fn();
     const handler = createDynamicIntegrationContractHandler({

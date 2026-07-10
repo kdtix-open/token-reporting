@@ -151,7 +151,14 @@ export async function pollReportRefreshJob(
       };
     }
 
-    const job = body as ReportRefreshJob;
+    const job = parseReportRefreshJob(body, jobId);
+    if (!job) {
+      return {
+        httpStatus: response.status,
+        message: "Refresh status response was invalid or did not match the requested job.",
+        outcome: "failed"
+      };
+    }
     options.onUpdate?.(job);
     if (isTerminalRefreshStatus(job.status)) {
       return {
@@ -198,6 +205,18 @@ function trimTrailingSlash(value: string): string {
 
 function isTerminalRefreshStatus(status: string): boolean {
   return status === "completed" || status === "degraded" || status === "failed";
+}
+
+function parseReportRefreshJob(body: unknown, expectedJobId: string): ReportRefreshJob | null {
+  if (typeof body !== "object" || body === null || Array.isArray(body)) return null;
+  const record = body as Record<string, unknown>;
+  if (record.jobId !== expectedJobId) return null;
+  if (!isKnownRefreshStatus(record.status)) return null;
+  return record as ReportRefreshJob;
+}
+
+function isKnownRefreshStatus(status: unknown): status is string {
+  return typeof status === "string" && (status === "running" || isTerminalRefreshStatus(status));
 }
 
 function delay(ms: number): Promise<void> {
