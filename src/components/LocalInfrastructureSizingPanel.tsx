@@ -139,6 +139,7 @@ export function LocalInfrastructureSizingPanel({
           <label className="infra-select-field">
             <span>Budget math scope</span>
             <select
+              disabled={!onBudgetScopeChange}
               value={activeBudgetScope}
               onChange={(event) => onBudgetScopeChange?.(event.target.value as WorkloadScope)}
             >

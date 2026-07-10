@@ -111,8 +111,9 @@ function sanitizeExistingCursorSnapshot(
   const redacted = redactCursorSnapshot(snapshot, redactionSalt);
   return {
     ...redacted,
-    redactionKeyFingerprint: snapshot.redactionKeyFingerprint,
-    redactionSchemeVersion: snapshot.redactionSchemeVersion
+    redactionKeyFingerprint:
+      snapshot.redactionKeyFingerprint ?? redacted.redactionKeyFingerprint,
+    redactionSchemeVersion: snapshot.redactionSchemeVersion ?? redacted.redactionSchemeVersion
   };
 }
 
@@ -123,7 +124,7 @@ function cursorRedactionSalt(env: NodeJS.ProcessEnv): string {
     env.CURSOR_ADMIN_API_KEY;
   if (!salt) {
     throw new Error(
-      "TOKEN_REPORTING_CURSOR_REDACTION_SALT or CURSOR_ADMIN_API_KEY is required to persist redacted Cursor identity fields."
+      "TOKEN_REPORTING_CURSOR_REDACTION_SALT, TOKEN_REPORTING_REDACTION_SALT, or CURSOR_ADMIN_API_KEY is required to persist redacted Cursor identity fields."
     );
   }
   return salt;

@@ -312,6 +312,70 @@ describe("persistCursorDailyUsageReport", () => {
     );
   });
 
+  it("preserves historical rows when same-scheme accumulated data predates fingerprints", async () => {
+    const tempRoot = await mkdtemp(path.join(os.tmpdir(), "token-reporting-"));
+    const outputPath = path.join(tempRoot, "latest-metadata.json");
+    const accumulatedPath = path.join(tempRoot, "accumulated-metadata.json");
+    const spend = cursorTeamSpendResponseSchema.parse(sampleSpend);
+    const events = cursorFilteredUsageEventsResponseSchema.parse(sampleEvents);
+
+    await persistCursorDailyUsageReport({
+      report: sampleReport,
+      spend,
+      events,
+      outputPath,
+      env: testRedactionEnv
+    });
+
+    const staleAccumulated = JSON.parse(await readFile(accumulatedPath, "utf8")) as {
+      daily: { data: Array<{ date: number; day: string }> };
+      redactionKeyFingerprint?: string;
+      redactionSchemeVersion: string;
+    };
+    const expectedFingerprint = staleAccumulated.redactionKeyFingerprint;
+    delete staleAccumulated.redactionKeyFingerprint;
+    staleAccumulated.daily.data.push({
+      ...staleAccumulated.daily.data[0],
+      date: 1740700800000,
+      day: "2025-02-28"
+    });
+    await writeFile(accumulatedPath, `${JSON.stringify(staleAccumulated, null, 2)}\n`, "utf8");
+
+    await persistCursorDailyUsageReport({
+      report: sampleReport,
+      spend,
+      events,
+      outputPath,
+      env: testRedactionEnv
+    });
+
+    const accumulated = JSON.parse(await readFile(accumulatedPath, "utf8")) as {
+      daily: { data: Array<{ day: string }> };
+      redactionKeyFingerprint: string;
+      redactionSchemeVersion: string;
+    };
+
+    expect(accumulated.daily.data).toHaveLength(3);
+    expect(accumulated.daily.data.map((item) => item.day)).toContain("2025-02-28");
+    expect(accumulated.redactionKeyFingerprint).toBe(expectedFingerprint);
+    expect(accumulated.redactionSchemeVersion).toBe("cursor-hmac-v1");
+  });
+
+  it("names every supported Cursor redaction salt source when missing", async () => {
+    const tempRoot = await mkdtemp(path.join(os.tmpdir(), "token-reporting-"));
+    const outputPath = path.join(tempRoot, "latest-metadata.json");
+
+    await expect(
+      persistCursorDailyUsageReport({
+        report: sampleReport,
+        outputPath,
+        env: {}
+      })
+    ).rejects.toThrow(
+      /TOKEN_REPORTING_CURSOR_REDACTION_SALT, TOKEN_REPORTING_REDACTION_SALT, or CURSOR_ADMIN_API_KEY/
+    );
+  });
+
   it("resets accumulated HMAC aliases when the redaction key changes", async () => {
     const tempRoot = await mkdtemp(path.join(os.tmpdir(), "token-reporting-"));
     const outputPath = path.join(tempRoot, "latest-metadata.json");
