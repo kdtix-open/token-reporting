@@ -290,7 +290,7 @@ function normalizeUsage(usage) {
     outputTokens: output,
     reasoningOutputTokens: reasoning,
     totalTokens: numberOrZero(usage.total_tokens),
-    uncachedInputTokens: input,
+    uncachedInputTokens: Math.max(input - cached, 0),
   };
 }
 

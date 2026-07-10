@@ -52,7 +52,7 @@ describe("analyze-codegraph-token-usage", () => {
       sessionFileCount: 2
     });
     expect(report.classifications.codegraph_assisted.billableProxyTokens.median).toBe(130);
-    expect(report.classifications.codegraph_assisted.uncachedInputTokens.median).toBe(100);
+    expect(report.classifications.codegraph_assisted.uncachedInputTokens.median).toBe(80);
     expect(report.classifications.shell_search_read.billableProxyTokens.median).toBe(240);
     expect(report.comparison.metrics.billableProxyTokens.delta).toBe(110);
   });

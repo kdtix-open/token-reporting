@@ -50,7 +50,7 @@ It measures:
 input + output
 ```
 
-This is an analysis proxy, not an official invoice field. Codex reports `input_tokens` as uncached input, and `reasoning_output_tokens` is already included in `output_tokens`.
+This is an analysis proxy, not an official invoice field. Codex reports `cached_input_tokens` as a subset of `input_tokens`, so uncached input is `max(input_tokens - cached_input_tokens, 0)`. `reasoning_output_tokens` is already included in `output_tokens`.
 
 ## Recommendation Guardrail
 
