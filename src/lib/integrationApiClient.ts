@@ -52,6 +52,7 @@ export async function requestReportRefresh(
   const timeout = createTimeoutController(timeoutMs);
 
   let response: Response | "timeout";
+  let body: unknown | "timeout";
   try {
     response = await Promise.race([
       fetcher(`${apiBaseUrl}/api/refresh`, {
@@ -64,15 +65,9 @@ export async function requestReportRefresh(
       }),
       timeout.promise
     ]);
+    body = response === "timeout" ? "timeout" : await readJsonBodyWithTimeout(response, timeout);
   } catch (error) {
-    if (timeout.didTimeout()) {
-      return {
-        message: `Refresh is still running after ${formatSeconds(
-          timeoutMs
-        )}. Check the refresh status or try a narrower provider refresh.`,
-        outcome: "failed"
-      };
-    }
+    if (timeout.didTimeout() || isAbortError(error)) return timeoutResult(timeoutMs);
 
     throw error;
   } finally {
@@ -83,7 +78,9 @@ export async function requestReportRefresh(
     return timeoutResult(timeoutMs);
   }
 
-  const body = await readJsonBody(response);
+  if (body === "timeout") {
+    return timeoutResult(timeoutMs);
+  }
 
   if (response.ok) {
     const job = parseRefreshJob(body);
@@ -125,6 +122,7 @@ export async function pollReportRefreshJob(
 
     const timeout = createTimeoutController(Math.min(30_000, requestTimeoutMs));
     let response: Response | "timeout";
+    let body: unknown | "timeout";
     try {
       response = await Promise.race([
         fetcher(`${apiBaseUrl}/api/refresh/${encodeURIComponent(jobId)}`, {
@@ -133,9 +131,11 @@ export async function pollReportRefreshJob(
         }),
         timeout.promise
       ]);
+      body = response === "timeout" ? "timeout" : await readJsonBodyWithTimeout(response, timeout);
     } catch (error) {
-      if (timeout.didTimeout() || isTransientPollingError(error)) {
+      if (timeout.didTimeout() || isAbortError(error) || isTransientPollingError(error)) {
         response = "timeout";
+        body = "timeout";
       } else {
         throw error;
       }
@@ -143,14 +143,13 @@ export async function pollReportRefreshJob(
       timeout.clear();
     }
 
-    if (response === "timeout") {
+    if (response === "timeout" || body === "timeout") {
       const remainingMs = remainingTimeoutMs(startedAt, timeoutMs);
       if (remainingMs <= 0) break;
       await delay(Math.min(intervalMs, remainingMs));
       continue;
     }
 
-    const body = await readJsonBody(response);
     if (!response.ok) {
       return {
         httpStatus: response.status,
@@ -159,11 +158,11 @@ export async function pollReportRefreshJob(
       };
     }
 
-    const job = parseRefreshJob(body);
+    const job = parseReportRefreshJob(body, jobId);
     if (!job) {
       return {
         httpStatus: response.status,
-        message: "Refresh status request returned a malformed job payload.",
+        message: refreshJobParseFailureMessage(body, jobId),
         outcome: "failed"
       };
     }
@@ -196,9 +195,17 @@ function refreshRequestBody(options: RequestReportRefreshOptions): Record<string
 async function readJsonBody(response: Response): Promise<unknown> {
   try {
     return (await response.json()) as unknown;
-  } catch {
+  } catch (error) {
+    if (isAbortError(error)) throw error;
     return {};
   }
+}
+
+function readJsonBodyWithTimeout(
+  response: Response,
+  timeout: { promise: Promise<"timeout"> }
+): Promise<unknown | "timeout"> {
+  return Promise.race([readJsonBody(response), timeout.promise]);
 }
 
 function readMessage(body: unknown): string | undefined {
@@ -207,30 +214,56 @@ function readMessage(body: unknown): string | undefined {
   return typeof raw === "string" ? raw : undefined;
 }
 
-function parseRefreshJob(body: unknown): ReportRefreshJob | null {
-  if (typeof body !== "object" || body === null || Array.isArray(body)) return null;
-  const job = body as Record<string, unknown>;
-  return typeof job.jobId === "string" &&
-    typeof job.status === "string" &&
-    isKnownRefreshStatus(job.status)
-    ? (job as ReportRefreshJob)
-    : null;
-}
-
-function isKnownRefreshStatus(status: string): boolean {
-  return status === "queued" || status === "running" || isTerminalRefreshStatus(status);
-}
-
-function isTransientPollingError(error: unknown): boolean {
-  return error instanceof TypeError || error instanceof DOMException;
-}
-
 function trimTrailingSlash(value: string): string {
   return value.endsWith("/") ? value.slice(0, -1) : value;
 }
 
 function isTerminalRefreshStatus(status: string): boolean {
   return status === "completed" || status === "degraded" || status === "failed";
+}
+
+function parseRefreshJob(body: unknown): ReportRefreshJob | null {
+  if (typeof body !== "object" || body === null || Array.isArray(body)) return null;
+  const record = body as Record<string, unknown>;
+  if (typeof record.jobId !== "string") return null;
+  if (!isKnownRefreshStatus(record.status)) return null;
+  return record as ReportRefreshJob;
+}
+
+function parseReportRefreshJob(body: unknown, expectedJobId: string): ReportRefreshJob | null {
+  const record = parseRefreshJob(body);
+  if (!record) return null;
+  if (record.jobId !== expectedJobId) return null;
+  return record;
+}
+
+function refreshJobParseFailureMessage(body: unknown, expectedJobId: string): string {
+  if (typeof body === "object" && body !== null && !Array.isArray(body)) {
+    const record = body as Record<string, unknown>;
+    if (
+      typeof record.jobId === "string" &&
+      record.jobId !== expectedJobId &&
+      isKnownRefreshStatus(record.status)
+    ) {
+      return "Refresh status response was invalid or did not match the requested job.";
+    }
+  }
+
+  return "Refresh status request returned a malformed job payload.";
+}
+
+function isKnownRefreshStatus(status: unknown): status is string {
+  return typeof status === "string" && (status === "running" || isTerminalRefreshStatus(status));
+}
+
+function isTransientPollingError(error: unknown): boolean {
+  return error instanceof TypeError;
+}
+
+function isAbortError(error: unknown): boolean {
+  return error instanceof DOMException
+    ? error.name === "AbortError"
+    : error instanceof Error && error.name === "AbortError";
 }
 
 function delay(ms: number): Promise<void> {

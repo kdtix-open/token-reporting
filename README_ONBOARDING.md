@@ -21,7 +21,10 @@ Use the devcontainer in `.devcontainer/devcontainer.json` for a reproducible Nod
 7. If bridge-backed forensics should be enabled on the operator host, run
    `npm run startup:repair-bridge-env`. It copies the SDLCA local bridge token
    into `.env.admin.credentials`, writes a backup, chmods the file to `600`, and
-   prints only a redacted summary.
+   prints only a redacted summary. Then rerun
+   `TOKEN_REPORTING_NODE_BIN=/opt/homebrew/bin/node npm run startup:install:macos`
+   so the LaunchAgent restarts and reloads the updated admin env file before
+   checking `/tools/token-reporting/api/operational-status`.
 
 ## Environment variables
 

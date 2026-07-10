@@ -43,10 +43,13 @@ async function main(): Promise<void> {
 
   if (repair.redactedSummary.changed) {
     const backupPath = `${adminEnvPath}.bak-${timestampForFile(new Date())}`;
+    if (adminEnvText) {
+      await fs.chmod(adminEnvPath, 0o600);
+    }
     await fs.writeFile(backupPath, adminEnvText, { mode: 0o600 });
-    await fs.writeFile(adminEnvPath, repair.updatedAdminEnvText, { mode: 0o600 });
-    await fs.chmod(adminEnvPath, 0o600);
+    await writeTextAtomically(adminEnvPath, repair.updatedAdminEnvText);
   }
+  await fs.chmod(adminEnvPath, 0o600);
 
   process.stdout.write(`${JSON.stringify(repair.redactedSummary, null, 2)}\n`);
 }
@@ -62,6 +65,18 @@ async function readTextIfExists(filePath: string): Promise<string> {
 
 function timestampForFile(date: Date): string {
   return date.toISOString().replace(/[-:]/gu, "").replace(/\.\d{3}Z$/u, "Z");
+}
+
+async function writeTextAtomically(filePath: string, text: string): Promise<void> {
+  const tempPath = `${filePath}.tmp-${process.pid}-${Date.now().toString(36)}`;
+  try {
+    await fs.writeFile(tempPath, text, { mode: 0o600 });
+    await fs.chmod(tempPath, 0o600);
+    await fs.rename(tempPath, filePath);
+  } catch (error) {
+    await fs.unlink(tempPath).catch(() => undefined);
+    throw error;
+  }
 }
 
 function readPositiveInteger(value: string | undefined, fallback: number): number {

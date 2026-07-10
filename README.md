@@ -76,8 +76,13 @@ connection from the SDLCA local bridge env without printing the token:
 
 ```bash
 npm run startup:repair-bridge-env
+TOKEN_REPORTING_NODE_BIN=/opt/homebrew/bin/node npm run startup:install:macos
 curl http://127.0.0.1:8095/tools/token-reporting/api/operational-status
 ```
+
+The repair command only updates `.env.admin.credentials`; restart the macOS
+LaunchAgent before probing because the production process reads that file at
+startup.
 
 For the KDTIX `mac-local` bridge, `dev.projectit.ai/tools/token-reporting` is an
 operator view over KDTIX-owned provider Admin/API credentials and KDTIX paid

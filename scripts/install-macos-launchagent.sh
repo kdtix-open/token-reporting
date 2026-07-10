@@ -144,15 +144,14 @@ render_plist() {
 EOF
 }
 
-if [[ "${DRY_RUN}" == "true" ]]; then
-  echo "install-macos-launchagent: dry run rendering ${PLIST_PATH}"
-  render_plist
-  exit 0
-fi
-
 mkdir -p "${PLIST_DIR}" "${LOG_ROOT}" "$(dirname "${PID_FILE}")"
 chmod +x "${REPO_ROOT}/scripts/run-production-service.sh"
 render_plist >"${PLIST_PATH}"
+
+if [[ "${DRY_RUN}" == "true" ]]; then
+  echo "install-macos-launchagent: dry run wrote ${PLIST_PATH}"
+  exit 0
+fi
 
 launchctl bootout "gui/$(id -u)" "${PLIST_PATH}" >/dev/null 2>&1 || true
 launchctl bootstrap "gui/$(id -u)" "${PLIST_PATH}"

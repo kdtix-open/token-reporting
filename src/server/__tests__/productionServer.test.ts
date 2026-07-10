@@ -91,6 +91,7 @@ describe("productionServer", () => {
     const baseUrl = await listen(server);
 
     const response = await fetch(`${baseUrl}/tools/token-reporting/api/operational-status`);
+    expect(response.headers.get("cache-control")).toBe("no-store");
     await expectJson(response, 200, {
       forensics: {
         bridgeTimeoutMs: 120000,
@@ -120,6 +121,7 @@ describe("productionServer", () => {
 
     const response = await fetch(`${baseUrl}/tools/token-reporting/api/operational-status`);
     expect(response.status).toBe(200);
+    expect(response.headers.get("cache-control")).toBe("no-store");
     const body = await response.text();
     expect(body).not.toContain("secret-token-value");
     expect(JSON.parse(body)).toEqual({

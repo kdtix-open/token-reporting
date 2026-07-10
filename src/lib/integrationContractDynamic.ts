@@ -1,6 +1,6 @@
-import { randomUUID } from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
+import { randomUUID } from "node:crypto";
 
 import { providerRegistry } from "../providers/registry";
 import { createMemoryForensicRunStore, type ForensicRunStore } from "./forensicRunStore";
@@ -470,31 +470,68 @@ function buildFailedRefreshJob(args: {
   const { error, generatedAt, jobId, previousJob, refreshRequest, startedAt } = args;
   const completedAt = new Date().toISOString();
   const degradedReason = error instanceof Error ? error.message : String(error);
-  const previousProviderResults = Array.isArray(previousJob?.providerResults)
-    ? previousJob.providerResults.filter(isRecord)
-    : [];
+  const previousProviderResults = readProviderResults(previousJob?.providerResults);
+  const providerResults =
+    previousProviderResults.length > 0
+      ? previousProviderResults
+      : refreshRequest.providers.map((providerId) => ({
+          completedAt,
+          degradedReason,
+          providerId,
+          startedAt,
+          status: "failed" as const
+        }));
+  const status =
+    previousProviderResults.length > 0 && refreshJobStatus(providerResults) !== "failed"
+      ? "degraded"
+      : "failed";
 
   return {
     completedAt,
     contractVersion: dynamicContractVersion,
     degradedReason,
+    forensicRun: reconcileAbandonedForensicRun(
+      previousJob?.forensicRun,
+      completedAt,
+      degradedReason
+    ),
     includeForensicModelProfiles: refreshRequest.includeForensicModelProfiles,
     includeHuggingFaceRefresh: refreshRequest.includeHuggingFaceRefresh,
     jobId,
     mode: refreshRequest.mode,
-    providerResults:
-      previousProviderResults.length > 0
-        ? previousProviderResults
-        : refreshRequest.providers.map((providerId) => ({
-            completedAt,
-            degradedReason,
-            providerId,
-            startedAt,
-            status: "failed"
-          })),
+    providerResults,
     startedAt: generatedAt.toISOString(),
-    status: "failed"
+    status
   };
+}
+
+function readProviderResults(value: unknown): DynamicProviderRefreshResult[] {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .map((item): DynamicProviderRefreshResult | null => {
+      if (!isRecord(item)) return null;
+      const providerId = readStringField(item, "providerId");
+      const status = readProviderRefreshStatus(item.status);
+      if (!providerId || !status) return null;
+
+      return {
+        accumulatedThrough: readStringField(item, "accumulatedThrough") ?? undefined,
+        completedAt: readStringField(item, "completedAt") ?? undefined,
+        degradedReason: readStringField(item, "degradedReason") ?? undefined,
+        providerId,
+        startedAt: readStringField(item, "startedAt") ?? undefined,
+        status
+      };
+    })
+    .filter((item): item is DynamicProviderRefreshResult => item !== null);
+}
+
+function readProviderRefreshStatus(value: unknown): DynamicProviderRefreshStatus | null {
+  if (value === "completed" || value === "degraded" || value === "failed" || value === "skipped") {
+    return value;
+  }
+  return null;
 }
 
 async function executeDynamicRefreshJob(args: {
@@ -674,57 +711,60 @@ async function dynamicRefreshStatusResponse(
 
 function refreshJobIsNonTerminal(job: Record<string, unknown>): boolean {
   const status = readStringField(job, "status");
-  return status === "queued" || status === "running";
+  return status === "running" || status === "queued";
 }
 
 function reconcileAbandonedRefreshJob(job: Record<string, unknown>): Record<string, unknown> {
   const completedAt = new Date().toISOString();
-  const message = "Refresh process restarted before completing this job.";
+  const degradedReason = "refresh_job_worker_not_active_after_restart";
   const providerResults = Array.isArray(job.providerResults)
-    ? job.providerResults.map((result) =>
-        isRecord(result) && refreshJobIsNonTerminal(result)
-          ? {
-              ...result,
-              completedAt,
-              degradedReason: readStringField(result, "degradedReason") ?? message,
-              status: "failed"
-            }
-          : result
+    ? job.providerResults.filter(isRecord).map((result) =>
+        reconcileAbandonedResult(result, completedAt, degradedReason)
       )
-    : job.providerResults;
-  const forensicRun = reconcileAbandonedForensicRun(job.forensicRun, completedAt, message);
+    : [];
 
   return {
     ...job,
     completedAt,
-    degradedReason: readStringField(job, "degradedReason") ?? message,
-    forensicRun,
+    degradedReason,
+    forensicRun: reconcileAbandonedForensicRun(job.forensicRun, completedAt, degradedReason),
     providerResults,
     status: "failed"
   };
 }
 
-function reconcileAbandonedForensicRun(
-  forensicRun: unknown,
+function reconcileAbandonedResult(
+  result: Record<string, unknown>,
   completedAt: string,
-  message: string
-): unknown {
-  if (!isRecord(forensicRun) || !refreshJobIsNonTerminal(forensicRun)) return forensicRun;
+  degradedReason: string
+): Record<string, unknown> {
+  const status = readStringField(result, "status");
+  if (status !== "running" && status !== "queued") return result;
+
   return {
-    ...forensicRun,
-    degradedReason: readStringField(forensicRun, "degradedReason") ?? message,
-    reviewerArtifacts: Array.isArray(forensicRun.reviewerArtifacts)
-      ? forensicRun.reviewerArtifacts.map((artifact) =>
-          isRecord(artifact) && refreshJobIsNonTerminal(artifact)
-            ? {
-                ...artifact,
-                completedAt,
-                degradedReason: readStringField(artifact, "degradedReason") ?? message,
-                status: "failed"
-              }
-            : artifact
-        )
-      : forensicRun.reviewerArtifacts,
+    ...result,
+    completedAt,
+    degradedReason,
+    status: "failed"
+  };
+}
+
+function reconcileAbandonedForensicRun(
+  value: unknown,
+  completedAt: string,
+  degradedReason: string
+): Record<string, unknown> | undefined {
+  if (!isRecord(value)) return undefined;
+  const reviewerArtifacts = Array.isArray(value.reviewerArtifacts)
+    ? value.reviewerArtifacts.filter(isRecord).map((artifact) =>
+        reconcileAbandonedResult(artifact, completedAt, degradedReason)
+      )
+    : [];
+
+  return {
+    ...value,
+    degradedReason,
+    reviewerArtifacts,
     status: "failed",
     updatedAt: completedAt
   };
@@ -839,15 +879,20 @@ async function createDynamicForensicRun(args: {
         reviewerModels,
         runId,
         usageSnapshotId
-      }).catch((error) => ({
-        degradedReason: error instanceof Error ? error.message : String(error),
-        reviewerArtifacts: queuedArtifacts.map((artifact) => ({
-          ...artifact,
-          degradedReason: error instanceof Error ? error.message : String(error),
+      }).catch((error) => {
+        const failedAt = new Date().toISOString();
+        const degradedReason = error instanceof Error ? error.message : String(error);
+        return {
+          degradedReason,
+          reviewerArtifacts: queuedArtifacts.map((artifact) => ({
+            ...artifact,
+            completedAt: failedAt,
+            degradedReason,
+            status: "failed" as const
+          })),
           status: "failed" as const
-        })),
-        status: "failed" as const
-      }))
+        };
+      })
     : {
         degradedReason: "bridge_forensic_executor_not_configured",
         reviewerArtifacts: terminalArtifacts(
@@ -953,11 +998,7 @@ function forensicRunUpdatedAt(
   reviewerArtifacts: DynamicForensicReviewerArtifact[],
   fallback: string
 ): string {
-  return (
-    latestTimestamp(
-      reviewerArtifacts.map((artifact) => artifact.completedAt ?? artifact.startedAt)
-    ) ?? fallback
-  );
+  return latestTimestamp(reviewerArtifacts.map((artifact) => artifact.completedAt)) ?? fallback;
 }
 
 async function dynamicLatestLocalModelProfileResponse(
