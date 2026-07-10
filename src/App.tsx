@@ -658,10 +658,10 @@ function statusFromRecords(
   fallback: RefreshStepStatus | null
 ): RefreshStepStatus {
   const statuses = records.map((record) => readStatus(record.status)).filter(Boolean);
-  if (statuses.includes("failed")) return "failed";
   if (statuses.includes("running")) return "running";
-  if (statuses.includes("degraded")) return "degraded";
   if (statuses.includes("queued")) return fallback && fallback !== "completed" ? fallback : "queued";
+  if (statuses.includes("failed")) return "failed";
+  if (statuses.includes("degraded")) return "degraded";
   if (statuses.length > 0 && statuses.every((status) => status === "completed")) {
     return "completed";
   }

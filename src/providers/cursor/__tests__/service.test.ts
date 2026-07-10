@@ -291,11 +291,15 @@ describe("persistCursorDailyUsageReport", () => {
     ) as {
       daily: { data: Array<{ userId: string }> };
       events: { usageEvents: Array<{ userEmail: string }> };
+      redactionKeyFingerprint: string;
+      redactionSchemeVersion: string;
       spend: { teamMemberSpend: Array<{ email: string; name: string; userId: string }> };
     };
 
     expect(accumulated.daily.data).toHaveLength(2);
     expect(accumulated.events.usageEvents).toHaveLength(3);
+    expect(accumulated.redactionKeyFingerprint).toMatch(/^[a-f0-9]{16}$/);
+    expect(accumulated.redactionSchemeVersion).toBe("cursor-hmac-v1");
     expect(accumulated.spend.teamMemberSpend).toHaveLength(2);
     expect(accumulated.daily.data.map((item) => item.userId)).toEqual(
       expect.arrayContaining([expect.stringMatching(/^user_redacted_hmac_[a-f0-9]{16}$/)])
@@ -305,6 +309,51 @@ describe("persistCursorDailyUsageReport", () => {
     );
     expect(accumulated.spend.teamMemberSpend.map((item) => item.name)).toEqual(
       expect.arrayContaining([expect.stringMatching(/^Redacted user hmac_[a-f0-9]{16}$/)])
+    );
+  });
+
+  it("resets accumulated HMAC aliases when the redaction key changes", async () => {
+    const tempRoot = await mkdtemp(path.join(os.tmpdir(), "token-reporting-"));
+    const outputPath = path.join(tempRoot, "latest-metadata.json");
+    const spend = cursorTeamSpendResponseSchema.parse(sampleSpend);
+    const events = cursorFilteredUsageEventsResponseSchema.parse(sampleEvents);
+
+    await persistCursorDailyUsageReport({
+      report: sampleReport,
+      spend,
+      events,
+      outputPath,
+      env: { TOKEN_REPORTING_CURSOR_REDACTION_SALT: "old-redaction-salt" }
+    });
+    const firstAccumulated = JSON.parse(
+      await readFile(path.join(tempRoot, "accumulated-metadata.json"), "utf8")
+    ) as {
+      daily: { data: Array<{ userId: string }> };
+      redactionKeyFingerprint: string;
+    };
+    const firstUserIds = firstAccumulated.daily.data.map((item) => item.userId);
+
+    await persistCursorDailyUsageReport({
+      report: sampleReport,
+      spend,
+      events,
+      outputPath,
+      env: { TOKEN_REPORTING_CURSOR_REDACTION_SALT: "new-redaction-salt" }
+    });
+
+    const accumulated = JSON.parse(
+      await readFile(path.join(tempRoot, "accumulated-metadata.json"), "utf8")
+    ) as {
+      daily: { data: Array<{ userId: string }> };
+      redactionKeyFingerprint: string;
+    };
+
+    expect(accumulated.daily.data).toHaveLength(2);
+    expect(accumulated.redactionKeyFingerprint).not.toBe(
+      firstAccumulated.redactionKeyFingerprint
+    );
+    expect(accumulated.daily.data.map((item) => item.userId)).not.toEqual(
+      expect.arrayContaining(firstUserIds)
     );
   });
 

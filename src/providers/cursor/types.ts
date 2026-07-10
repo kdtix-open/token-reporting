@@ -107,7 +107,9 @@ export const cursorSnapshotSchema = z.object({
   generatedAt: z.string().optional(),
   daily: cursorDailyUsageResponseSchema,
   spend: cursorTeamSpendResponseSchema.optional(),
-  events: cursorFilteredUsageEventsResponseSchema.optional()
+  events: cursorFilteredUsageEventsResponseSchema.optional(),
+  redactionKeyFingerprint: z.string().optional(),
+  redactionSchemeVersion: z.string().optional()
 });
 
 export type CursorSnapshot = z.infer<typeof cursorSnapshotSchema>;

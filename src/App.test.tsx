@@ -364,6 +364,56 @@ describe("App", () => {
     expect(screen.getByText("Snapshots reloaded after refresh response.")).toBeInTheDocument();
   });
 
+  it("refresh activity panel keeps mixed forensic reviewers running while one is active", async () => {
+    const fetchStub = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url === sameOriginRefreshUrl) {
+        return Promise.resolve({
+          json: async () => ({
+            forensicRun: {
+              reviewerArtifacts: [
+                {
+                  degradedReason: "sdlca_bridge_forensic_result_invalid",
+                  reviewerModel: "gpt",
+                  status: "failed"
+                },
+                { reviewerModel: "composer", status: "running" }
+              ],
+              status: "running"
+            },
+            jobId: "dynamic-refresh-mixed-forensics",
+            providerResults: [{ providerId: "github-copilot", status: "completed" }],
+            status: "degraded"
+          }),
+          ok: true,
+          status: 202
+        });
+      }
+
+      return Promise.resolve({ ok: false });
+    });
+    vi.stubGlobal("fetch", fetchStub);
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(fetchStub).toHaveBeenCalledWith(
+        expect.stringContaining("/data/github-copilot/accumulated-metadata.json")
+      );
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /Refresh Report/i }));
+
+    expect(
+      await screen.findByText("Refresh job dynamic-refresh-mixed-forensics degraded")
+    ).toBeInTheDocument();
+    const forensicsStep = screen.getByText("Forensic reviewers").closest("li") as HTMLElement;
+    expect(forensicsStep).toHaveTextContent("Running");
+    expect(forensicsStep).toHaveTextContent(
+      "gpt failed (invalid reviewer result); composer running"
+    );
+  });
+
   it("refresh activity panel uses top-level Hugging Face candidate status for completed jobs", async () => {
     const fetchStub = vi.fn().mockImplementation((input: RequestInfo | URL) => {
       const url = String(input);

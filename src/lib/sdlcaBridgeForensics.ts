@@ -320,9 +320,9 @@ async function executeReviewer(args: {
       );
     }
 
-    let payload: SdlcaBridgeExecuteResponse;
+    let payload: unknown;
     try {
-      payload = (await response.json()) as SdlcaBridgeExecuteResponse;
+      payload = await response.json();
     } catch (error) {
       const timedOut = abortController?.timedOut() === true || isAbortError(error);
       const diagnostics = {
@@ -354,68 +354,93 @@ async function executeReviewer(args: {
         args.startedAtIso
       );
     }
-  args.logger?.trace("SDLCA bridge reviewer response received", {
-    bridgeProviderKind: args.providerKind,
-    durationMs,
-    payload: redactBridgeValue(payload),
-    reviewerModel: args.reviewerModel,
-    runId: args.request.runId,
-    status: response.status
-  });
-  const normalization = normalizeBridgeForensicArtifact(
-    payload.result,
-    args.providerKind,
-    args.request.createdAt
-  );
-  const validation = validateForensicArtifact(normalization.result, args.providerKind);
-  if (!validation.artifact) {
-    const diagnostics = {
-      bridgeHttpStatus: response.status,
+
+    if (!isBridgeExecuteResponse(payload)) {
+      const diagnostics = {
+        bridgeHttpStatus: response.status,
+        bridgeProviderKind: args.providerKind,
+        durationMs,
+        payloadSummary: summarizeBridgeResult(payload)
+      };
+      args.logger?.error("SDLCA bridge reviewer response envelope invalid", {
+        bridgeProviderKind: args.providerKind,
+        diagnostics,
+        durationMs,
+        reviewerModel: args.reviewerModel,
+        runId: args.request.runId
+      });
+      return failedReviewerArtifact(
+        args.request.runId,
+        args.reviewerModel,
+        args.providerKind,
+        "sdlca_bridge_forensic_result_invalid",
+        diagnostics,
+        args.startedAtIso
+      );
+    }
+
+    args.logger?.trace("SDLCA bridge reviewer response received", {
       bridgeProviderKind: args.providerKind,
       durationMs,
-      resultSummary: summarizeBridgeResult(payload.result),
-      validationErrors: validation.errors
-    };
-    args.logger?.error("SDLCA bridge reviewer result invalid", {
+      payload: redactBridgeValue(payload),
+      reviewerModel: args.reviewerModel,
+      runId: args.request.runId,
+      status: response.status
+    });
+    const normalization = normalizeBridgeForensicArtifact(
+      payload.result,
+      args.providerKind,
+      args.request.createdAt
+    );
+    const validation = validateForensicArtifact(normalization.result, args.providerKind);
+    if (!validation.artifact) {
+      const diagnostics = {
+        bridgeHttpStatus: response.status,
+        bridgeProviderKind: args.providerKind,
+        durationMs,
+        resultSummary: summarizeBridgeResult(payload.result),
+        validationErrors: validation.errors
+      };
+      args.logger?.error("SDLCA bridge reviewer result invalid", {
+        bridgeProviderKind: args.providerKind,
+        diagnostics,
+        durationMs,
+        reviewerModel: args.reviewerModel,
+        runId: args.request.runId
+      });
+      return failedReviewerArtifact(
+        args.request.runId,
+        args.reviewerModel,
+        args.providerKind,
+        "sdlca_bridge_forensic_result_invalid",
+        diagnostics,
+        args.startedAtIso
+      );
+    }
+
+    args.logger?.info("SDLCA bridge reviewer artifact completed", {
+      artifactUri,
       bridgeProviderKind: args.providerKind,
-      diagnostics,
       durationMs,
       reviewerModel: args.reviewerModel,
       runId: args.request.runId
     });
-    return failedReviewerArtifact(
-      args.request.runId,
-      args.reviewerModel,
-      args.providerKind,
-      "sdlca_bridge_forensic_result_invalid",
-      diagnostics,
-      args.startedAtIso
-    );
-  }
 
-  args.logger?.info("SDLCA bridge reviewer artifact completed", {
-    artifactUri,
-    bridgeProviderKind: args.providerKind,
-    durationMs,
-    reviewerModel: args.reviewerModel,
-    runId: args.request.runId
-  });
-
-  return {
-    artifact: validation.artifact,
-    artifactUri,
-    bridgeProviderKind: args.providerKind,
-    completedAt: new Date().toISOString(),
-    diagnostics: normalization.normalized
-      ? sanitizeDiagnostics({
-          normalizedFromBridgeResult: true,
-          originalResultSummary: summarizeBridgeResult(payload.result)
-        })
-      : undefined,
-    reviewerModel: args.reviewerModel,
-    startedAt: args.startedAtIso,
-    status: "completed"
-  };
+    return {
+      artifact: validation.artifact,
+      artifactUri,
+      bridgeProviderKind: args.providerKind,
+      completedAt: new Date().toISOString(),
+      diagnostics: normalization.normalized
+        ? sanitizeDiagnostics({
+            normalizedFromBridgeResult: true,
+            originalResultSummary: summarizeBridgeResult(payload.result)
+          })
+        : undefined,
+      reviewerModel: args.reviewerModel,
+      startedAt: args.startedAtIso,
+      status: "completed"
+    };
   } finally {
     abortController?.clear();
   }
@@ -690,13 +715,20 @@ function redactBridgeArtifactValue(value: unknown, seen = new WeakSet<object>())
   return Object.fromEntries(
     Object.entries(value).map(([key, child]) => [
       key,
-      isBridgeSensitiveKey(key) ? "[REDACTED]" : redactBridgeArtifactValue(child, seen)
+      shouldRedactBridgeArtifactKey(key, child) ? "[REDACTED]" : redactBridgeArtifactValue(child, seen)
     ])
   );
 }
 
-function isBridgeSensitiveKey(key: string): boolean {
-  return bridgeSensitiveKeyPattern.test(key) && !bridgeTokenTelemetryKeyPattern.test(key);
+function shouldRedactBridgeArtifactKey(key: string, value: unknown): boolean {
+  if (!bridgeSensitiveKeyPattern.test(key)) return false;
+  if (!bridgeTokenTelemetryKeyPattern.test(key)) return true;
+  return !isBridgeTokenTelemetryValue(value);
+}
+
+function isBridgeTokenTelemetryValue(value: unknown): boolean {
+  if (typeof value === "number" || isRecord(value)) return true;
+  return Array.isArray(value) && value.every(isBridgeTokenTelemetryValue);
 }
 
 function redactFreeText(value: string): string {
@@ -814,6 +846,10 @@ function summarizeBridgeResult(raw: unknown): Record<string, unknown> {
     keys: Object.keys(raw).sort(),
     providerKind: raw.providerKind
   });
+}
+
+function isBridgeExecuteResponse(value: unknown): value is SdlcaBridgeExecuteResponse {
+  return isRecord(value) && "result" in value;
 }
 
 function sanitizeDiagnostics(value: Record<string, unknown>): Record<string, unknown> {

@@ -759,6 +759,7 @@ async function dynamicRefreshStatusResponse(
   env: NodeJS.ProcessEnv
 ): Promise<IntegrationContractResponse> {
   const jobId = requestPath.split("/").at(-1) ?? "";
+  pruneTerminalRefreshJobs();
   const terminalJob = terminalDynamicRefreshJobs.get(jobId);
   if (terminalJob && !activeDynamicRefreshJobIds.has(jobId)) {
     return jsonResponse(

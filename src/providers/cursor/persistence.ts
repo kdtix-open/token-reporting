@@ -15,6 +15,8 @@ import type {
   CursorTeamSpendResponse
 } from "./types";
 
+const cursorRedactionSchemeVersion = "cursor-hmac-v1";
+
 interface PersistReportArgs {
   /** Daily usage response (legacy) — wrapped under `daily` in the new snapshot. */
   report: CursorDailyUsageResponse;
@@ -51,9 +53,9 @@ export async function persistCursorDailyUsageReport({
   const redactedSnapshot = redactCursorSnapshot(snapshot, redactionSalt);
 
   const accumulatedPath = accumulatedPathForLatest(outputPath);
-  const existing = await readJsonIfExists<typeof snapshot>(accumulatedPath);
+  const existing = await readJsonIfExists<CursorSnapshot>(accumulatedPath);
   const accumulated = existing
-    ? mergeCursorSnapshots(redactCursorSnapshot(existing, redactionSalt), redactedSnapshot)
+    ? mergeCursorSnapshots(sanitizeExistingCursorSnapshot(existing, redactionSalt), redactedSnapshot)
     : redactedSnapshot;
 
   await mkdir(path.dirname(outputPath), { recursive: true });
@@ -96,7 +98,21 @@ function redactCursorSnapshot(snapshot: CursorSnapshot, redactionSalt: string): 
             }))
           }
         }
-      : {})
+      : {}),
+    redactionKeyFingerprint: cursorRedactionKeyFingerprint(redactionSalt),
+    redactionSchemeVersion: cursorRedactionSchemeVersion
+  };
+}
+
+function sanitizeExistingCursorSnapshot(
+  snapshot: CursorSnapshot,
+  redactionSalt: string
+): CursorSnapshot {
+  const redacted = redactCursorSnapshot(snapshot, redactionSalt);
+  return {
+    ...redacted,
+    redactionKeyFingerprint: snapshot.redactionKeyFingerprint,
+    redactionSchemeVersion: snapshot.redactionSchemeVersion
   };
 }
 
@@ -146,11 +162,14 @@ function stableCursorHash(value: string, redactionSalt: string): string {
     .slice(0, 16);
 }
 
-function mergeCursorSnapshots<T extends {
-  daily: CursorDailyUsageResponse;
-  spend?: CursorTeamSpendResponse;
-  events?: CursorFilteredUsageEventsResponse;
-}>(existing: T, incoming: T): T {
+function cursorRedactionKeyFingerprint(redactionSalt: string): string {
+  return createHmac("sha256", redactionSalt)
+    .update("cursor-redaction-key-fingerprint-v1")
+    .digest("hex")
+    .slice(0, 16);
+}
+
+function mergeCursorSnapshots(existing: CursorSnapshot, incoming: CursorSnapshot): CursorSnapshot {
   if (shouldResetCursorAccumulatedHistoryForRedactionMigration(existing, incoming)) {
     return incoming;
   }
@@ -210,14 +229,26 @@ function mergeCursorSnapshots<T extends {
           }
         }
       : {})
-  } as T;
+  };
 }
 
 function shouldResetCursorAccumulatedHistoryForRedactionMigration(
-  existing: Pick<CursorSnapshot, "daily" | "events">,
-  incoming: Pick<CursorSnapshot, "daily" | "events">
+  existing: CursorSnapshot,
+  incoming: CursorSnapshot
 ): boolean {
-  return hasLegacyCursorAlias(existing) && hasHmacCursorAlias(incoming);
+  return (
+    (hasLegacyCursorAlias(existing) && hasHmacCursorAlias(incoming)) ||
+    cursorRedactionKeyChanged(existing, incoming)
+  );
+}
+
+function cursorRedactionKeyChanged(existing: CursorSnapshot, incoming: CursorSnapshot): boolean {
+  if (!hasHmacCursorAlias(existing) || !hasHmacCursorAlias(incoming)) return false;
+  if (!incoming.redactionKeyFingerprint || !incoming.redactionSchemeVersion) return false;
+  return (
+    existing.redactionKeyFingerprint !== incoming.redactionKeyFingerprint ||
+    existing.redactionSchemeVersion !== incoming.redactionSchemeVersion
+  );
 }
 
 function hasLegacyCursorAlias(snapshot: Pick<CursorSnapshot, "daily" | "events">): boolean {

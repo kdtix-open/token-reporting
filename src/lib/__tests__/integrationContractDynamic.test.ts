@@ -749,6 +749,72 @@ describe("integrationContractDynamic", () => {
     expect(getJob).not.toHaveProperty("persistenceWarning");
   });
 
+  it("createDynamicIntegrationContractHandler_RefreshStatus_DoesNotRetryExpiredTerminalCache", async () => {
+    const baseNowMs = Date.parse("2026-06-07T16:46:00.000Z");
+    const nowSpy = vi.spyOn(Date, "now").mockReturnValue(baseNowMs);
+    let getJob: Record<string, unknown> | undefined;
+    let setCalls = 0;
+    const refreshJobStore = {
+      async get() {
+        return getJob;
+      },
+      async set(_jobId: string, job: Record<string, unknown>) {
+        setCalls += 1;
+        if (setCalls === 1) {
+          getJob = job;
+          return;
+        }
+        throw new Error("disk full");
+      }
+    };
+    const refreshExecutor = vi.fn().mockResolvedValue({
+      providerResults: [
+        {
+          accumulatedThrough: "2026-06-07",
+          completedAt: "2026-06-07T16:46:08.000Z",
+          providerId: "codex",
+          status: "completed"
+        }
+      ]
+    });
+    const handler = createDynamicIntegrationContractHandler({
+      asyncRefresh: true,
+      loadSummaries: async () => summaries,
+      now: () => new Date("2026-06-07T16:46:00.000Z"),
+      refreshExecutor,
+      refreshJobStore
+    });
+
+    try {
+      await handler({
+        body: {
+          providers: ["codex"]
+        },
+        method: "POST",
+        path: "/api/refresh"
+      });
+      await vi.waitFor(() => expect(setCalls).toBeGreaterThanOrEqual(2));
+
+      nowSpy.mockReturnValue(baseNowMs + 31 * 60 * 1000);
+      const statusResponse = await handler({
+        method: "GET",
+        path: "/api/refresh/dynamic-refresh-20260607T164600000Z"
+      });
+
+      expect(statusResponse.status).toBe(200);
+      expect(statusResponse.body).toMatchObject({
+        degradedReason: "refresh_job_worker_not_active_after_restart",
+        jobId: "dynamic-refresh-20260607T164600000Z",
+        providerResults: [expect.objectContaining({ providerId: "codex", status: "failed" })],
+        status: "failed"
+      });
+      expect(statusResponse.body).not.toHaveProperty("persistenceRetryAttempts");
+      expect(setCalls).toBe(4);
+    } finally {
+      nowSpy.mockRestore();
+    }
+  });
+
   it("createDynamicIntegrationContractHandler_RefreshStatus_ReconcilesPersistedRunningJobAfterRestart", async () => {
     const refreshJobStore = {
       get: vi.fn(async () => ({

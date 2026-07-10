@@ -153,8 +153,11 @@ describe("sdlcaBridgeForensics", () => {
             tokenUsage: {
               apiToken: "nested-api-secret",
               inputTokens: 123,
+              requestTokens: ["array-opaque-token-secret"],
+              tokenUsage: "nested-opaque-token-secret",
               totalTokens: 456
             },
+            tokens: "opaque-token-secret",
             tokenValue: "token-secret"
           }
         })
@@ -184,10 +187,61 @@ describe("sdlcaBridgeForensics", () => {
       tokenUsage: {
         apiToken: "[REDACTED]",
         inputTokens: 123,
+        requestTokens: "[REDACTED]",
+        tokenUsage: "[REDACTED]",
         totalTokens: 456
       },
+      tokens: "[REDACTED]",
       tokenValue: "[REDACTED]"
     });
+  });
+
+  it("createSdlcaBridgeForensicExecutor_NullSuccessEnvelope_ReturnsFailedArtifact", async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse({
+          result: [
+            {
+              forensicCapabilities,
+              kind: "codex",
+              providerId: "codex-reviewer",
+              providerName: "Codex reviewer",
+              resolvedExecutable: "/usr/bin/codex"
+            }
+          ]
+        })
+      )
+      .mockResolvedValueOnce(jsonResponse(null));
+
+    const executor = createSdlcaBridgeForensicExecutor({
+      bridgeToken: "bridge-token",
+      bridgeUrl: "http://127.0.0.1:4818",
+      fetcher,
+      workingDirectory: "/Users/ckreager/repos/kdtix/token_reporting"
+    });
+
+    const result = await executor({
+      createdAt: "2026-06-07T17:30:00.000Z",
+      evidencePacket,
+      huggingFaceCandidateSetId: "hf-candidates-test",
+      reviewerModels: ["gpt"],
+      runId: "dynamic-forensic-20260607T173000000Z",
+      usageSnapshotId: "dynamic-usage-codex-2026-06-07"
+    });
+
+    expect(result.status).toBe("degraded");
+    expect(result.reviewerArtifacts).toEqual([
+      expect.objectContaining({
+        bridgeProviderKind: "codex",
+        degradedReason: "sdlca_bridge_forensic_result_invalid",
+        diagnostics: expect.objectContaining({
+          payloadSummary: { type: "object" }
+        }),
+        reviewerModel: "gpt",
+        status: "failed"
+      })
+    ]);
   });
 
   it("createSdlcaBridgeForensicExecutor_RealSdlcaProviderResultShape_RunsReviewerArtifact", async () => {
