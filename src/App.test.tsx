@@ -324,6 +324,83 @@ describe("App", () => {
     expect(screen.getByText("Snapshots reloaded after refresh response.")).toBeInTheDocument();
   });
 
+  it("refresh button polls running jobs before reloading snapshots", async () => {
+    const statusUrl = `${sameOriginRefreshUrl}/dynamic-refresh-003`;
+    let statusCalls = 0;
+    const fetchStub = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url === sameOriginRefreshUrl) {
+        return Promise.resolve({
+          json: async () => ({
+            jobId: "dynamic-refresh-003",
+            providerResults: [{ providerId: "codex", status: "running" }],
+            status: "running"
+          }),
+          ok: true,
+          status: 202
+        });
+      }
+      if (url === statusUrl) {
+        statusCalls += 1;
+        if (statusCalls === 1) {
+          return Promise.resolve({
+            json: async () => ({
+              forensicRun: {
+                reviewerArtifacts: [{ reviewerModel: "sonnet", status: "queued" }],
+                status: "queued"
+              },
+              jobId: "dynamic-refresh-003",
+              providerResults: [{ providerId: "codex", status: "running" }],
+              status: "running"
+            }),
+            ok: true,
+            status: 200
+          });
+        }
+
+        return Promise.resolve({
+          json: async () => ({
+            jobId: "dynamic-refresh-003",
+            providerResults: [{ providerId: "codex", status: "completed" }],
+            status: "completed"
+          }),
+          ok: true,
+          status: 200
+        });
+      }
+
+      return Promise.resolve({ ok: false });
+    });
+    vi.stubGlobal("fetch", fetchStub);
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(fetchStub).toHaveBeenCalledWith(
+        expect.stringContaining("/data/github-copilot/accumulated-metadata.json")
+      );
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /Refresh Report/i }));
+
+    expect(await screen.findByText("Refresh job dynamic-refresh-003 running")).toBeInTheDocument();
+    expect(screen.getByText("codex running")).toBeInTheDocument();
+    expect(screen.getByText("sonnet queued")).toBeInTheDocument();
+    expect(screen.getAllByText("Running").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Queued").length).toBeGreaterThan(0);
+    expect(
+      await screen.findByText("Refresh job dynamic-refresh-003 completed", undefined, {
+        timeout: 5_000
+      })
+    ).toBeInTheDocument();
+    const statusCallIndex = fetchStub.mock.calls.findIndex(([input]) => String(input) === statusUrl);
+    const reloadCallIndex = fetchStub.mock.calls.findIndex(([input]) =>
+      String(input).includes("/data/github-copilot/accumulated-metadata.json?t=")
+    );
+    expect(statusCallIndex).toBeGreaterThan(-1);
+    expect(reloadCallIndex).toBeGreaterThan(statusCallIndex);
+  });
+
   it("refresh button keeps the report freshness visible when dynamic refresh is blocked", async () => {
     const fetchStub = vi.fn().mockImplementation((input: RequestInfo | URL) => {
       const url = String(input);

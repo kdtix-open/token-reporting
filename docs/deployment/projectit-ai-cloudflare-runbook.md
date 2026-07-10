@@ -25,6 +25,7 @@ mac-local LaunchAgent used by `dev.projectit.ai/tools/token-reporting`:
 
 ```bash
 TOKEN_REPORTING_BASE_PATH=/tools/token-reporting npm run build
+npm run startup:repair-bridge-env
 TOKEN_REPORTING_NODE_BIN=/opt/homebrew/bin/node npm run startup:install:macos
 ```
 
@@ -63,6 +64,8 @@ npx wrangler dev --config deploy/cloudflare/wrangler.jsonc
 | `TOKEN_REPORTING_HOST` | Bind address. Use `0.0.0.0` when Docker Desktop Caddy reaches the host through `host.docker.internal`. |
 | `TOKEN_REPORTING_SDLCA_BRIDGE_URL` | Optional SDLCA local bridge URL for forensic reviewer execution. |
 | `TOKEN_REPORTING_SDLCA_BRIDGE_TOKEN` | Optional SDLCA bridge bearer token; never commit or log raw value. |
+| `TOKEN_REPORTING_SDLCA_BRIDGE_WORKING_DIRECTORY` | Working directory sent to the local bridge for forensic reviewer execution. |
+| `TOKEN_REPORTING_SDLCA_BRIDGE_TIMEOUT_MS` | Bridge forensic execution timeout, default `120000`. |
 | `DEBUG` / `VERBOSE` | `0` to `3`; use `3` during UAT troubleshooting. |
 
 ## Tenant and Secret Boundaries
@@ -87,6 +90,8 @@ npx wrangler dev --config deploy/cloudflare/wrangler.jsonc
 |---|---|---|
 | `https://dev.projectit.ai/tools/token-reporting` returns `502` | Caddy is up but nothing is listening on host port `8095` | Run `lsof -nP -iTCP:8095 -sTCP:LISTEN`, then `TOKEN_REPORTING_NODE_BIN=/opt/homebrew/bin/node npm run startup:install:macos`. |
 | LaunchAgent is loaded but exits quickly | Node path moved or dependencies/dist are missing | Re-run `npm install`, `TOKEN_REPORTING_BASE_PATH=/tools/token-reporting npm run build`, then reinstall the LaunchAgent with a current absolute `TOKEN_REPORTING_NODE_BIN`. |
+| Refresh shows all provider scripts failed with `npm_not_found_or_path_missing` | launchd started the service without a useful `PATH` | Re-run `TOKEN_REPORTING_NODE_BIN=/opt/homebrew/bin/node npm run startup:install:macos`; the installer persists `/opt/homebrew/bin`, `/usr/local/bin`, and system paths into the LaunchAgent. |
+| Forensic reviewers are not dispatched and operational status says `not_configured` | Token Reporting is up but the SDLCA bridge URL/token are absent from `TOKEN_REPORTING_ADMIN_ENV_FILE` | Run `npm run startup:repair-bridge-env`, restart the LaunchAgent, and confirm `/api/operational-status` reports `configured`. |
 | UI loads but refresh is blocked | Read-only mode or missing Admin/API credential file | Confirm `TOKEN_REPORTING_READ_ONLY=false` for the operator host and that `TOKEN_REPORTING_ADMIN_ENV_FILE` points to the local credential file. Do not print credential values. |
 | WSL UAT shows KDTIX data | WSL service is using the KDTIX credential file or data root | Stop the WSL service, point it at sandbox/mock credentials and an isolated `TOKEN_REPORTING_DATA_ROOT`, then restart with `npm run startup:install:wsl`. |
 
@@ -96,8 +101,10 @@ npx wrangler dev --config deploy/cloudflare/wrangler.jsonc
 - `npm run typecheck`
 - `npm run lint`
 - `npm run build:projectit`
+- `npm run startup:repair-bridge-env`
 - `TOKEN_REPORTING_NODE_BIN=/opt/homebrew/bin/node npm run startup:install:macos`
 - `curl http://127.0.0.1:8095/tools/token-reporting/api/integration/contract`
+- `curl http://127.0.0.1:8095/tools/token-reporting/api/operational-status`
 - `docker compose -f deploy/local-docker/docker-compose.yml up --build`
 - `docker compose -f deploy/hybrid-cloudflare/docker-compose.yml up --build`
 - `curl http://127.0.0.1:8081/tools/token-reporting/api/integration/contract`

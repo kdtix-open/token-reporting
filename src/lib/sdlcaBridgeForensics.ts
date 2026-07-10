@@ -6,6 +6,8 @@ import type {
 import { redactLogValue, type ObservabilityLogger } from "./observabilityLogger";
 
 type SdlcaBridgeProviderKind = "claude" | "codex" | "copilot" | "cursor";
+const bridgeSensitiveKeyPattern =
+  /(?:api[_-]?key|authorization|bearer|credential|password|secret|token)/i;
 
 interface SdlcaBridgeProvider {
   forensicCapabilities?: {
@@ -58,30 +60,52 @@ export function createSdlcaBridgeForensicExecutor(
           reviewerModel,
           runId: request.runId
         });
-        reviewerArtifacts.push(
-          failedReviewerArtifact(
-            request.runId,
-            reviewerModel,
-            providerKind,
-            "bridge_forensic_provider_unavailable"
-          )
+        const artifact = failedReviewerArtifact(
+          request.runId,
+          reviewerModel,
+          providerKind,
+          "bridge_forensic_provider_unavailable"
         );
+        reviewerArtifacts.push(artifact);
+        try {
+          await request.onReviewerArtifact?.(artifact, reviewerArtifacts);
+        } catch (error) {
+          logger?.error(
+            "SDLCA bridge reviewer progress callback failed",
+            {
+              reviewerModel,
+              runId: request.runId
+            },
+            error
+          );
+        }
         continue;
       }
 
-      reviewerArtifacts.push(
-        await executeReviewer({
-          bridgeToken: options.bridgeToken,
-          bridgeUrl,
-          fetcher,
-          logger,
-          providerKind,
-          request,
-          reviewerModel,
-          timeoutMs: options.timeoutMs,
-          workingDirectory: options.workingDirectory
-        })
-      );
+      const artifact = await executeReviewer({
+        bridgeToken: options.bridgeToken,
+        bridgeUrl,
+        fetcher,
+        logger,
+        providerKind,
+        request,
+        reviewerModel,
+        timeoutMs: options.timeoutMs,
+        workingDirectory: options.workingDirectory
+      });
+      reviewerArtifacts.push(artifact);
+      try {
+        await request.onReviewerArtifact?.(artifact, reviewerArtifacts);
+      } catch (error) {
+        logger?.error(
+          "SDLCA bridge reviewer progress callback failed",
+          {
+            reviewerModel,
+            runId: request.runId
+          },
+          error
+        );
+      }
     }
 
     const status = reviewerArtifacts.every((artifact) => artifact.status === "completed")
@@ -127,7 +151,7 @@ async function fetchForensicProviders(
   const payload = (await response.json()) as unknown;
   logger?.trace("SDLCA bridge provider discovery response received", {
     durationMs,
-    payload
+    payload: redactBridgeValue(payload)
   });
   const providers = readBridgeProviderEntries(payload);
   const forensicProviders = new Set(
@@ -180,11 +204,12 @@ async function executeReviewer(args: {
     timeoutMs: args.timeoutMs
   });
   args.logger?.trace("SDLCA bridge reviewer dispatch payload", {
-    body,
+    body: redactBridgeValue(body),
     reviewerModel: args.reviewerModel,
     runId: args.request.runId
   });
   const startedAt = Date.now();
+  const startedAtIso = new Date(startedAt).toISOString();
   const response = await args.fetcher(`${args.bridgeUrl}/execute`, {
     body: JSON.stringify(body),
     headers: {
@@ -215,7 +240,8 @@ async function executeReviewer(args: {
       args.reviewerModel,
       args.providerKind,
       `sdlca_bridge_forensic_execute_failed_${response.status}`,
-      diagnostics
+      diagnostics,
+      startedAtIso
     );
   }
 
@@ -223,7 +249,7 @@ async function executeReviewer(args: {
   args.logger?.trace("SDLCA bridge reviewer response received", {
     bridgeProviderKind: args.providerKind,
     durationMs,
-    payload,
+    payload: redactBridgeValue(payload),
     reviewerModel: args.reviewerModel,
     runId: args.request.runId,
     status: response.status
@@ -249,7 +275,8 @@ async function executeReviewer(args: {
       args.reviewerModel,
       args.providerKind,
       "sdlca_bridge_forensic_result_invalid",
-      diagnostics
+      diagnostics,
+      startedAtIso
     );
   }
 
@@ -262,10 +289,12 @@ async function executeReviewer(args: {
   });
 
   return {
-    artifact: validation.artifact,
+    artifact: sanitizeForensicArtifact(validation.artifact),
     artifactUri,
     bridgeProviderKind: args.providerKind,
+    completedAt: new Date().toISOString(),
     reviewerModel: args.reviewerModel,
+    startedAt: startedAtIso,
     status: "completed"
   };
 }
@@ -275,14 +304,17 @@ function failedReviewerArtifact(
   reviewerModel: string,
   providerKind: SdlcaBridgeProviderKind,
   degradedReason: string,
-  diagnostics?: Record<string, unknown>
+  diagnostics?: Record<string, unknown>,
+  startedAt?: string
 ): DynamicForensicReviewerArtifact {
   return {
     artifactUri: reviewerArtifactUri(runId, reviewerModel),
     bridgeProviderKind: providerKind,
+    completedAt: new Date().toISOString(),
     degradedReason,
     diagnostics: diagnostics ? sanitizeDiagnostics(diagnostics) : undefined,
     reviewerModel,
+    startedAt,
     status: "failed"
   };
 }
@@ -320,6 +352,57 @@ function validateForensicArtifact(
   }
 
   return { artifact: raw, errors };
+}
+
+function redactBridgeValue(value: unknown): unknown {
+  return redactBridgeStrings(redactLogValue(value));
+}
+
+function redactBridgeStrings(value: unknown): unknown {
+  if (typeof value === "string") return redactFreeText(value);
+  if (Array.isArray(value)) return value.map(redactBridgeStrings);
+  if (!isRecord(value)) return value;
+  return Object.fromEntries(
+    Object.entries(value).map(([key, child]) => [key, redactBridgeStrings(child)])
+  );
+}
+
+function redactBridgeArtifactValue(
+  value: unknown,
+  seen = new WeakSet<object>()
+): unknown {
+  if (typeof value === "string") return redactFreeText(value);
+  if (typeof value !== "object" || value === null) return value;
+  if (seen.has(value)) return "[Circular]";
+
+  seen.add(value);
+  if (Array.isArray(value)) return value.map((item) => redactBridgeArtifactValue(item, seen));
+
+  return Object.fromEntries(
+    Object.entries(value).map(([key, child]) => [
+      key,
+      bridgeSensitiveKeyPattern.test(key) ? "[REDACTED]" : redactBridgeArtifactValue(child, seen)
+    ])
+  );
+}
+
+function redactFreeText(value: string): string {
+  return value
+    .replace(
+      /(^|[{\s,])("?[A-Za-z0-9_.-]*(?:api[_-]?key|authorization|bearer|credential|password|secret|token)[A-Za-z0-9_.-]*"?\s*[:=]\s*)(["'])[^"'\r\n]*(\3)/giu,
+      "$1$2$3[REDACTED]$4"
+    )
+    .replace(/\b(authorization\s*:)(?=\s*(?!\[REDACTED\])[^"'\s])\s*[^\r\n,;)}\]]+/giu, "$1 [REDACTED]")
+    .replace(/\b(bearer)(?=\s+(?!\[REDACTED\])[^"'\s])\s+[^\r\n,;)}\]]+/giu, "$1 [REDACTED]")
+    .replace(
+      /\b([A-Za-z0-9_.-]*(?:api[_-]?key|credential|password|secret|token)[A-Za-z0-9_.-]*\s*[:=])(?=\s*(?!\[REDACTED\])[^"'\s])\s*[^\r\n,;)}\]]+/giu,
+      "$1 [REDACTED]"
+    )
+    .replace(/\bsk-[A-Za-z0-9_-]{12,}\b/gu, "[REDACTED]");
+}
+
+function sanitizeForensicArtifact(artifact: Record<string, unknown>): Record<string, unknown> {
+  return redactBridgeArtifactValue(artifact) as Record<string, unknown>;
 }
 
 async function readBridgeErrorSummary(response: Response): Promise<string | undefined> {
@@ -369,16 +452,11 @@ function summarizeBridgeResult(raw: unknown): Record<string, unknown> {
 }
 
 function sanitizeDiagnostics(value: Record<string, unknown>): Record<string, unknown> {
-  return redactLogValue(value) as Record<string, unknown>;
+  return redactBridgeValue(value) as Record<string, unknown>;
 }
 
 function sanitizeDiagnosticString(value: string): string {
-  return value
-    .replace(
-      /\b[A-Za-z0-9_-]*(?:api[_-]?key|authorization|bearer|credential|password|secret|token)[A-Za-z0-9_-]*\b\s*[:=]\s*[^\s,;"')]+/gi,
-      "[REDACTED]"
-    )
-    .slice(0, 2_000);
+  return redactFreeText(value).slice(0, 2_000);
 }
 
 function isForensicProvider(value: unknown): value is SdlcaBridgeProvider {

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { createSdlcaBridgeForensicExecutor } from "../sdlcaBridgeForensics";
+import type { ObservabilityLogger } from "../observabilityLogger";
 
 const forensicCapabilities = {
   artifactKinds: ["local_model_forensic_review"],
@@ -390,7 +391,399 @@ describe("sdlcaBridgeForensics", () => {
       status: "failed"
     });
   });
+
+  it("createSdlcaBridgeForensicExecutor_InvalidCurrentSchemaResult_IsNotNormalized", async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse({
+          result: [
+            {
+              forensicCapabilities,
+              kind: "claude",
+              providerId: "claude-reviewer",
+              providerName: "Claude Reviewer",
+              resolvedExecutable: "/usr/bin/claude"
+            }
+          ]
+        })
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({
+          result: forensicArtifact("codex", "Wrong provider result")
+        })
+      );
+
+    const executor = createSdlcaBridgeForensicExecutor({
+      bridgeToken: "bridge-token",
+      bridgeUrl: "http://127.0.0.1:4818",
+      fetcher,
+      workingDirectory: "/Users/ckreager/repos/kdtix/token_reporting"
+    });
+
+    const result = await executor({
+      createdAt: "2026-06-07T17:30:00.000Z",
+      evidencePacket,
+      huggingFaceCandidateSetId: "hf-candidates-test",
+      reviewerModels: ["opus"],
+      runId: "dynamic-forensic-20260607T173000000Z",
+      usageSnapshotId: "dynamic-usage-codex-2026-06-07"
+    });
+
+    expect(result.status).toBe("degraded");
+    expect(result.reviewerArtifacts[0]).toMatchObject({
+      bridgeProviderKind: "claude",
+      degradedReason: "sdlca_bridge_forensic_result_invalid",
+      diagnostics: {
+        bridgeHttpStatus: 200,
+        bridgeProviderKind: "claude",
+        validationErrors: ["providerKind_expected_claude"]
+      },
+      reviewerModel: "opus",
+      status: "failed"
+    });
+  });
+
+  it("createSdlcaBridgeForensicExecutor_SchemaOnlyBridgeResult_DoesNotNormalizeSyntheticArtifact", async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse({
+          result: [
+            {
+              forensicCapabilities,
+              kind: "claude",
+              providerId: "claude-reviewer",
+              providerName: "Claude Reviewer",
+              resolvedExecutable: "/usr/bin/claude"
+            }
+          ]
+        })
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({
+          result: {
+            schemaVersion: "sdlca.bridge.forensic.v0"
+          }
+        })
+      );
+
+    const executor = createSdlcaBridgeForensicExecutor({
+      bridgeToken: "bridge-token",
+      bridgeUrl: "http://127.0.0.1:4818",
+      fetcher,
+      workingDirectory: "/Users/ckreager/repos/kdtix/token_reporting"
+    });
+
+    const result = await executor({
+      createdAt: "2026-06-07T17:30:00.000Z",
+      evidencePacket,
+      huggingFaceCandidateSetId: "hf-candidates-test",
+      reviewerModels: ["opus"],
+      runId: "dynamic-forensic-20260607T173000000Z",
+      usageSnapshotId: "dynamic-usage-codex-2026-06-07"
+    });
+
+    expect(result.status).toBe("degraded");
+    expect(result.reviewerArtifacts[0]).toMatchObject({
+      bridgeProviderKind: "claude",
+      degradedReason: "sdlca_bridge_forensic_result_invalid",
+      diagnostics: {
+        bridgeHttpStatus: 200,
+        bridgeProviderKind: "claude",
+        resultSummary: expect.objectContaining({
+          keys: ["schemaVersion"]
+        }),
+        validationErrors: expect.arrayContaining([
+          "artifactSchemaVersion_expected_sdlca.bridge.forensic.v0"
+        ])
+      },
+      reviewerModel: "opus",
+      status: "failed"
+    });
+    expect(result.reviewerArtifacts[0]?.artifact).toBeUndefined();
+  });
+
+  it("createSdlcaBridgeForensicExecutor_CurrentSchemaArtifact_RedactsQuotedSecrets", async () => {
+    const traceContexts: Record<string, unknown>[] = [];
+    const logger = createCapturingLogger(traceContexts);
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse({
+          result: [
+            {
+              forensicCapabilities,
+              kind: "claude",
+              providerId: "claude-reviewer",
+              providerName: "Claude Reviewer",
+              resolvedExecutable: "/usr/bin/claude"
+            }
+          ]
+        })
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({
+          result: {
+            ...forensicArtifact("claude", "Quoted secret perspective"),
+            findings: [
+              {
+                details: "password: correct horse battery staple",
+                evidenceRefs: ['{"api_key": "alpha beta,gamma"}', "Authorization: Bearer delta echo"],
+                severity: "high",
+                title: "credential leaked"
+              }
+            ],
+            recommendations: ['Rotate TOKEN_REPORTING_SDLCA_BRIDGE_TOKEN="alpha beta,gamma".'],
+            summary: 'credential: "correct horse battery staple"'
+          }
+        })
+      );
+
+    const executor = createSdlcaBridgeForensicExecutor({
+      bridgeToken: "bridge-token",
+      bridgeUrl: "http://127.0.0.1:4818",
+      fetcher,
+      logger,
+      workingDirectory: "/Users/ckreager/repos/kdtix/token_reporting"
+    });
+
+    const result = await executor({
+      createdAt: "2026-06-07T17:30:00.000Z",
+      evidencePacket,
+      huggingFaceCandidateSetId: "hf-candidates-test",
+      reviewerModels: ["sonnet"],
+      runId: "dynamic-forensic-20260607T173000000Z",
+      usageSnapshotId: "dynamic-usage-codex-2026-06-07"
+    });
+
+    expect(result.status).toBe("completed");
+    expect(result.reviewerArtifacts[0]).toMatchObject({
+      artifact: expect.objectContaining({
+        findings: [
+          expect.objectContaining({
+            details: "password: [REDACTED]",
+            evidenceRefs: ['{"api_key": "[REDACTED]"}', "Authorization: [REDACTED]"]
+          })
+        ],
+        recommendations: ['Rotate TOKEN_REPORTING_SDLCA_BRIDGE_TOKEN="[REDACTED]".'],
+        summary: 'credential: "[REDACTED]"'
+      }),
+      bridgeProviderKind: "claude",
+      reviewerModel: "sonnet",
+      status: "completed"
+    });
+    const serializedResult = JSON.stringify(result);
+    const serializedTraceContexts = JSON.stringify(traceContexts);
+    expect(serializedResult).not.toContain("correct horse battery staple");
+    expect(serializedResult).not.toContain("alpha beta,gamma");
+    expect(serializedResult).not.toContain("delta echo");
+    expect(serializedTraceContexts).toContain("[REDACTED]");
+    expect(serializedTraceContexts).not.toContain("correct horse battery staple");
+    expect(serializedTraceContexts).not.toContain("alpha beta,gamma");
+    expect(serializedTraceContexts).not.toContain("delta echo");
+  });
+
+  it("createSdlcaBridgeForensicExecutor_CurrentSchemaArtifact_PreservesLargeArtifactShape", async () => {
+    const longSummary = "A".repeat(2_500);
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse({
+          result: [
+            {
+              forensicCapabilities,
+              kind: "claude",
+              providerId: "claude-reviewer",
+              providerName: "Claude Reviewer",
+              resolvedExecutable: "/usr/bin/claude"
+            }
+          ]
+        })
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({
+          result: {
+            ...forensicArtifact("claude", longSummary),
+            api_key: "sk-test_1234567890abcdef",
+            findings: Array.from({ length: 105 }, (_, index) => ({
+              details: index === 104 ? "token=super-secret" : `evidence ${index}`,
+              severity: "info",
+              title: `Finding ${index}`
+            })),
+            recommendations: ["Keep all 105 findings for forensic review."]
+          }
+        })
+      );
+
+    const executor = createSdlcaBridgeForensicExecutor({
+      bridgeToken: "bridge-token",
+      bridgeUrl: "http://127.0.0.1:4818",
+      fetcher,
+      workingDirectory: "/Users/ckreager/repos/kdtix/token_reporting"
+    });
+
+    const result = await executor({
+      createdAt: "2026-06-07T17:30:00.000Z",
+      evidencePacket,
+      huggingFaceCandidateSetId: "hf-candidates-test",
+      reviewerModels: ["sonnet"],
+      runId: "dynamic-forensic-20260607T173000000Z",
+      usageSnapshotId: "dynamic-usage-codex-2026-06-07"
+    });
+    const artifact = result.reviewerArtifacts[0]?.artifact as
+      | { api_key?: string; findings?: unknown[]; summary?: string }
+      | undefined;
+
+    expect(result.status).toBe("completed");
+    expect(artifact?.summary).toHaveLength(2_500);
+    expect(artifact?.findings).toHaveLength(105);
+    expect(artifact?.api_key).toBe("[REDACTED]");
+    expect(JSON.stringify(artifact)).not.toContain("super-secret");
+    expect(JSON.stringify(artifact)).not.toContain("sk-test_1234567890abcdef");
+  });
+
+  it("createSdlcaBridgeForensicExecutor_LegacyBridgeResult_IsNotNormalized", async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse({
+          result: [
+            {
+              forensicCapabilities,
+              kind: "claude",
+              providerId: "claude-reviewer",
+              providerName: "Claude Reviewer",
+              resolvedExecutable: "/usr/bin/claude"
+            }
+          ]
+        })
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({
+          result: {
+            bridgeProviderKind: "claude",
+            findings: [
+              {
+                details: "TOKEN_REPORTING_SDLCA_BRIDGE_TOKEN=super-secret",
+                severity: "critical",
+                title: "credential leaked"
+              }
+            ],
+            recommendations: ["Rotate sk-test_1234567890abcd before sharing."],
+            reviewerModel: "sonnet",
+            schemaVersion: "sdlca.bridge.forensic.v0",
+            summary: "credential: super-secret"
+          }
+        })
+      );
+
+    const executor = createSdlcaBridgeForensicExecutor({
+      bridgeToken: "bridge-token",
+      bridgeUrl: "http://127.0.0.1:4818",
+      fetcher,
+      workingDirectory: "/Users/ckreager/repos/kdtix/token_reporting"
+    });
+
+    const result = await executor({
+      createdAt: "2026-06-07T17:30:00.000Z",
+      evidencePacket,
+      huggingFaceCandidateSetId: "hf-candidates-test",
+      reviewerModels: ["sonnet"],
+      runId: "dynamic-forensic-20260607T173000000Z",
+      usageSnapshotId: "dynamic-usage-codex-2026-06-07"
+    });
+
+    expect(result.status).toBe("degraded");
+    expect(result.reviewerArtifacts[0]).toMatchObject({
+      bridgeProviderKind: "claude",
+      degradedReason: "sdlca_bridge_forensic_result_invalid",
+      diagnostics: {
+        bridgeHttpStatus: 200,
+        bridgeProviderKind: "claude",
+        validationErrors: expect.arrayContaining([
+          "artifactSchemaVersion_expected_sdlca.bridge.forensic.v0"
+        ])
+      },
+      reviewerModel: "sonnet",
+      status: "failed"
+    });
+  });
+
+  it("createSdlcaBridgeForensicExecutor_LegacyBridgeResultForDifferentProvider_IsNotNormalized", async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse({
+          result: [
+            {
+              forensicCapabilities,
+              kind: "claude",
+              providerId: "claude-reviewer",
+              providerName: "Claude Reviewer",
+              resolvedExecutable: "/usr/bin/claude"
+            }
+          ]
+        })
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({
+          result: {
+            findings: [{ details: "Wrong provider.", severity: "low", title: "Provider mismatch" }],
+            providerKind: "codex",
+            recommendations: [],
+            schemaVersion: "sdlca.bridge.forensic.v0",
+            summary: "Wrong provider result"
+          }
+        })
+      );
+
+    const executor = createSdlcaBridgeForensicExecutor({
+      bridgeToken: "bridge-token",
+      bridgeUrl: "http://127.0.0.1:4818",
+      fetcher,
+      workingDirectory: "/Users/ckreager/repos/kdtix/token_reporting"
+    });
+
+    const result = await executor({
+      createdAt: "2026-06-07T17:30:00.000Z",
+      evidencePacket,
+      huggingFaceCandidateSetId: "hf-candidates-test",
+      reviewerModels: ["opus"],
+      runId: "dynamic-forensic-20260607T173000000Z",
+      usageSnapshotId: "dynamic-usage-codex-2026-06-07"
+    });
+
+    expect(result.status).toBe("degraded");
+    expect(result.reviewerArtifacts[0]).toMatchObject({
+      bridgeProviderKind: "claude",
+      degradedReason: "sdlca_bridge_forensic_result_invalid",
+      diagnostics: {
+        bridgeHttpStatus: 200,
+        bridgeProviderKind: "claude",
+        validationErrors: expect.arrayContaining([
+          "artifactSchemaVersion_expected_sdlca.bridge.forensic.v0",
+          "providerKind_expected_claude"
+        ])
+      },
+      reviewerModel: "opus",
+      status: "failed"
+    });
+  });
 });
+
+function createCapturingLogger(traceContexts: Record<string, unknown>[]): ObservabilityLogger {
+  const logger: ObservabilityLogger = {
+    debug: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    trace: vi.fn((_message: string, context?: Record<string, unknown>) => {
+      if (context) traceContexts.push(context);
+    }),
+    withContext: vi.fn(() => logger)
+  };
+  return logger;
+}
 
 function forensicArtifact(providerKind: "claude" | "codex" | "copilot", summary: string) {
   return {

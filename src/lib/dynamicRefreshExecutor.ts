@@ -11,6 +11,7 @@ import type { ObservabilityLogger } from "./observabilityLogger";
 const execFileAsync = promisify(execFile);
 
 export interface ProviderScriptRunResult {
+  failureReason?: string;
   ok: boolean;
   stderr?: string;
   stdout?: string;
@@ -144,6 +145,7 @@ export function createProviderScriptRefreshExecutor(
         } else {
           logger?.error("Provider refresh script failed", {
             durationMs,
+            failureReason: result.failureReason,
             providerId,
             scriptName: script.scriptName,
             stderr: result.stderr,
@@ -153,7 +155,9 @@ export function createProviderScriptRefreshExecutor(
 
         return {
           completedAt: now().toISOString(),
-          degradedReason: result.ok ? undefined : result.stderr || result.stdout || "script_failed",
+          degradedReason: result.ok
+            ? undefined
+            : result.failureReason ?? result.stderr ?? result.stdout ?? "script_failed",
           providerId,
           startedAt,
           status: result.ok ? "completed" : "failed"
@@ -188,13 +192,33 @@ async function runNpmScript(
 
     return { ok: true, stderr, stdout };
   } catch (error) {
-    const failure = error as { stderr?: string; stdout?: string };
-    return {
-      ok: false,
-      stderr: failure.stderr,
-      stdout: failure.stdout
-    };
+    return formatProviderScriptFailure(error, npmCommand);
   }
+}
+
+/** Formats npm script spawn failures for dynamic refresh diagnostics. */
+export function formatProviderScriptFailure(
+  error: unknown,
+  npmCommand: string
+): ProviderScriptRunResult {
+  const failure = error as {
+    code?: string;
+    message?: string;
+    stderr?: string;
+    stdout?: string;
+    syscall?: string;
+  };
+  const npmMissing = failure.code === "ENOENT";
+  return {
+    failureReason: npmMissing ? "npm_not_found_or_path_missing" : undefined,
+    ok: false,
+    stderr:
+      failure.stderr ??
+      (npmMissing
+        ? `${npmCommand} command not found; PATH may be missing for LaunchAgent startup.`
+        : failure.message),
+    stdout: failure.stdout
+  };
 }
 
 function readHuggingFaceCandidateSetId(stdout: string | undefined): string | undefined {

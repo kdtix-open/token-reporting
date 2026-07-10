@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { randomUUID } from "node:crypto";
 
 import { providerRegistry } from "../providers/registry";
 import { createMemoryForensicRunStore, type ForensicRunStore } from "./forensicRunStore";
@@ -54,9 +55,11 @@ export interface DynamicForensicReviewerArtifact {
   artifact?: Record<string, unknown>;
   artifactUri: string;
   bridgeProviderKind?: string;
+  completedAt?: string;
   degradedReason?: string;
   diagnostics?: Record<string, unknown>;
   reviewerModel: string;
+  startedAt?: string;
   status: "queued" | "running" | "completed" | "failed";
 }
 
@@ -64,6 +67,10 @@ export interface DynamicForensicRunRequest {
   createdAt: string;
   evidencePacket: Record<string, unknown>;
   huggingFaceCandidateSetId: string;
+  onReviewerArtifact?: (
+    artifact: DynamicForensicReviewerArtifact,
+    reviewerArtifacts: DynamicForensicReviewerArtifact[]
+  ) => Promise<void> | void;
   reviewerModels: string[];
   runId: string;
   usageSnapshotId: string;
@@ -80,6 +87,7 @@ export type DynamicForensicExecutor = (
 ) => Promise<DynamicForensicExecutionResult>;
 
 export interface DynamicIntegrationContractOptions {
+  asyncRefresh?: boolean;
   budgetLimits?: Record<string, DynamicProviderBudgetLimit>;
   dataRoot?: string;
   env?: NodeJS.ProcessEnv;
@@ -92,6 +100,7 @@ export interface DynamicIntegrationContractOptions {
 }
 
 const dynamicContractVersion = "sdlca-token-reporting-dynamic-v0.1";
+const activeDynamicRefreshJobIds = new Set<string>();
 
 export function createDynamicIntegrationContractHandler(
   options: DynamicIntegrationContractOptions = {}
@@ -125,12 +134,13 @@ export function createDynamicIntegrationContractHandler(
         loadSummaries,
         refreshJobStore,
         now(),
-        env
+        env,
+        options.asyncRefresh ?? readAsyncRefreshMode(env)
       );
     }
 
     if (method === "GET" && requestPath.startsWith("/api/refresh/")) {
-      return dynamicRefreshStatusResponse(requestPath, refreshJobStore);
+      return dynamicRefreshStatusResponse(requestPath, refreshJobStore, env);
     }
 
     if (method === "POST" && requestPath === "/api/local-model-profiles/forensic-runs") {
@@ -256,6 +266,11 @@ function buildProviderBudgetStatus(
   };
 }
 
+function readAsyncRefreshMode(env: NodeJS.ProcessEnv): boolean {
+  const raw = env.TOKEN_REPORTING_REFRESH_ASYNC?.trim().toLowerCase();
+  return raw === "1" || raw === "true";
+}
+
 async function dynamicRefreshResponse(
   body: unknown,
   forensicExecutor: DynamicForensicExecutor | undefined,
@@ -264,7 +279,8 @@ async function dynamicRefreshResponse(
   loadSummaries: () => Promise<ProviderReportSummary[]>,
   refreshJobStore: RefreshJobStore,
   generatedAt: Date,
-  env: NodeJS.ProcessEnv
+  env: NodeJS.ProcessEnv,
+  asyncRefresh: boolean
 ): Promise<IntegrationContractResponse> {
   try {
     assertWritableOperationAllowed("Token Reporting provider refresh", env);
@@ -280,9 +296,270 @@ async function dynamicRefreshResponse(
   if (validationError) return validationError;
 
   const executor = refreshExecutor ?? defaultRefreshExecutor;
-  const jobId = `dynamic-refresh-${compactTimestamp(generatedAt)}`;
+  const jobId = await createRefreshJobId(generatedAt, refreshJobStore);
+  const forensicRunId = forensicRunIdForRefreshJob(jobId, generatedAt);
   const startedAt = generatedAt.toISOString();
+  const requestContext = {
+    body,
+    executor,
+    forensicExecutor,
+    forensicRunStore,
+    forensicRunId,
+    generatedAt,
+    jobId,
+    loadSummaries,
+    refreshRequest,
+    startedAt
+  };
 
+  if (asyncRefresh) {
+    const acceptedJob = buildAcceptedRefreshJob({
+      body,
+      forensicExecutor,
+      forensicRunId,
+      generatedAt,
+      jobId,
+      refreshRequest,
+      startedAt
+    });
+    await refreshJobStore.set(jobId, acceptedJob).catch((error) => {
+      activeDynamicRefreshJobIds.delete(jobId);
+      throw error;
+    });
+    let latestJob = acceptedJob;
+    void executeDynamicRefreshJob({
+      ...requestContext,
+      onProgress: (job) => {
+        latestJob = job;
+        return refreshJobStore.set(jobId, job);
+      }
+    })
+      .then((job) => {
+        latestJob = job;
+        return refreshJobStore.set(jobId, job);
+      })
+      .catch(async (error) => {
+        latestJob = buildFailedRefreshJob({
+          error,
+          generatedAt,
+          jobId,
+          previousJob: latestJob,
+          refreshRequest,
+          startedAt
+        });
+        await refreshJobStore.set(jobId, latestJob).catch(() => undefined);
+      })
+      .finally(() => activeDynamicRefreshJobIds.delete(jobId));
+
+    return jsonResponse(202, acceptedJob);
+  }
+
+  try {
+    const job = await executeDynamicRefreshJob(requestContext);
+    await refreshJobStore.set(jobId, job);
+
+    return jsonResponse(job.status === "failed" ? 500 : 202, job);
+  } finally {
+    activeDynamicRefreshJobIds.delete(jobId);
+  }
+}
+
+async function createRefreshJobId(
+  generatedAt: Date,
+  refreshJobStore: RefreshJobStore
+): Promise<string> {
+  const baseJobId = `dynamic-refresh-${compactTimestamp(generatedAt)}`;
+  if (await reserveRefreshJobIdIfAvailable(baseJobId, refreshJobStore)) return baseJobId;
+
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    const candidate = `${baseJobId}-${randomUUID().slice(0, 8)}`;
+    if (await reserveRefreshJobIdIfAvailable(candidate, refreshJobStore)) return candidate;
+  }
+
+  const fallback = `${baseJobId}-${Date.now().toString(36)}`;
+  activeDynamicRefreshJobIds.add(fallback);
+  return fallback;
+}
+
+async function reserveRefreshJobIdIfAvailable(
+  jobId: string,
+  refreshJobStore: RefreshJobStore
+): Promise<boolean> {
+  if (activeDynamicRefreshJobIds.has(jobId)) return false;
+  activeDynamicRefreshJobIds.add(jobId);
+  if (await refreshJobStore.get(jobId)) {
+    activeDynamicRefreshJobIds.delete(jobId);
+    return false;
+  }
+
+  return true;
+}
+
+function forensicRunIdForRefreshJob(jobId: string, generatedAt: Date): string {
+  const prefix = "dynamic-refresh-";
+  if (jobId.startsWith(prefix)) return `dynamic-forensic-${jobId.slice(prefix.length)}`;
+  return `dynamic-forensic-${compactTimestamp(generatedAt)}`;
+}
+
+function buildAcceptedRefreshJob(args: {
+  body: unknown;
+  forensicExecutor: DynamicForensicExecutor | undefined;
+  forensicRunId: string;
+  generatedAt: Date;
+  jobId: string;
+  refreshRequest: DynamicRefreshRequest;
+  startedAt: string;
+}): Record<string, unknown> {
+  const { body, forensicExecutor, forensicRunId, jobId, refreshRequest, startedAt } = args;
+  const huggingFaceCandidateSetId = readStringField(body, "huggingFaceCandidateSetId");
+  const reviewerModels =
+    refreshRequest.reviewerModels.length > 0
+      ? refreshRequest.reviewerModels
+      : readForensicReviewerModels(body);
+
+  return {
+    acceptedAt: startedAt,
+    contractVersion: dynamicContractVersion,
+    forensicRun: refreshRequest.includeForensicModelProfiles
+      ? {
+          bridgeDispatch: {
+            executionKind: "forensic",
+            status: forensicExecutor ? "queued" : "not_configured"
+          },
+          contractVersion: dynamicContractVersion,
+          createdAt: startedAt,
+          degradedReason: forensicExecutor ? undefined : "bridge_forensic_executor_not_configured",
+          huggingFaceCandidateSetId,
+          reviewerArtifacts: reviewerModels.map((reviewerModel) => ({
+            artifactUri: `local://token-reporting/forensics/${forensicRunId}/reviewers/${encodeURIComponent(
+              reviewerModel
+            )}.json`,
+            reviewerModel,
+            status: forensicExecutor ? "queued" : "failed"
+          })),
+          reviewerModels,
+          runId: forensicRunId,
+          status: forensicExecutor ? "queued" : "degraded",
+          updatedAt: startedAt,
+          usageSnapshotId: readStringField(body, "usageSnapshotId")
+        }
+      : undefined,
+    huggingFaceCandidateSetId,
+    includeForensicModelProfiles: refreshRequest.includeForensicModelProfiles,
+    includeHuggingFaceRefresh: refreshRequest.includeHuggingFaceRefresh,
+    jobId,
+    mode: refreshRequest.mode,
+    providerResults: refreshRequest.providers.map((providerId) => ({
+      providerId,
+      startedAt,
+      status: "running"
+    })),
+    startedAt,
+    status: "running"
+  };
+}
+
+function buildFailedRefreshJob(args: {
+  error: unknown;
+  generatedAt: Date;
+  jobId: string;
+  previousJob?: Record<string, unknown>;
+  refreshRequest: DynamicRefreshRequest;
+  startedAt: string;
+}): Record<string, unknown> {
+  const { error, generatedAt, jobId, previousJob, refreshRequest, startedAt } = args;
+  const completedAt = new Date().toISOString();
+  const degradedReason = error instanceof Error ? error.message : String(error);
+  const previousProviderResults = readProviderResults(previousJob?.providerResults);
+  const providerResults =
+    previousProviderResults.length > 0
+      ? previousProviderResults
+      : refreshRequest.providers.map((providerId) => ({
+          completedAt,
+          degradedReason,
+          providerId,
+          startedAt,
+          status: "failed" as const
+        }));
+  const status =
+    previousProviderResults.length > 0 && refreshJobStatus(providerResults) !== "failed"
+      ? "degraded"
+      : "failed";
+
+  return {
+    completedAt,
+    contractVersion: dynamicContractVersion,
+    degradedReason,
+    forensicRun: reconcileAbandonedForensicRun(
+      previousJob?.forensicRun,
+      completedAt,
+      degradedReason
+    ),
+    includeForensicModelProfiles: refreshRequest.includeForensicModelProfiles,
+    includeHuggingFaceRefresh: refreshRequest.includeHuggingFaceRefresh,
+    jobId,
+    mode: refreshRequest.mode,
+    providerResults,
+    startedAt: generatedAt.toISOString(),
+    status
+  };
+}
+
+function readProviderResults(value: unknown): DynamicProviderRefreshResult[] {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .map((item): DynamicProviderRefreshResult | null => {
+      if (!isRecord(item)) return null;
+      const providerId = readStringField(item, "providerId");
+      const status = readProviderRefreshStatus(item.status);
+      if (!providerId || !status) return null;
+
+      return {
+        accumulatedThrough: readStringField(item, "accumulatedThrough") ?? undefined,
+        completedAt: readStringField(item, "completedAt") ?? undefined,
+        degradedReason: readStringField(item, "degradedReason") ?? undefined,
+        providerId,
+        startedAt: readStringField(item, "startedAt") ?? undefined,
+        status
+      };
+    })
+    .filter((item): item is DynamicProviderRefreshResult => item !== null);
+}
+
+function readProviderRefreshStatus(value: unknown): DynamicProviderRefreshStatus | null {
+  if (value === "completed" || value === "degraded" || value === "failed" || value === "skipped") {
+    return value;
+  }
+  return null;
+}
+
+async function executeDynamicRefreshJob(args: {
+  body: unknown;
+  executor: DynamicRefreshExecutor;
+  forensicExecutor: DynamicForensicExecutor | undefined;
+  forensicRunStore: ForensicRunStore;
+  forensicRunId: string;
+  generatedAt: Date;
+  jobId: string;
+  loadSummaries: () => Promise<ProviderReportSummary[]>;
+  onProgress?: (job: Record<string, unknown>) => Promise<void>;
+  refreshRequest: DynamicRefreshRequest;
+  startedAt: string;
+}): Promise<Record<string, unknown>> {
+  const {
+    body,
+    executor,
+    forensicExecutor,
+    forensicRunStore,
+    forensicRunId,
+    generatedAt,
+    jobId,
+    loadSummaries,
+    onProgress,
+    refreshRequest,
+    startedAt
+  } = args;
   let executionResult: DynamicRefreshExecutionResult;
   try {
     executionResult = await executor(refreshRequest);
@@ -301,7 +578,6 @@ async function dynamicRefreshResponse(
   const resultsByProvider = new Map(
     executionResult.providerResults.map((result) => [result.providerId, result])
   );
-  const completedAt = generatedAt.toISOString();
   const providerResults = refreshRequest.providers.map((providerId) => {
     const result = resultsByProvider.get(providerId) ?? {
       degradedReason: "dynamic_refresh_executor_returned_no_result",
@@ -312,7 +588,7 @@ async function dynamicRefreshResponse(
 
     return {
       accumulatedThrough: result.accumulatedThrough ?? summary?.reportEndDay,
-      completedAt: result.completedAt ?? completedAt,
+      completedAt: result.completedAt ?? generatedAt.toISOString(),
       degradedReason: result.degradedReason,
       providerId,
       startedAt: result.startedAt ?? startedAt,
@@ -323,6 +599,27 @@ async function dynamicRefreshResponse(
   const refreshHuggingFaceCandidateSetId =
     readStringField(body, "huggingFaceCandidateSetId") ??
     executionResult.huggingFaceCandidateSetId;
+  await onProgress?.({
+    contractVersion: dynamicContractVersion,
+    forensicRun: refreshRequest.includeForensicModelProfiles
+      ? buildProgressForensicRun({
+          body,
+          forensicExecutor,
+          forensicRunId,
+          generatedAt,
+          refreshRequest,
+          startedAt
+        })
+      : undefined,
+    huggingFaceCandidateSetId: refreshHuggingFaceCandidateSetId,
+    includeForensicModelProfiles: refreshRequest.includeForensicModelProfiles,
+    includeHuggingFaceRefresh: refreshRequest.includeHuggingFaceRefresh,
+    jobId,
+    mode: refreshRequest.mode,
+    providerResults,
+    startedAt,
+    status: "running"
+  });
   const forensicRun = refreshRequest.includeForensicModelProfiles
     ? await createDynamicForensicRun({
         body: {
@@ -332,10 +629,30 @@ async function dynamicRefreshResponse(
         },
         forensicExecutor,
         forensicRunStore,
+        runId: forensicRunId,
         generatedAt,
-        loadSummaries
+        loadSummaries,
+        onProgress: async (progressRun) => {
+          await onProgress?.({
+            contractVersion: dynamicContractVersion,
+            forensicRun: progressRun,
+            huggingFaceCandidateSetId: refreshHuggingFaceCandidateSetId,
+            includeForensicModelProfiles: refreshRequest.includeForensicModelProfiles,
+            includeHuggingFaceRefresh: refreshRequest.includeHuggingFaceRefresh,
+            jobId,
+            mode: refreshRequest.mode,
+            providerResults,
+            startedAt,
+            status: "running"
+          });
+        }
       })
     : undefined;
+  const completedAt =
+    latestTimestamp([
+      ...providerResults.map((result) => result.completedAt),
+      readStringField(forensicRun, "updatedAt")
+    ]) ?? generatedAt.toISOString();
   const status = combinedRefreshStatus(refreshStatus, readStringField(forensicRun, "status"));
   const job = {
     completedAt,
@@ -351,14 +668,20 @@ async function dynamicRefreshResponse(
     status
   };
 
-  await refreshJobStore.set(jobId, job);
+  return job;
+}
 
-  return jsonResponse(status === "failed" ? 500 : 202, job);
+function latestTimestamp(values: Array<string | undefined | null>): string | undefined {
+  return values
+    .filter((value): value is string => Boolean(value))
+    .sort()
+    .at(-1);
 }
 
 async function dynamicRefreshStatusResponse(
   requestPath: string,
-  refreshJobStore: RefreshJobStore
+  refreshJobStore: RefreshJobStore,
+  env: NodeJS.ProcessEnv
 ): Promise<IntegrationContractResponse> {
   const jobId = requestPath.split("/").at(-1) ?? "";
   const job = await refreshJobStore.get(jobId);
@@ -369,7 +692,82 @@ async function dynamicRefreshStatusResponse(
     });
   }
 
+  if (refreshJobIsNonTerminal(job) && !activeDynamicRefreshJobIds.has(jobId)) {
+    const reconciledJob = reconcileAbandonedRefreshJob(job);
+    try {
+      assertWritableOperationAllowed("Token Reporting refresh job reconciliation", env);
+    } catch {
+      return jsonResponse(200, {
+        ...reconciledJob,
+        persistenceWarning: "refresh_job_reconciliation_not_persisted_read_only"
+      });
+    }
+    await refreshJobStore.set(jobId, reconciledJob).catch(() => undefined);
+    return jsonResponse(200, reconciledJob);
+  }
+
   return jsonResponse(200, job);
+}
+
+function refreshJobIsNonTerminal(job: Record<string, unknown>): boolean {
+  const status = readStringField(job, "status");
+  return status === "running" || status === "queued";
+}
+
+function reconcileAbandonedRefreshJob(job: Record<string, unknown>): Record<string, unknown> {
+  const completedAt = new Date().toISOString();
+  const degradedReason = "refresh_job_worker_not_active_after_restart";
+  const providerResults = Array.isArray(job.providerResults)
+    ? job.providerResults.filter(isRecord).map((result) =>
+        reconcileAbandonedResult(result, completedAt, degradedReason)
+      )
+    : [];
+
+  return {
+    ...job,
+    completedAt,
+    degradedReason,
+    forensicRun: reconcileAbandonedForensicRun(job.forensicRun, completedAt, degradedReason),
+    providerResults,
+    status: "failed"
+  };
+}
+
+function reconcileAbandonedResult(
+  result: Record<string, unknown>,
+  completedAt: string,
+  degradedReason: string
+): Record<string, unknown> {
+  const status = readStringField(result, "status");
+  if (status !== "running" && status !== "queued") return result;
+
+  return {
+    ...result,
+    completedAt,
+    degradedReason,
+    status: "failed"
+  };
+}
+
+function reconcileAbandonedForensicRun(
+  value: unknown,
+  completedAt: string,
+  degradedReason: string
+): Record<string, unknown> | undefined {
+  if (!isRecord(value)) return undefined;
+  const reviewerArtifacts = Array.isArray(value.reviewerArtifacts)
+    ? value.reviewerArtifacts.filter(isRecord).map((artifact) =>
+        reconcileAbandonedResult(artifact, completedAt, degradedReason)
+      )
+    : [];
+
+  return {
+    ...value,
+    degradedReason,
+    reviewerArtifacts,
+    status: "failed",
+    updatedAt: completedAt
+  };
 }
 
 async function dynamicForensicRunResponse(
@@ -406,10 +804,13 @@ async function createDynamicForensicRun(args: {
   forensicRunStore: ForensicRunStore;
   generatedAt: Date;
   loadSummaries: () => Promise<ProviderReportSummary[]>;
+  onProgress?: (run: Record<string, unknown>) => Promise<void>;
+  runId?: string;
 }): Promise<Record<string, unknown>> {
-  const { body, forensicExecutor, forensicRunStore, generatedAt, loadSummaries } = args;
+  const { body, forensicExecutor, forensicRunStore, generatedAt, loadSummaries, onProgress } =
+    args;
   const createdAt = generatedAt.toISOString();
-  const runId = `dynamic-forensic-${compactTimestamp(generatedAt)}`;
+  const runId = args.runId ?? `dynamic-forensic-${compactTimestamp(generatedAt)}`;
   const reviewerModels = readForensicReviewerModels(body);
   const summaries = await loadSummaries().catch(() => [] as ProviderReportSummary[]);
   const providerSnapshotIds = summaries.map(
@@ -438,28 +839,69 @@ async function createDynamicForensicRun(args: {
     reviewerModel,
     status: "queued" as const
   }));
+  await onProgress?.(
+    buildProgressForensicRunRecord({
+      createdAt,
+      forensicExecutor,
+      huggingFaceCandidateSetId,
+      reviewerArtifacts: queuedArtifacts,
+      reviewerModels,
+      runId,
+      status: forensicExecutor ? "queued" : "degraded",
+      usageSnapshotId
+    })
+  );
   const executionResult = forensicExecutor
     ? await forensicExecutor({
         createdAt,
         evidencePacket,
         huggingFaceCandidateSetId,
+        onReviewerArtifact: async (_artifact, completedArtifacts) => {
+          const completedByReviewer = new Map(
+            completedArtifacts.map((artifact) => [artifact.reviewerModel, artifact])
+          );
+          const progressArtifacts = queuedArtifacts.map(
+            (artifact) => completedByReviewer.get(artifact.reviewerModel) ?? artifact
+          );
+          await onProgress?.(
+            buildProgressForensicRunRecord({
+              createdAt,
+              forensicExecutor,
+              huggingFaceCandidateSetId,
+              reviewerArtifacts: progressArtifacts,
+              reviewerModels,
+              runId,
+              status: "running",
+              usageSnapshotId
+            })
+          );
+        },
         reviewerModels,
         runId,
         usageSnapshotId
-      }).catch((error) => ({
-        degradedReason: error instanceof Error ? error.message : String(error),
-        reviewerArtifacts: queuedArtifacts.map((artifact) => ({
-          ...artifact,
-          degradedReason: error instanceof Error ? error.message : String(error),
+      }).catch((error) => {
+        const failedAt = new Date().toISOString();
+        const degradedReason = error instanceof Error ? error.message : String(error);
+        return {
+          degradedReason,
+          reviewerArtifacts: queuedArtifacts.map((artifact) => ({
+            ...artifact,
+            completedAt: failedAt,
+            degradedReason,
+            status: "failed" as const
+          })),
           status: "failed" as const
-        })),
-        status: "failed" as const
-      }))
+        };
+      })
     : {
         degradedReason: "bridge_forensic_executor_not_configured",
-        reviewerArtifacts: queuedArtifacts,
+        reviewerArtifacts: terminalArtifacts(
+          queuedArtifacts,
+          "bridge_forensic_executor_not_configured"
+        ),
         status: "degraded" as const
       };
+  const updatedAt = forensicRunUpdatedAt(executionResult.reviewerArtifacts, createdAt);
   const parentSynthesis = buildParentSynthesis(executionResult.reviewerArtifacts);
 
   const run = {
@@ -480,13 +922,83 @@ async function createDynamicForensicRun(args: {
     reviewerModels,
     runId,
     status: executionResult.status,
-    updatedAt: createdAt,
+    updatedAt,
     usageSnapshotId
   };
 
   await forensicRunStore.set(runId, run);
 
   return run;
+}
+
+function buildProgressForensicRun(args: {
+  body: unknown;
+  forensicExecutor: DynamicForensicExecutor | undefined;
+  forensicRunId: string;
+  generatedAt: Date;
+  refreshRequest: DynamicRefreshRequest;
+  startedAt: string;
+}): Record<string, unknown> {
+  const reviewerModels =
+    args.refreshRequest.reviewerModels.length > 0
+      ? args.refreshRequest.reviewerModels
+      : readForensicReviewerModels(args.body);
+  const reviewerArtifacts = reviewerModels.map((reviewerModel) => ({
+    artifactUri: `local://token-reporting/forensics/${args.forensicRunId}/reviewers/${encodeURIComponent(
+      reviewerModel
+    )}.json`,
+    reviewerModel,
+    status: args.forensicExecutor ? ("queued" as const) : ("failed" as const)
+  }));
+
+  return buildProgressForensicRunRecord({
+    createdAt: args.startedAt,
+    degradedReason: args.forensicExecutor ? undefined : "bridge_forensic_executor_not_configured",
+    forensicExecutor: args.forensicExecutor,
+    huggingFaceCandidateSetId: readStringField(args.body, "huggingFaceCandidateSetId"),
+    reviewerArtifacts,
+    reviewerModels,
+    runId: args.forensicRunId,
+    status: args.forensicExecutor ? "queued" : "degraded",
+    usageSnapshotId: readStringField(args.body, "usageSnapshotId")
+  });
+}
+
+function buildProgressForensicRunRecord(args: {
+  createdAt: string;
+  degradedReason?: string;
+  forensicExecutor: DynamicForensicExecutor | undefined;
+  huggingFaceCandidateSetId?: string | null;
+  reviewerArtifacts: DynamicForensicReviewerArtifact[];
+  reviewerModels: string[];
+  runId: string;
+  status: "queued" | "running" | "completed" | "degraded" | "failed";
+  usageSnapshotId?: string | null;
+}): Record<string, unknown> {
+  const updatedAt = forensicRunUpdatedAt(args.reviewerArtifacts, args.createdAt);
+  return {
+    bridgeDispatch: {
+      executionKind: "forensic",
+      status: args.forensicExecutor ? args.status : "not_configured"
+    },
+    contractVersion: dynamicContractVersion,
+    createdAt: args.createdAt,
+    degradedReason: args.degradedReason,
+    huggingFaceCandidateSetId: args.huggingFaceCandidateSetId,
+    reviewerArtifacts: args.reviewerArtifacts,
+    reviewerModels: args.reviewerModels,
+    runId: args.runId,
+    status: args.status,
+    updatedAt,
+    usageSnapshotId: args.usageSnapshotId
+  };
+}
+
+function forensicRunUpdatedAt(
+  reviewerArtifacts: DynamicForensicReviewerArtifact[],
+  fallback: string
+): string {
+  return latestTimestamp(reviewerArtifacts.map((artifact) => artifact.completedAt)) ?? fallback;
 }
 
 async function dynamicLatestLocalModelProfileResponse(
@@ -510,6 +1022,17 @@ async function dynamicLatestLocalModelProfileResponse(
     status: readStringField(latest, "status") ?? "unknown",
     usageSnapshotId: readStringField(latest, "usageSnapshotId")
   });
+}
+
+function terminalArtifacts(
+  artifacts: DynamicForensicReviewerArtifact[],
+  degradedReason: string
+): DynamicForensicReviewerArtifact[] {
+  return artifacts.map((artifact) => ({
+    ...artifact,
+    degradedReason,
+    status: "failed"
+  }));
 }
 
 function buildParentSynthesis(

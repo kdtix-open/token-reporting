@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   createDynamicIntegrationContractHandler,
+  type DynamicForensicExecutionResult,
+  type DynamicForensicReviewerArtifact,
   type DynamicProviderBudgetLimit
 } from "../integrationContractDynamic";
 import type { ProviderReportSummary, SpendProjection } from "../types";
@@ -286,6 +288,496 @@ describe("integrationContractDynamic", () => {
     });
   });
 
+  it("createDynamicIntegrationContractHandler_RefreshEndpoint_AsyncModeStoresRunningThenCompletedJob", async () => {
+    let resolveRefresh:
+      | ((result: {
+          providerResults: Array<{
+            accumulatedThrough: string;
+            completedAt: string;
+            providerId: string;
+            status: "completed";
+          }>;
+        }) => void)
+      | undefined;
+    const refreshExecutor = vi.fn(
+      () =>
+        new Promise<{
+          providerResults: Array<{
+            accumulatedThrough: string;
+            completedAt: string;
+            providerId: string;
+            status: "completed";
+          }>;
+        }>((resolve) => {
+          resolveRefresh = resolve;
+        })
+    );
+    const handler = createDynamicIntegrationContractHandler({
+      asyncRefresh: true,
+      loadSummaries: async () => summaries,
+      now: () => new Date("2026-06-07T16:45:00.000Z"),
+      refreshExecutor
+    });
+
+    const acceptedResponse = await handler({
+      body: {
+        providers: ["codex"]
+      },
+      method: "POST",
+      path: "/api/refresh"
+    });
+
+    expect(acceptedResponse.status).toBe(202);
+    expect(acceptedResponse.body).toMatchObject({
+      jobId: "dynamic-refresh-20260607T164500000Z",
+      providerResults: [expect.objectContaining({ providerId: "codex", status: "running" })],
+      status: "running"
+    });
+
+    const runningResponse = await handler({
+      method: "GET",
+      path: "/api/refresh/dynamic-refresh-20260607T164500000Z"
+    });
+    expect(runningResponse.body).toMatchObject({
+      jobId: "dynamic-refresh-20260607T164500000Z",
+      status: "running"
+    });
+
+    resolveRefresh?.({
+      providerResults: [
+        {
+          accumulatedThrough: "2026-06-07",
+          completedAt: "2026-06-07T16:45:08.000Z",
+          providerId: "codex",
+          status: "completed"
+        }
+      ]
+    });
+
+    await vi.waitFor(async () => {
+      const completedResponse = await handler({
+        method: "GET",
+        path: "/api/refresh/dynamic-refresh-20260607T164500000Z"
+      });
+      expect(completedResponse.body).toMatchObject({
+        completedAt: "2026-06-07T16:45:08.000Z",
+        jobId: "dynamic-refresh-20260607T164500000Z",
+        providerResults: [expect.objectContaining({ providerId: "codex", status: "completed" })],
+        status: "completed"
+      });
+    });
+  });
+
+  it("createDynamicIntegrationContractHandler_RefreshEndpoint_AsyncModeUsesUniqueIdsWithinSameMillisecond", async () => {
+    const jobs = new Map<string, Record<string, unknown>>();
+    let releaseBaseRead: ((value: Record<string, unknown> | undefined) => void) | undefined;
+    const baseRead = new Promise<Record<string, unknown> | undefined>((resolve) => {
+      releaseBaseRead = resolve;
+    });
+    const baseJobId = "dynamic-refresh-20260607T164500000Z";
+    const refreshJobStore = {
+      get: vi.fn(async (jobId: string) => (jobId === baseJobId ? baseRead : jobs.get(jobId))),
+      set: vi.fn(async (jobId: string, job: Record<string, unknown>) => {
+        jobs.set(jobId, job);
+      })
+    };
+    const refreshExecutor = vi.fn().mockResolvedValue({
+      providerResults: [
+        {
+          accumulatedThrough: "2026-06-07",
+          completedAt: "2026-06-07T16:45:08.000Z",
+          providerId: "codex",
+          status: "completed"
+        }
+      ]
+    });
+    const handler = createDynamicIntegrationContractHandler({
+      asyncRefresh: true,
+      loadSummaries: async () => summaries,
+      now: () => new Date("2026-06-07T16:45:00.000Z"),
+      refreshExecutor,
+      refreshJobStore
+    });
+
+    const firstPromise = handler({
+      body: {
+        includeForensicModelProfiles: true,
+        providers: ["codex"],
+        reviewerModels: ["sonnet"]
+      },
+      method: "POST",
+      path: "/api/refresh"
+    });
+    await vi.waitFor(() => expect(refreshJobStore.get).toHaveBeenCalledWith(baseJobId));
+    const secondPromise = handler({
+      body: {
+        includeForensicModelProfiles: true,
+        providers: ["codex"],
+        reviewerModels: ["sonnet"]
+      },
+      method: "POST",
+      path: "/api/refresh"
+    });
+    releaseBaseRead?.(undefined);
+    const [first, second] = await Promise.all([firstPromise, secondPromise]);
+    const firstBody = first.body as Record<string, unknown>;
+    const secondBody = second.body as Record<string, unknown>;
+    const secondForensicRun = secondBody.forensicRun as {
+      reviewerArtifacts: Array<{ artifactUri: string }>;
+      runId: string;
+    };
+
+    expect(firstBody).toMatchObject({
+      jobId: "dynamic-refresh-20260607T164500000Z"
+    });
+    expect(secondBody).toMatchObject({
+      jobId: expect.stringMatching(/^dynamic-refresh-20260607T164500000Z-[a-f0-9]{8}$/)
+    });
+    expect(secondBody.jobId).not.toBe(firstBody.jobId);
+    expect(secondForensicRun.runId).toBe(
+      String(secondBody.jobId).replace("dynamic-refresh-", "dynamic-forensic-")
+    );
+    expect(secondForensicRun.reviewerArtifacts[0]?.artifactUri).toContain(
+      secondForensicRun.runId
+    );
+  });
+
+  it("createDynamicIntegrationContractHandler_RefreshStatus_ReconcilesPersistedRunningJobAfterRestart", async () => {
+    const jobs = new Map<string, Record<string, unknown>>([
+      [
+        "dynamic-refresh-abandoned",
+        {
+          forensicRun: {
+            reviewerArtifacts: [{ reviewerModel: "sonnet", status: "queued" }],
+            status: "queued"
+          },
+          jobId: "dynamic-refresh-abandoned",
+          providerResults: [{ providerId: "codex", status: "running" }],
+          status: "running"
+        }
+      ]
+    ]);
+    const refreshJobStore = {
+      get: vi.fn(async (jobId: string) => jobs.get(jobId)),
+      set: vi.fn(async (jobId: string, job: Record<string, unknown>) => {
+        jobs.set(jobId, job);
+      })
+    };
+    const handler = createDynamicIntegrationContractHandler({
+      loadSummaries: async () => summaries,
+      refreshJobStore
+    });
+
+    const response = await handler({
+      method: "GET",
+      path: "/api/refresh/dynamic-refresh-abandoned"
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      degradedReason: "refresh_job_worker_not_active_after_restart",
+      forensicRun: {
+        degradedReason: "refresh_job_worker_not_active_after_restart",
+        reviewerArtifacts: [
+          expect.objectContaining({
+            degradedReason: "refresh_job_worker_not_active_after_restart",
+            reviewerModel: "sonnet",
+            status: "failed"
+          })
+        ],
+        status: "failed"
+      },
+      providerResults: [
+        expect.objectContaining({
+          degradedReason: "refresh_job_worker_not_active_after_restart",
+          providerId: "codex",
+          status: "failed"
+        })
+      ],
+      status: "failed"
+    });
+    expect(refreshJobStore.set).toHaveBeenCalledWith(
+      "dynamic-refresh-abandoned",
+      expect.objectContaining({ status: "failed" })
+    );
+  });
+
+  it("createDynamicIntegrationContractHandler_RefreshStatus_ReadOnlyModeSkipsReconciliationWrite", async () => {
+    const refreshJobStore = {
+      get: vi.fn(async () => ({
+        jobId: "dynamic-refresh-read-only-abandoned",
+        providerResults: [{ providerId: "codex", status: "running" }],
+        status: "running"
+      })),
+      set: vi.fn()
+    };
+    const handler = createDynamicIntegrationContractHandler({
+      env: {
+        TOKEN_REPORTING_READ_ONLY: "true"
+      },
+      loadSummaries: async () => summaries,
+      refreshJobStore
+    });
+
+    const response = await handler({
+      method: "GET",
+      path: "/api/refresh/dynamic-refresh-read-only-abandoned"
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      persistenceWarning: "refresh_job_reconciliation_not_persisted_read_only",
+      status: "failed"
+    });
+    expect(refreshJobStore.set).not.toHaveBeenCalled();
+  });
+
+  it("createDynamicIntegrationContractHandler_RefreshEndpoint_AsyncModePublishesProviderAndReviewerProgress", async () => {
+    let resolveRefresh:
+      | ((result: {
+          providerResults: Array<{ accumulatedThrough: string; providerId: string; status: "completed" }>;
+        }) => void)
+      | undefined;
+    let resolveForensics:
+      | ((result: DynamicForensicExecutionResult) => void)
+      | undefined;
+    let publishReviewerProgress: (() => Promise<void>) | undefined;
+    const sonnetArtifact: DynamicForensicReviewerArtifact = {
+      artifact: {
+        artifactKind: "local_model_forensic_review",
+        artifactSchemaVersion: "sdlca.bridge.forensic.v0",
+        recommendations: ["Keep tail-context work hosted."],
+        summary: "Sonnet completed."
+      },
+      artifactUri:
+        "local://token-reporting/forensics/dynamic-forensic-20260607T164500000Z/reviewers/sonnet.json",
+      bridgeProviderKind: "claude",
+      reviewerModel: "sonnet",
+      status: "completed" as const
+    };
+    const refreshExecutor = vi.fn(
+      () =>
+        new Promise<{
+          providerResults: Array<{ accumulatedThrough: string; providerId: string; status: "completed" }>;
+        }>((resolve) => {
+          resolveRefresh = resolve;
+        })
+    );
+    const forensicExecutor = vi.fn(
+      async (request) =>
+        new Promise<DynamicForensicExecutionResult>((resolve) => {
+          publishReviewerProgress = async () => {
+            await request.onReviewerArtifact?.(sonnetArtifact, [sonnetArtifact]);
+          };
+          resolveForensics = resolve;
+        })
+    );
+    const handler = createDynamicIntegrationContractHandler({
+      asyncRefresh: true,
+      forensicExecutor,
+      loadSummaries: async () => summaries,
+      now: () => new Date("2026-06-07T16:45:00.000Z"),
+      refreshExecutor
+    });
+
+    const acceptedResponse = await handler({
+      body: {
+        includeForensicModelProfiles: true,
+        providers: ["codex"],
+        reviewerModels: ["sonnet"]
+      },
+      method: "POST",
+      path: "/api/refresh"
+    });
+
+    expect(acceptedResponse.status).toBe(202);
+    resolveRefresh?.({
+      providerResults: [
+        {
+          accumulatedThrough: "2026-06-07",
+          providerId: "codex",
+          status: "completed"
+        }
+      ]
+    });
+
+    await vi.waitFor(async () => {
+      const progressResponse = await handler({
+        method: "GET",
+        path: "/api/refresh/dynamic-refresh-20260607T164500000Z"
+      });
+      expect(progressResponse.body).toMatchObject({
+        forensicRun: {
+          reviewerArtifacts: [expect.objectContaining({ reviewerModel: "sonnet", status: "queued" })],
+          status: "queued"
+        },
+        providerResults: [expect.objectContaining({ providerId: "codex", status: "completed" })],
+        status: "running"
+      });
+    });
+
+    await publishReviewerProgress?.();
+
+    await vi.waitFor(async () => {
+      const reviewerProgressResponse = await handler({
+        method: "GET",
+        path: "/api/refresh/dynamic-refresh-20260607T164500000Z"
+      });
+      expect(reviewerProgressResponse.body).toMatchObject({
+        forensicRun: {
+          reviewerArtifacts: [
+            expect.objectContaining({ reviewerModel: "sonnet", status: "completed" })
+          ],
+          status: "running"
+        },
+        providerResults: [expect.objectContaining({ providerId: "codex", status: "completed" })],
+        status: "running"
+      });
+    });
+
+    resolveForensics?.({
+      reviewerArtifacts: [sonnetArtifact],
+      status: "completed"
+    });
+
+    await vi.waitFor(async () => {
+      const completedResponse = await handler({
+        method: "GET",
+        path: "/api/refresh/dynamic-refresh-20260607T164500000Z"
+      });
+      expect(completedResponse.body).toMatchObject({
+        forensicRun: {
+          reviewerArtifacts: [
+            expect.objectContaining({ reviewerModel: "sonnet", status: "completed" })
+          ],
+          status: "completed"
+        },
+        providerResults: [expect.objectContaining({ providerId: "codex", status: "completed" })],
+        status: "completed"
+      });
+    });
+  });
+
+  it("createDynamicIntegrationContractHandler_RefreshEndpoint_AsyncModePreservesProviderResultsWhenProgressStoreFails", async () => {
+    const jobs = new Map<string, Record<string, unknown>>();
+    const refreshJobStore = {
+      get: vi.fn(async (jobId: string) => jobs.get(jobId)),
+      set: vi.fn(async (jobId: string, job: Record<string, unknown>) => {
+        const providerResults = job.providerResults as Array<Record<string, unknown>> | undefined;
+        if (
+          job.status === "running" &&
+          providerResults?.some((result) => result.status === "completed")
+        ) {
+          throw new Error("refresh progress store failed");
+        }
+        jobs.set(jobId, job);
+      })
+    };
+    const refreshExecutor = vi.fn().mockResolvedValue({
+      providerResults: [
+        {
+          accumulatedThrough: "2026-06-07",
+          completedAt: "2026-06-07T16:45:08.000Z",
+          providerId: "codex",
+          status: "completed"
+        }
+      ]
+    });
+    const forensicExecutor = vi.fn();
+    const handler = createDynamicIntegrationContractHandler({
+      asyncRefresh: true,
+      forensicExecutor,
+      loadSummaries: async () => summaries,
+      now: () => new Date("2026-06-07T16:45:00.000Z"),
+      refreshExecutor,
+      refreshJobStore
+    });
+
+    await handler({
+      body: {
+        includeForensicModelProfiles: true,
+        reviewerModels: ["sonnet"],
+        providers: ["codex"]
+      },
+      method: "POST",
+      path: "/api/refresh"
+    });
+
+    await vi.waitFor(async () => {
+      const completedResponse = await handler({
+        method: "GET",
+        path: "/api/refresh/dynamic-refresh-20260607T164500000Z"
+      });
+      expect(completedResponse.body).toMatchObject({
+        degradedReason: "refresh progress store failed",
+        forensicRun: {
+          degradedReason: "refresh progress store failed",
+          reviewerArtifacts: [
+            expect.objectContaining({
+              completedAt: expect.any(String),
+              degradedReason: "refresh progress store failed",
+              reviewerModel: "sonnet",
+              status: "failed"
+            })
+          ],
+          status: "failed",
+          updatedAt: expect.any(String)
+        },
+        providerResults: [
+          expect.objectContaining({
+            accumulatedThrough: "2026-06-07",
+            providerId: "codex",
+            status: "completed"
+          })
+        ],
+        status: "degraded"
+      });
+    });
+    expect(forensicExecutor).not.toHaveBeenCalled();
+  });
+
+  it("createDynamicIntegrationContractHandler_RefreshEndpoint_AsyncModeHandlesFailedRecoveryStoreWrite", async () => {
+    const jobs = new Map<string, Record<string, unknown>>();
+    const refreshJobStore = {
+      get: vi.fn(async (jobId: string) => jobs.get(jobId)),
+      set: vi.fn(async (jobId: string, job: Record<string, unknown>) => {
+        if (jobs.size > 0) {
+          throw new Error("refresh recovery store failed");
+        }
+        jobs.set(jobId, job);
+      })
+    };
+    const refreshExecutor = vi.fn().mockRejectedValue(new Error("refresh execution failed"));
+    const handler = createDynamicIntegrationContractHandler({
+      asyncRefresh: true,
+      loadSummaries: async () => summaries,
+      now: () => new Date("2026-06-07T16:45:00.000Z"),
+      refreshExecutor,
+      refreshJobStore
+    });
+
+    await handler({
+      body: {
+        providers: ["codex"]
+      },
+      method: "POST",
+      path: "/api/refresh"
+    });
+
+    await vi.waitFor(() => {
+      expect(refreshJobStore.set).toHaveBeenCalledTimes(3);
+    });
+    const response = await handler({
+      method: "GET",
+      path: "/api/refresh/dynamic-refresh-20260607T164500000Z"
+    });
+    expect(response.body).toMatchObject({
+      degradedReason: "refresh_job_worker_not_active_after_restart",
+      jobId: "dynamic-refresh-20260607T164500000Z",
+      status: "failed"
+    });
+  });
+
   it("createDynamicIntegrationContractHandler_RefreshEndpoint_ReadOnlyModeBlocksMutation", async () => {
     const refreshExecutor = vi.fn();
     const handler = createDynamicIntegrationContractHandler({
@@ -342,6 +834,7 @@ describe("integrationContractDynamic", () => {
           artifactUri:
             "local://token-reporting/forensics/dynamic-forensic-20260607T172000000Z/reviewers/gpt.json",
           bridgeProviderKind: "codex",
+          completedAt: "2026-06-07T17:21:05.000Z",
           reviewerModel: "gpt",
           status: "completed"
         }
@@ -384,13 +877,15 @@ describe("integrationContractDynamic", () => {
       })
     );
     expect(response.body).toMatchObject({
+      completedAt: "2026-06-07T17:21:05.000Z",
       forensicRun: {
         parentSynthesis: {
           recommendation: "Refresh-triggered forensic review completed."
         },
         huggingFaceCandidateSetId: "hf-candidates-20260607T172000123Z",
         runId: "dynamic-forensic-20260607T172000000Z",
-        status: "completed"
+        status: "completed",
+        updatedAt: "2026-06-07T17:21:05.000Z"
       },
       status: "completed"
     });
@@ -442,13 +937,15 @@ describe("integrationContractDynamic", () => {
       reviewerArtifacts: [
         expect.objectContaining({
           artifactUri: "local://token-reporting/forensics/dynamic-forensic-20260607T170000000Z/reviewers/sonnet.json",
+          degradedReason: "bridge_forensic_executor_not_configured",
           reviewerModel: "sonnet",
-          status: "queued"
+          status: "failed"
         }),
         expect.objectContaining({
           artifactUri: "local://token-reporting/forensics/dynamic-forensic-20260607T170000000Z/reviewers/gpt.json",
+          degradedReason: "bridge_forensic_executor_not_configured",
           reviewerModel: "gpt",
-          status: "queued"
+          status: "failed"
         })
       ]
     });
@@ -579,6 +1076,45 @@ describe("integrationContractDynamic", () => {
       runId: "dynamic-forensic-20260607T173000000Z",
       status: "completed"
     });
+  });
+
+  it("createDynamicIntegrationContractHandler_ForensicRunEndpoint_ExecutorRejectionStampsFailedArtifacts", async () => {
+    const forensicExecutor = vi.fn().mockRejectedValue(new Error("bridge dispatch crashed"));
+    const handler = createDynamicIntegrationContractHandler({
+      forensicExecutor,
+      loadSummaries: async () => summaries,
+      now: () => new Date("2026-06-07T17:30:00.000Z")
+    });
+
+    const response = await handler({
+      body: {
+        reviewerModels: ["gpt"],
+        usageSnapshotId: "dynamic-usage-codex-2026-06-07"
+      },
+      method: "POST",
+      path: "/api/local-model-profiles/forensic-runs"
+    });
+    const body = response.body as {
+      reviewerArtifacts: Array<{ completedAt?: string }>;
+      updatedAt?: string;
+    };
+
+    expect(response.status).toBe(202);
+    expect(response.body).toMatchObject({
+      degradedReason: "bridge dispatch crashed",
+      reviewerArtifacts: [
+        expect.objectContaining({
+          completedAt: expect.any(String),
+          degradedReason: "bridge dispatch crashed",
+          reviewerModel: "gpt",
+          status: "failed"
+        })
+      ],
+      status: "failed",
+      updatedAt: expect.any(String)
+    });
+    expect(body.updatedAt).toBe(body.reviewerArtifacts[0]?.completedAt);
+    expect(body.updatedAt).not.toBe("2026-06-07T17:30:00.000Z");
   });
 
   it("createDynamicIntegrationContractHandler_ForensicRunEndpoint_ReportsDegradedBridgeDispatch", async () => {

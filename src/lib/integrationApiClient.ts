@@ -28,8 +28,18 @@ export interface RequestReportRefreshOptions {
   timeoutMs?: number;
 }
 
+export interface PollReportRefreshJobOptions {
+  apiBaseUrl?: string;
+  defaultApiBaseUrl?: string;
+  fetcher?: typeof fetch;
+  intervalMs?: number;
+  onUpdate?: (job: ReportRefreshJob) => void;
+  timeoutMs?: number;
+}
+
 const defaultApiBaseUrl = "http://127.0.0.1:8788";
-const defaultTimeoutMs = 300_000;
+const defaultTimeoutMs = 1_200_000;
+const defaultPollIntervalMs = 3_000;
 
 export async function requestReportRefresh(
   options: RequestReportRefreshOptions = {}
@@ -42,6 +52,7 @@ export async function requestReportRefresh(
   const timeout = createTimeoutController(timeoutMs);
 
   let response: Response | "timeout";
+  let body: unknown | "timeout";
   try {
     response = await Promise.race([
       fetcher(`${apiBaseUrl}/api/refresh`, {
@@ -54,15 +65,9 @@ export async function requestReportRefresh(
       }),
       timeout.promise
     ]);
+    body = response === "timeout" ? "timeout" : await readJsonBodyWithTimeout(response, timeout);
   } catch (error) {
-    if (timeout.didTimeout()) {
-      return {
-        message: `Refresh is still running after ${formatSeconds(
-          timeoutMs
-        )}. Check the refresh status or try a narrower provider refresh.`,
-        outcome: "failed"
-      };
-    }
+    if (timeout.didTimeout() || isAbortError(error)) return timeoutResult(timeoutMs);
 
     throw error;
   } finally {
@@ -73,7 +78,9 @@ export async function requestReportRefresh(
     return timeoutResult(timeoutMs);
   }
 
-  const body = await readJsonBody(response);
+  if (body === "timeout") {
+    return timeoutResult(timeoutMs);
+  }
 
   if (response.ok) {
     return {
@@ -89,6 +96,85 @@ export async function requestReportRefresh(
   };
 }
 
+export async function pollReportRefreshJob(
+  jobId: string,
+  options: PollReportRefreshJobOptions = {}
+): Promise<ReportRefreshResult> {
+  const apiBaseUrl = trimTrailingSlash(
+    options.apiBaseUrl ?? options.defaultApiBaseUrl ?? defaultApiBaseUrl
+  );
+  const fetcher = options.fetcher ?? fetch;
+  const timeoutMs = options.timeoutMs ?? defaultTimeoutMs;
+  const intervalMs = Math.max(0, options.intervalMs ?? defaultPollIntervalMs);
+  const startedAt = Date.now();
+
+  while (true) {
+    const requestTimeoutMs = remainingTimeoutMs(startedAt, timeoutMs);
+    if (requestTimeoutMs <= 0) break;
+
+    const timeout = createTimeoutController(Math.min(30_000, requestTimeoutMs));
+    let response: Response | "timeout";
+    let body: unknown | "timeout";
+    try {
+      response = await Promise.race([
+        fetcher(`${apiBaseUrl}/api/refresh/${encodeURIComponent(jobId)}`, {
+          method: "GET",
+          signal: timeout.signal
+        }),
+        timeout.promise
+      ]);
+      body = response === "timeout" ? "timeout" : await readJsonBodyWithTimeout(response, timeout);
+    } catch (error) {
+      if (timeout.didTimeout() || isAbortError(error)) {
+        response = "timeout";
+        body = "timeout";
+      } else {
+        throw error;
+      }
+    } finally {
+      timeout.clear();
+    }
+
+    if (response === "timeout" || body === "timeout") {
+      const remainingMs = remainingTimeoutMs(startedAt, timeoutMs);
+      if (remainingMs <= 0) break;
+      await delay(Math.min(intervalMs, remainingMs));
+      continue;
+    }
+
+    if (!response.ok) {
+      return {
+        httpStatus: response.status,
+        message: readMessage(body) ?? `Refresh status request failed with HTTP ${response.status}.`,
+        outcome: response.status === 403 ? "blocked" : "failed"
+      };
+    }
+
+    const job = parseReportRefreshJob(body, jobId);
+    if (!job) {
+      return {
+        httpStatus: response.status,
+        message: "Refresh status response was invalid or did not match the requested job.",
+        outcome: "failed"
+      };
+    }
+    options.onUpdate?.(job);
+    if (isTerminalRefreshStatus(job.status)) {
+      return {
+        job,
+        outcome: "accepted"
+      };
+    }
+
+    const remainingMs = remainingTimeoutMs(startedAt, timeoutMs);
+    if (remainingMs > 0) {
+      await delay(Math.min(intervalMs, remainingMs));
+    }
+  }
+
+  return timeoutResult(timeoutMs);
+}
+
 function refreshRequestBody(options: RequestReportRefreshOptions): Record<string, unknown> {
   return {
     includeForensicModelProfiles: options.includeForensicModelProfiles ?? true,
@@ -101,9 +187,17 @@ function refreshRequestBody(options: RequestReportRefreshOptions): Record<string
 async function readJsonBody(response: Response): Promise<unknown> {
   try {
     return (await response.json()) as unknown;
-  } catch {
+  } catch (error) {
+    if (isAbortError(error)) throw error;
     return {};
   }
+}
+
+function readJsonBodyWithTimeout(
+  response: Response,
+  timeout: { promise: Promise<"timeout"> }
+): Promise<unknown | "timeout"> {
+  return Promise.race([readJsonBody(response), timeout.promise]);
 }
 
 function readMessage(body: unknown): string | undefined {
@@ -114,6 +208,36 @@ function readMessage(body: unknown): string | undefined {
 
 function trimTrailingSlash(value: string): string {
   return value.endsWith("/") ? value.slice(0, -1) : value;
+}
+
+function isTerminalRefreshStatus(status: string): boolean {
+  return status === "completed" || status === "degraded" || status === "failed";
+}
+
+function parseReportRefreshJob(body: unknown, expectedJobId: string): ReportRefreshJob | null {
+  if (typeof body !== "object" || body === null || Array.isArray(body)) return null;
+  const record = body as Record<string, unknown>;
+  if (record.jobId !== expectedJobId) return null;
+  if (!isKnownRefreshStatus(record.status)) return null;
+  return record as ReportRefreshJob;
+}
+
+function isKnownRefreshStatus(status: unknown): status is string {
+  return typeof status === "string" && (status === "running" || isTerminalRefreshStatus(status));
+}
+
+function isAbortError(error: unknown): boolean {
+  return error instanceof DOMException
+    ? error.name === "AbortError"
+    : error instanceof Error && error.name === "AbortError";
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function remainingTimeoutMs(startedAt: number, timeoutMs: number): number {
+  return Math.max(0, timeoutMs - (Date.now() - startedAt));
 }
 
 function createTimeoutController(timeoutMs: number): {

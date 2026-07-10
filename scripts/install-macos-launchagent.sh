@@ -5,33 +5,38 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
-if [[ "$(uname -s)" != "Darwin" ]]; then
+ALLOW_NON_DARWIN_FOR_TESTS="${TOKEN_REPORTING_LAUNCHD_ALLOW_NON_DARWIN_FOR_TESTS:-false}"
+DRY_RUN="${TOKEN_REPORTING_LAUNCHD_DRY_RUN:-false}"
+SKIP_PRECHECKS="${TOKEN_REPORTING_LAUNCHD_SKIP_PRECHECKS:-false}"
+
+if [[ "$(uname -s)" != "Darwin" && "${ALLOW_NON_DARWIN_FOR_TESTS}" != "true" ]]; then
   echo "install-macos-launchagent: run this on macOS, not $(uname -s)." >&2
   exit 2
 fi
 
-if [[ -z "${TOKEN_REPORTING_NODE_BIN:-}" ]] && ! command -v node >/dev/null 2>&1; then
+if [[ "${SKIP_PRECHECKS}" != "true" && -z "${TOKEN_REPORTING_NODE_BIN:-}" ]] && ! command -v node >/dev/null 2>&1; then
   echo "install-macos-launchagent: node is required." >&2
   exit 2
 fi
 
-NODE_BIN="${TOKEN_REPORTING_NODE_BIN:-$(command -v node)}"
+NODE_BIN="${TOKEN_REPORTING_NODE_BIN:-$(command -v node || printf '/usr/bin/node')}"
 if [[ ! "${NODE_BIN}" = /* ]]; then
   NODE_BIN="$(command -v "${NODE_BIN}")"
 fi
+NODE_BIN_DIR="${NODE_BIN%/*}"
 
-if [[ ! -x "${NODE_BIN}" ]]; then
+if [[ "${SKIP_PRECHECKS}" != "true" && ! -x "${NODE_BIN}" ]]; then
   echo "install-macos-launchagent: resolved node is not executable: ${NODE_BIN}" >&2
   exit 2
 fi
 
 TSX_CLI="${TOKEN_REPORTING_TSX_CLI:-${REPO_ROOT}/node_modules/tsx/dist/cli.mjs}"
-if [[ ! -f "${TSX_CLI}" ]]; then
+if [[ "${SKIP_PRECHECKS}" != "true" && ! -f "${TSX_CLI}" ]]; then
   echo "install-macos-launchagent: dependencies are missing; run npm install in ${REPO_ROOT} first." >&2
   exit 2
 fi
 
-if [[ ! -d "${REPO_ROOT}/dist" ]]; then
+if [[ "${SKIP_PRECHECKS}" != "true" && ! -d "${REPO_ROOT}/dist" ]]; then
   echo "install-macos-launchagent: dist is missing; run TOKEN_REPORTING_BASE_PATH=/tools/token-reporting npm run build first." >&2
   exit 2
 fi
@@ -48,7 +53,9 @@ ADMIN_ENV_FILE="${TOKEN_REPORTING_ADMIN_ENV_FILE:-${REPO_ROOT}/.env.admin.creden
 REFRESH_ASYNC="${TOKEN_REPORTING_REFRESH_ASYNC:-true}"
 READ_ONLY="${TOKEN_REPORTING_READ_ONLY:-false}"
 PID_FILE="${TOKEN_REPORTING_PID_FILE:-${REPO_ROOT}/tmp/projectit-token-reporting-production.pid}"
-PLIST_DIR="${HOME}/Library/LaunchAgents"
+DEFAULT_LAUNCHD_PATH="${NODE_BIN_DIR}:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:${HOME}/.local/bin"
+LAUNCHD_PATH="${TOKEN_REPORTING_LAUNCHD_PATH:-${DEFAULT_LAUNCHD_PATH}}"
+PLIST_DIR="${TOKEN_REPORTING_LAUNCHD_PLIST_DIR:-${HOME}/Library/LaunchAgents}"
 PLIST_PATH="${PLIST_DIR}/${LABEL}.plist"
 
 for value in \
@@ -57,6 +64,7 @@ for value in \
   "${REPO_ROOT}" \
   "${LOG_ROOT}" \
   "${PID_FILE}" \
+  "${LAUNCHD_PATH}" \
   "${LABEL}"; do
   if [[ "${value}" == *$'\n'* || "${value}" == *$'\r'* ]]; then
     echo "install-macos-launchagent: unsupported newline in path/value: ${value}" >&2
@@ -97,6 +105,8 @@ cat >"${PLIST_PATH}" <<EOF
     <string>$(xml_escape "${NODE_BIN}")</string>
     <key>TOKEN_REPORTING_TSX_CLI</key>
     <string>$(xml_escape "${TSX_CLI}")</string>
+    <key>PATH</key>
+    <string>$(xml_escape "${LAUNCHD_PATH}")</string>
     <key>TOKEN_REPORTING_HOST</key>
     <string>$(xml_escape "${HOST}")</string>
     <key>TOKEN_REPORTING_PORT</key>
@@ -134,6 +144,11 @@ cat >"${PLIST_PATH}" <<EOF
 </dict>
 </plist>
 EOF
+
+if [[ "${DRY_RUN}" == "true" ]]; then
+  echo "install-macos-launchagent: dry run wrote ${PLIST_PATH}"
+  exit 0
+fi
 
 launchctl bootout "gui/$(id -u)" "${PLIST_PATH}" >/dev/null 2>&1 || true
 launchctl bootstrap "gui/$(id -u)" "${PLIST_PATH}"

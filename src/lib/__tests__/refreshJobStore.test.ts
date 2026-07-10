@@ -46,4 +46,34 @@ describe("refreshJobStore", () => {
       }
     });
   });
+
+  it("createFileRefreshJobStore_ConcurrentSets_PreservesEveryJob", async () => {
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "token-reporting-refresh-jobs-"));
+    const storePath = path.join(tempDir, "refresh-jobs.json");
+    const store = createFileRefreshJobStore(storePath);
+
+    await Promise.all([
+      store.set("dynamic-refresh-a", {
+        jobId: "dynamic-refresh-a",
+        status: "running"
+      }),
+      store.set("dynamic-refresh-b", {
+        jobId: "dynamic-refresh-b",
+        status: "completed"
+      })
+    ]);
+
+    await expect(JSON.parse(await fs.readFile(storePath, "utf8"))).toEqual({
+      jobs: {
+        "dynamic-refresh-a": {
+          jobId: "dynamic-refresh-a",
+          status: "running"
+        },
+        "dynamic-refresh-b": {
+          jobId: "dynamic-refresh-b",
+          status: "completed"
+        }
+      }
+    });
+  });
 });

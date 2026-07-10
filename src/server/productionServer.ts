@@ -58,6 +58,7 @@ export function createTokenReportingProductionServer(
         basePath,
         dataRoot,
         distRoot,
+        env,
         handleApiRequest,
         logger,
         request,
@@ -104,6 +105,7 @@ async function routeProductionRequest(args: {
   basePath: string;
   dataRoot: string;
   distRoot: string;
+  env: NodeJS.ProcessEnv;
   handleApiRequest: (request: IntegrationContractRequest) => Promise<IntegrationContractResponse>;
   logger: ObservabilityLogger;
   request: IncomingMessage;
@@ -135,6 +137,7 @@ async function routeProductionRequest(args: {
 
 async function routeApiRequest(
   args: {
+    env: NodeJS.ProcessEnv;
     handleApiRequest: (request: IntegrationContractRequest) => Promise<IntegrationContractResponse>;
     logger: ObservabilityLogger;
     request: IncomingMessage;
@@ -142,6 +145,13 @@ async function routeApiRequest(
   },
   apiPath: string
 ): Promise<void> {
+  if (apiPath === "/api/operational-status" && args.request.method === "GET") {
+    writeJson(args.response, 200, buildOperationalStatus(args.env), {
+      "Cache-Control": "no-store"
+    });
+    return;
+  }
+
   const body = await readJsonBody(args.request);
   args.logger.debug("Production API request body parsed", { body, path: apiPath });
   const result = await args.handleApiRequest({
@@ -260,6 +270,33 @@ function createConfiguredForensicExecutor(env: NodeJS.ProcessEnv, logger: Observ
     timeoutMs: readPositiveInteger(env.TOKEN_REPORTING_SDLCA_BRIDGE_TIMEOUT_MS, 120_000),
     workingDirectory: env.TOKEN_REPORTING_SDLCA_BRIDGE_WORKING_DIRECTORY?.trim() ?? process.cwd()
   });
+}
+
+function buildOperationalStatus(env: NodeJS.ProcessEnv): {
+  forensics: {
+    bridgeTimeoutMs: number;
+    bridgeUrlConfigured: boolean;
+    status: "configured" | "not_configured";
+    tokenConfigured: boolean;
+    workingDirectoryConfigured: boolean;
+  };
+  service: "token-reporting-production";
+} {
+  const bridgeUrlConfigured = Boolean(env.TOKEN_REPORTING_SDLCA_BRIDGE_URL?.trim());
+  const tokenConfigured = Boolean(env.TOKEN_REPORTING_SDLCA_BRIDGE_TOKEN?.trim());
+
+  return {
+    forensics: {
+      bridgeTimeoutMs: readPositiveInteger(env.TOKEN_REPORTING_SDLCA_BRIDGE_TIMEOUT_MS, 120_000),
+      bridgeUrlConfigured,
+      status: bridgeUrlConfigured && tokenConfigured ? "configured" : "not_configured",
+      tokenConfigured,
+      workingDirectoryConfigured: Boolean(
+        env.TOKEN_REPORTING_SDLCA_BRIDGE_WORKING_DIRECTORY?.trim()
+      )
+    },
+    service: "token-reporting-production"
+  };
 }
 
 function readPositiveInteger(value: string | undefined, fallback: number): number {

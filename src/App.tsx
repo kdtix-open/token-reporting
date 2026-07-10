@@ -32,7 +32,7 @@ import {
   type ReportForensicRun,
   type SqlDialect,
 } from "./lib/reportExports";
-import { requestReportRefresh } from "./lib/integrationApiClient";
+import { pollReportRefreshJob, requestReportRefresh } from "./lib/integrationApiClient";
 import { resolveRuntimeApiBaseUrl, resolveRuntimeAssetPath } from "./lib/runtimePaths";
 import { providerRegistry } from "./providers/registry";
 import "./App.css";
@@ -239,7 +239,19 @@ export default function App() {
     ];
 
     try {
-      const result = await requestReportRefresh({ defaultApiBaseUrl: apiBaseUrl });
+      let result = await requestReportRefresh({ defaultApiBaseUrl: apiBaseUrl });
+      if (result.outcome === "accepted") {
+        if (!isTerminalRefreshJobStatus(result.job.status)) {
+          result = await pollReportRefreshJob(result.job.jobId, {
+            defaultApiBaseUrl: apiBaseUrl,
+            onUpdate: (job) => {
+              setRefreshMessage(`Refresh job ${job.jobId} ${job.status}`);
+              setRefreshSteps(refreshStepsFromJob(job));
+            }
+          });
+        }
+      }
+
       if (result.outcome === "accepted") {
         setRefreshMessage(`Refresh job ${result.job.jobId} ${result.job.status}`);
         setRefreshSteps(refreshStepsFromJob(result.job));
@@ -564,15 +576,19 @@ function readStatus(value: unknown): RefreshStepStatus | null {
   return null;
 }
 
+function isTerminalRefreshJobStatus(status: string): boolean {
+  return status === "completed" || status === "degraded" || status === "failed";
+}
+
 function statusFromRecords(
   records: Record<string, unknown>[],
   fallback: RefreshStepStatus | null
 ): RefreshStepStatus {
   const statuses = records.map((record) => readStatus(record.status)).filter(Boolean);
   if (statuses.includes("failed")) return "failed";
-  if (statuses.includes("degraded") || statuses.includes("queued") || statuses.includes("running")) {
-    return "degraded";
-  }
+  if (statuses.includes("degraded")) return "degraded";
+  if (statuses.includes("running")) return "running";
+  if (statuses.includes("queued")) return "queued";
   if (statuses.length > 0 && statuses.every((status) => status === "completed")) {
     return "completed";
   }

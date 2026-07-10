@@ -16,7 +16,15 @@ Use the devcontainer in `.devcontainer/devcontainer.json` for a reproducible Nod
 6. For the mac-local projectit.ai operator host, run
    `TOKEN_REPORTING_NODE_BIN=/opt/homebrew/bin/node npm run startup:install:macos`.
    The LaunchAgent listens on `8095`, which is the upstream used by the SDLCA
-   Docker Caddy route.
+   Docker Caddy route. The installer writes a launchd-safe `PATH` so refresh
+   scripts can find `npm` after a reboot.
+7. If bridge-backed forensics should be enabled on the operator host, run
+   `npm run startup:repair-bridge-env`. It copies the SDLCA local bridge token
+   into `.env.admin.credentials`, writes a backup, chmods the file to `600`, and
+   prints only a redacted summary. Then rerun
+   `TOKEN_REPORTING_NODE_BIN=/opt/homebrew/bin/node npm run startup:install:macos`
+   so the LaunchAgent restarts and reloads the updated admin env file before
+   checking `/tools/token-reporting/api/operational-status`.
 
 ## Environment variables
 
@@ -36,6 +44,10 @@ Use the devcontainer in `.devcontainer/devcontainer.json` for a reproducible Nod
 - `TOKEN_REPORTING_NODE_BIN`: absolute Node executable pinned into macOS launchd or WSL systemd-user startup units.
 - `TOKEN_REPORTING_PORT`: local production port, `8095` for the SDLCA Caddy route.
 - `TOKEN_REPORTING_HOST`: bind address, normally `0.0.0.0` so Docker Desktop can reach the host service through `host.docker.internal`.
+- `TOKEN_REPORTING_SDLCA_BRIDGE_URL`: SDLCA local bridge URL for forensic reviewer execution.
+- `TOKEN_REPORTING_SDLCA_BRIDGE_TOKEN`: SDLCA bridge bearer token; store only in the admin env file or secret store and never print.
+- `TOKEN_REPORTING_SDLCA_BRIDGE_WORKING_DIRECTORY`: working directory sent to the local bridge for forensic reviewer execution.
+- `TOKEN_REPORTING_SDLCA_BRIDGE_TIMEOUT_MS`: bridge forensic execution timeout, default `120000`.
 
 ## Startup and tenancy notes
 
@@ -54,6 +66,7 @@ Useful probes:
 ```bash
 launchctl print gui/$(id -u)/com.kdtix.token-reporting
 curl http://127.0.0.1:8095/tools/token-reporting/api/integration/contract
+curl http://127.0.0.1:8095/tools/token-reporting/api/operational-status
 curl https://dev.projectit.ai/tools/token-reporting
 ```
 
