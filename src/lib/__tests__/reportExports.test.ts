@@ -91,6 +91,26 @@ describe("reportExports", () => {
     expect(result.payload).toContain("ON CONFLICT (id) DO UPDATE SET");
   });
 
+  it("createReportExport_DatabaseFormat_IncludesScopedReportBreakdowns", () => {
+    const result = createReportExport(
+      {
+        ...richReportContext(),
+        localModelWorkloadScopeId: "repo_automation_project"
+      },
+      "database"
+    );
+    const sql = result.payload as string;
+
+    expect(sql).toContain("CREATE TABLE IF NOT EXISTS report_breakdowns");
+    expect(sql).toContain("'local_model_migration'");
+    expect(sql).toContain("'selected_scope'");
+    expect(sql).toContain("'scope_id'");
+    expect(sql).toContain("'repo_automation_project'");
+    expect(sql).toContain("'context_evidence_source'");
+    expect(sql).toContain("'global_local_session_distribution_scaled_to_scope'");
+    expect(sql).not.toContain("'applied_forensic_guidance'");
+  });
+
   it("createReportExport_PdfAndDocxFormats_IncludeRichWebsiteReportSections", () => {
     const context = richReportContext();
     const pdf = createReportExport(context, "pdf");
@@ -110,7 +130,8 @@ describe("reportExports", () => {
       expect(text).toContain("Executive Hardware Decision Summary");
       expect(text).toContain("Hardware Budget Required by Scope");
       expect(text).toContain("first-server shadow/canary");
-      expect(text).toContain("$150K is not enough for all-provider replacement");
+      expect(text).toContain("For all-provider steady-state replacement");
+      expect(text).toContain("production-pod planning");
       expect(text).toContain("Copilot Dominance Warning");
       expect(text).toContain("Target first-server migration objective");
       expect(text).toContain("Estimated safe initial routing");
@@ -180,7 +201,7 @@ describe("reportExports", () => {
           ]),
           hardwareBudgetSummary: {
             cfoSummaryLines: expect.arrayContaining([
-              "$150K is not enough for all-provider replacement."
+              "For all-provider steady-state replacement, create a $1.2M-$2.0M production-pod planning envelope."
             ]),
             copilotDominanceWarning: expect.stringContaining(
               "GitHub Copilot CLI token telemetry is not present"
@@ -347,7 +368,9 @@ describe("reportExports", () => {
     expect(workbookText).toContain("Local AI Infrastructure Sizing");
     expect(workbookText).toContain("Executive Hardware Decision Summary");
     expect(workbookText).toContain("Hardware Budget Required by Scope");
-    expect(workbookText).toContain("$150K is not enough for all-provider replacement");
+    expect(workbookText).toContain(
+      "For all-provider steady-state replacement, create a $1.2M-$2.0M production-pod planning envelope"
+    );
     expect(workbookText).toContain("Target first-server migration objective");
     expect(workbookText).toContain("Estimated safe initial routing");
     expect(workbookText).toContain("Estimated full-workload capacity");

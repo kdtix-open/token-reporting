@@ -508,9 +508,11 @@ export function buildLocalInfrastructureSizing(
     hardwareProfiles,
     workloadSummary,
     workloadScopeSummaries,
-    productionRoutingBlocked
+    productionRoutingBlocked,
+    budgetHighUsd
   );
   const hardwareBudgetSummary = buildHardwareBudgetSummary({
+    budgetHighUsd,
     providerCoverage,
     scenarios: hardwareBudgetScenarios,
     selectedScope: workloadScopeConfig.defaultSizingScope
@@ -1422,6 +1424,8 @@ function buildWorkloadScopeSummaries(
     p95: workload.currentProjectLaneP95Context,
     p99: workload.currentProjectLaneP99Context
   };
+  const repoRouteClassIds = ["repo_agent_worker", "repo_agent_reviewer", "long_context_tail"];
+  const repoContext = contextForRouteClasses(routeClasses, repoRouteClassIds);
   const repoCompute =
     (routeById.get("repo_agent_worker")?.computeTokensPerDay ?? 0) +
     (routeById.get("repo_agent_reviewer")?.computeTokensPerDay ?? 0);
@@ -1438,13 +1442,14 @@ function buildWorkloadScopeSummaries(
     }),
     scopeSummary({
       computeTokensPerDay: repoCompute,
-      context: allContext,
+      context: repoContext,
       label: "Repo Automation project-lane sizing",
       notes: [
-        "Default sizing scope. Copilot CLI volume is reported separately so it does not define one project lane by itself."
+        "Default sizing scope. Copilot CLI volume is reported separately so it does not define one project lane by itself.",
+        "Context requirement is derived from repo route classes and includes the global long-context tail fallback until route-specific tail samples exist."
       ],
       providerIds: ["claude-code", "codex", "claude", "cursor"],
-      routeClassIds: ["repo_agent_worker", "repo_agent_reviewer", "long_context_tail"],
+      routeClassIds: repoRouteClassIds,
       scope: "repo_automation_project"
     }),
     scopeSummary({
@@ -1475,6 +1480,19 @@ function buildWorkloadScopeSummaries(
       scope: "reviewer"
     })
   ];
+}
+
+function contextForRouteClasses(
+  routeClasses: WorkloadRouteClass[],
+  routeClassIds: string[]
+): WorkloadScopeSummary["contextRequirementTokens"] {
+  const selectedRoutes = routeClasses.filter((route) => routeClassIds.includes(route.id));
+  return {
+    max: maxNullable(selectedRoutes.map((route) => route.contextRequirementTokens.max)),
+    p50: maxNullable(selectedRoutes.map((route) => route.contextRequirementTokens.p50)),
+    p95: maxNullable(selectedRoutes.map((route) => route.contextRequirementTokens.p95)),
+    p99: maxNullable(selectedRoutes.map((route) => route.contextRequirementTokens.p99))
+  };
 }
 
 function scopeSummary(input: {
@@ -1523,15 +1541,17 @@ function applySelectedWorkloadScope(
 }
 
 function buildHardwareBudgetSummary(input: {
+  budgetHighUsd: number;
   providerCoverage: NormalizedProviderUsage[];
   scenarios: HardwareBudgetScenario[];
   selectedScope: WorkloadScope;
 }): HardwareBudgetSummary {
+  const budgetLabel = formatBudgetUsd(input.budgetHighUsd);
   return {
     cfoSummaryLines: [
-      firstServerBudgetLine(input.scenarios),
-      allProviderSteadyBudgetLine(input.scenarios),
-      "For Repo Automation project-lane only, the $150K server may be sufficient for initial local worker testing, but full p99 replacement remains blocked by context, quality, and benchmark gates.",
+      firstServerBudgetLine(input.scenarios, input.budgetHighUsd),
+      allProviderSteadyBudgetLine(input.scenarios, input.budgetHighUsd),
+      `For Repo Automation project-lane only, the ${budgetLabel} server may be sufficient for initial local worker testing, but full p99 replacement remains blocked by context, quality, and benchmark gates.`,
       "For all-provider steady-state replacement, create a $1.2M-$2.0M production-pod planning envelope.",
       "For all-provider peak-safe replacement, create a $3.5M-$6.0M expansion envelope.",
       "NVL72-class rack scale should be tied to sold reserved-capacity product demand, not internal provider displacement alone."
@@ -1545,10 +1565,12 @@ function buildHardwareBudgetScenarios(
   profiles: HardwareProfile[],
   workload: LocalInfrastructureWorkloadSummary,
   scopes: WorkloadScopeSummary[],
-  productionRoutingBlocked: boolean
+  productionRoutingBlocked: boolean,
+  budgetHighUsd: number
 ): HardwareBudgetScenario[] {
   const preferredProfile = selectPreferredBudgetProfile(profiles);
   const rackProfile = selectRackScaleBudgetProfile(profiles, preferredProfile);
+  const budgetLabel = formatBudgetUsd(budgetHighUsd);
 
   return [
     hardwareBudgetScenario({
@@ -1565,8 +1587,7 @@ function buildHardwareBudgetScenarios(
     }),
     hardwareBudgetScenario({
       cloudFallbackRequired: true,
-      explanation:
-        "For Repo Automation project-lane only, the $150K server may be sufficient for initial local worker testing, but full p99 replacement remains blocked by context, quality, and benchmark gates.",
+      explanation: `For Repo Automation project-lane only, the ${budgetLabel} server may be sufficient for initial local worker testing, but full p99 replacement remains blocked by context, quality, and benchmark gates.`,
       fullReplacementAllowed:
         !productionRoutingBlocked && preferredProfile.fullProjectLaneClaimAllowed,
       goal: "steady_state_replacement",
@@ -1587,10 +1608,8 @@ function buildHardwareBudgetScenarios(
       targetTokensPerSecond: workload.repoAutomationPeakTps
     }),
     hardwareBudgetScenario({
-      capexOverride: [1_200_000, 2_000_000],
       cloudFallbackRequired: true,
-      explanation:
-        "$150K is not enough for all-provider replacement. For all-provider steady-state replacement, create a $1.2M-$2.0M production-pod planning envelope.",
+      explanation: `Treat ${budgetLabel} as first-server budget only, not all-provider replacement authority. For all-provider steady-state replacement, create a $1.2M-$2.0M production-pod planning envelope.`,
       fullReplacementAllowed: false,
       goal: "steady_state_replacement",
       profile: preferredProfile,
@@ -1599,7 +1618,6 @@ function buildHardwareBudgetScenarios(
       targetTokensPerSecond: workload.allProviderComputeTps
     }),
     hardwareBudgetScenario({
-      capexOverride: [3_500_000, 6_000_000],
       cloudFallbackRequired: true,
       explanation:
         "For all-provider peak-safe replacement, create a $3.5M-$6.0M expansion envelope.",
@@ -1636,7 +1654,11 @@ function buildHardwareBudgetScenarios(
   ];
 }
 
-function firstServerBudgetLine(scenarios: HardwareBudgetScenario[]): string {
+function firstServerBudgetLine(
+  scenarios: HardwareBudgetScenario[],
+  budgetHighUsd: number
+): string {
+  const budgetLabel = formatBudgetUsd(budgetHighUsd);
   const safeCanary = scenarios.find(
     (scenario) =>
       scenario.scope === "repo_automation_project" &&
@@ -1646,15 +1668,19 @@ function firstServerBudgetLine(scenarios: HardwareBudgetScenario[]): string {
     return "First-server shadow/canary budget fit is unknown until hardware profiles are selected.";
   }
   if (safeCanary.estimatedCapexHighUsd === null) {
-    return "$150K first-server shadow/canary fit requires a vendor quote before approval.";
+    return `${budgetLabel} first-server shadow/canary fit requires a vendor quote before approval.`;
   }
-  if (safeCanary.estimatedCapexHighUsd <= DEFAULT_BUDGET_HIGH_USD) {
-    return "$150K is enough for first-server shadow/canary and benchmark collection.";
+  if (safeCanary.estimatedCapexHighUsd <= budgetHighUsd) {
+    return `${budgetLabel} is enough for first-server shadow/canary and benchmark collection.`;
   }
-  return "$150K is not enough for first-server shadow/canary with the selected hardware profile.";
+  return `${budgetLabel} is not enough for first-server shadow/canary with the selected hardware profile.`;
 }
 
-function allProviderSteadyBudgetLine(scenarios: HardwareBudgetScenario[]): string {
+function allProviderSteadyBudgetLine(
+  scenarios: HardwareBudgetScenario[],
+  budgetHighUsd: number
+): string {
+  const budgetLabel = formatBudgetUsd(budgetHighUsd);
   const steadyState = scenarios.find(
     (scenario) =>
       scenario.scope === "all_provider_traffic" &&
@@ -1662,12 +1688,12 @@ function allProviderSteadyBudgetLine(scenarios: HardwareBudgetScenario[]): strin
   );
   if (!steadyState) return "All-provider replacement budget fit is unknown.";
   if (steadyState.estimatedCapexHighUsd === null) {
-    return "$150K all-provider replacement fit requires a vendor quote before approval.";
+    return `${budgetLabel} all-provider replacement fit requires a vendor quote before approval.`;
   }
-  if (steadyState.estimatedCapexHighUsd <= DEFAULT_BUDGET_HIGH_USD) {
-    return "$150K appears enough for all-provider steady-state replacement under the selected workload.";
+  if (steadyState.estimatedCapexHighUsd <= budgetHighUsd) {
+    return `${budgetLabel} appears enough for all-provider steady-state replacement under the selected workload.`;
   }
-  return "$150K is not enough for all-provider replacement.";
+  return `${budgetLabel} is not enough for all-provider replacement.`;
 }
 
 function copilotBudgetWarning(providerCoverage: NormalizedProviderUsage[]): string {
@@ -1730,7 +1756,6 @@ function fallbackPreferredBudgetProfile(): HardwareProfile {
 }
 
 function hardwareBudgetScenario(input: {
-  capexOverride?: [number, number];
   cloudFallbackRequired: boolean;
   confidence?: HardwareBudgetConfidence;
   explanation: string;
@@ -1748,12 +1773,8 @@ function hardwareBudgetScenario(input: {
       : Math.max(1, Math.ceil(input.targetTokensPerSecond / estimatedNodeThroughputTps));
   const requiredGpuCount =
     requiredNodes === null ? null : requiredNodes * input.profile.gpuCount;
-  const capexLow =
-    input.capexOverride?.[0] ??
-    multiplyNullable(input.profile.estimatedCapexLowUsd, requiredNodes);
-  const capexHigh =
-    input.capexOverride?.[1] ??
-    multiplyNullable(input.profile.estimatedCapexHighUsd, requiredNodes);
+  const capexLow = multiplyNullable(input.profile.estimatedCapexLowUsd, requiredNodes);
+  const capexHigh = multiplyNullable(input.profile.estimatedCapexHighUsd, requiredNodes);
   const requiredContextTokens = requiredContextForScope(input.scopes, input.scope);
 
   return {
@@ -2344,6 +2365,11 @@ function nullableSum(values: Array<number | null>): number | null {
   return present.length > 0 ? sum(present) : null;
 }
 
+function maxNullable(values: Array<number | null>): number | null {
+  const present = values.filter((value): value is number => value !== null);
+  return present.length > 0 ? Math.max(...present) : null;
+}
+
 function sum(values: number[]): number {
   return values.reduce((total, value) => total + value, 0);
 }
@@ -2359,6 +2385,12 @@ function round2(value: number): number {
 
 function roundMoney(value: number): number {
   return Math.round(value * 100) / 100;
+}
+
+function formatBudgetUsd(value: number): string {
+  if (value >= 1_000_000) return `$${(value / 1_000_000).toLocaleString()}M`;
+  if (value >= 1_000 && value % 1_000 === 0) return `$${(value / 1_000).toLocaleString()}K`;
+  return `$${value.toLocaleString()}`;
 }
 
 function capexRange(profile: HardwareProfile | null): string {

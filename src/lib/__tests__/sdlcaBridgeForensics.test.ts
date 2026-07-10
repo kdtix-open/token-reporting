@@ -754,6 +754,8 @@ describe("sdlcaBridgeForensics", () => {
           result: {
             ...forensicArtifact("claude", "Sonnet perspective"),
             api_key: "sk-test_1234567890abcd",
+            api_key_value: "sk-test_abcdef1234567890",
+            authorizationHeader: "Bearer super-secret-header",
             metrics: {
               inputTokens: 12_345,
               outputTokens: 678,
@@ -794,6 +796,8 @@ describe("sdlcaBridgeForensics", () => {
     expect(result.status).toBe("completed");
     const artifactText = JSON.stringify(result.reviewerArtifacts[0]?.artifact);
     expect(result.reviewerArtifacts[0]?.artifact).toMatchObject({
+      api_key_value: "[REDACTED]",
+      authorizationHeader: "[REDACTED]",
       metrics: {
         inputTokens: 12_345,
         outputTokens: 678,
@@ -805,6 +809,8 @@ describe("sdlcaBridgeForensics", () => {
     });
     expect(artifactText).toContain("[REDACTED]");
     expect(artifactText).not.toContain("super-secret");
+    expect(artifactText).not.toContain("super-secret-header");
+    expect(artifactText).not.toContain("sk-test_abcdef1234567890");
     expect(artifactText).not.toContain("sk-test_1234567890abcd");
   });
 

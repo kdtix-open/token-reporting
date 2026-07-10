@@ -606,7 +606,10 @@ export function buildLocalModelReport(
   const rawTokenObservedProviders: TokenObservedProvider[] = [];
   const rawRequestOnlyProviders: RequestOnlyProvider[] = [];
   const { availableWorkloadScopes, selectedWorkloadScope, tenant } = resolveWorkloadScope(options);
-  const appliedForensicGuidance = buildAppliedForensicGuidance(forensicRun);
+  const appliedForensicGuidance =
+    selectedWorkloadScope.id === "all_provider_traffic"
+      ? buildAppliedForensicGuidance(forensicRun)
+      : null;
 
   for (const s of summaries) {
     if (hasTokenFields(s)) {

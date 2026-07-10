@@ -7,7 +7,7 @@ import { redactLogValue, type ObservabilityLogger } from "./observabilityLogger"
 
 type SdlcaBridgeProviderKind = "claude" | "codex" | "copilot" | "cursor";
 const bridgeSensitiveKeyPattern =
-  /(?:api[_-]?key|authorization|bearer|credential|password|secret|(?:access|auth|bridge|id|refresh|session)[_-]?token|token)$/i;
+  /(?:api[_-]?key|authorization|bearer|credential|password|secret|(?:access|auth|bridge|id|refresh|session)[_-]?token|^token$|[_-]token$)/i;
 
 interface SdlcaBridgeProvider {
   forensicCapabilities?: {

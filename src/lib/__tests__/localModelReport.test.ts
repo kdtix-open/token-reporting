@@ -561,6 +561,22 @@ describe("buildLocalModelReport", () => {
       )?.forensicInterpretation
     ).toContain("long-context candidate screen");
   });
+
+  it("ignores forensic guidance inside scoped tenant pipeline reports", () => {
+    const report = buildLocalModelReport(
+      [copilotCliSummary, claudeSummary, codexSummary],
+      null,
+      null,
+      forensicTieredRoutingRun,
+      { workloadScopeId: "repo_automation_project" }
+    );
+
+    expect(report.selectedWorkloadScope.id).toBe("repo_automation_project");
+    expect(report.appliedForensicGuidance).toBeNull();
+    expect(
+      report.profiles.some((profile) => profile.forensicInterpretation !== undefined)
+    ).toBe(false);
+  });
 });
 
 const forensicTieredRoutingRun = {

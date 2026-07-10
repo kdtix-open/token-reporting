@@ -199,7 +199,7 @@ export function createReportExport(
       return {
         filename: `token-report-database-${dateStamp}.sql`,
         mimeType: "application/sql",
-        payload: generateDatabaseSql(rows, dialect)
+        payload: generateDatabaseSql(rows, dialect, report)
       };
   }
 }
@@ -226,17 +226,33 @@ export function downloadReportExport(
 
 export function generateDatabaseSql(
   rows: ReportExportRow[],
-  dialect: SqlDialect
+  dialect: SqlDialect,
+  report?: ReportExportBreakdowns
 ): string {
   return [
     databaseInjectionComment(dialect),
     createSchemaSql(dialect),
+    ...(report
+      ? [
+          createReportBreakdownSchemaSql(dialect),
+          ...reportBreakdownRows(report).map((row, index) =>
+            upsertReportBreakdownSql(row, index, dialect)
+          )
+        ]
+      : []),
     ...rows.flatMap((row) => [
       upsertProviderSql(row, dialect),
       upsertModelSql(row, dialect),
       upsertSnapshotSql(row, dialect)
     ])
   ].join("\n\n");
+}
+
+interface ReportBreakdownSqlRow {
+  field: string;
+  recordType: string;
+  section: string;
+  value: string;
 }
 
 const seatBasedProviderIds = new Set(["github-copilot", "claude-code"]);
@@ -2268,6 +2284,143 @@ EXCEPTION
     IF SQLCODE != -955 THEN RAISE; END IF;
 END;
 /`;
+  }
+}
+
+function createReportBreakdownSchemaSql(dialect: SqlDialect): string {
+  switch (dialect) {
+    case "sqlite":
+    case "postgresql":
+      return `CREATE TABLE IF NOT EXISTS report_breakdowns (
+  id TEXT PRIMARY KEY,
+  section TEXT NOT NULL,
+  record_type TEXT NOT NULL,
+  field TEXT NOT NULL,
+  metric_value TEXT NOT NULL
+);`;
+    case "mysql":
+      return `CREATE TABLE IF NOT EXISTS report_breakdowns (
+  id VARCHAR(255) PRIMARY KEY,
+  section VARCHAR(128) NOT NULL,
+  record_type VARCHAR(255) NOT NULL,
+  field VARCHAR(255) NOT NULL,
+  metric_value TEXT NOT NULL
+);`;
+    case "mssql":
+      return `IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[report_breakdowns]') AND type = N'U')
+BEGIN
+  CREATE TABLE dbo.report_breakdowns (
+    id NVARCHAR(255) NOT NULL PRIMARY KEY,
+    section NVARCHAR(128) NOT NULL,
+    record_type NVARCHAR(255) NOT NULL,
+    field NVARCHAR(255) NOT NULL,
+    metric_value NVARCHAR(MAX) NOT NULL
+  );
+END;`;
+    case "oracle":
+      return `BEGIN
+  EXECUTE IMMEDIATE 'CREATE TABLE report_breakdowns (
+    id VARCHAR2(255) PRIMARY KEY,
+    section VARCHAR2(128) NOT NULL,
+    record_type VARCHAR2(255) NOT NULL,
+    field VARCHAR2(255) NOT NULL,
+    metric_value CLOB NOT NULL
+  )';
+EXCEPTION
+  WHEN OTHERS THEN
+    IF SQLCODE != -955 THEN RAISE; END IF;
+END;
+/`;
+  }
+}
+
+function reportBreakdownRows(report: ReportExportBreakdowns): ReportBreakdownSqlRow[] {
+  const lines = createCsv([], report).split("\n");
+  const headerIndex = lines.findIndex((line) => line === "section,record_type,field,value");
+  if (headerIndex === -1) return [];
+
+  return lines
+    .slice(headerIndex + 1)
+    .filter((line) => line.trim().length > 0)
+    .map(parseCsvLine)
+    .filter((cells): cells is [string, string, string, string] => cells.length === 4)
+    .map(([section, recordType, field, value]) => ({
+      field,
+      recordType,
+      section,
+      value
+    }));
+}
+
+function parseCsvLine(line: string): string[] {
+  const cells: string[] = [];
+  let cell = "";
+  let inQuotes = false;
+
+  for (let index = 0; index < line.length; index += 1) {
+    const char = line[index];
+    if (char === "\"" && inQuotes && line[index + 1] === "\"") {
+      cell += "\"";
+      index += 1;
+    } else if (char === "\"") {
+      inQuotes = !inQuotes;
+    } else if (char === "," && !inQuotes) {
+      cells.push(cell);
+      cell = "";
+    } else {
+      cell += char;
+    }
+  }
+
+  cells.push(cell);
+  return cells;
+}
+
+function upsertReportBreakdownSql(
+  row: ReportBreakdownSqlRow,
+  index: number,
+  dialect: SqlDialect
+): string {
+  const id = `${row.section}:${row.recordType}:${row.field}:${index}`;
+  const values = [
+    sqlString(id),
+    sqlString(row.section),
+    sqlString(row.recordType),
+    sqlString(row.field),
+    sqlString(row.value)
+  ];
+  const columns = "id, section, record_type, field, metric_value";
+
+  switch (dialect) {
+    case "sqlite":
+    case "postgresql":
+      return `INSERT INTO report_breakdowns (${columns})
+VALUES (${values.join(", ")})
+ON CONFLICT${conflictTarget(dialect)} DO UPDATE SET
+  section = ${excluded(dialect)}.section,
+  record_type = ${excluded(dialect)}.record_type,
+  field = ${excluded(dialect)}.field,
+  metric_value = ${excluded(dialect)}.metric_value;`;
+    case "mysql":
+      return `INSERT INTO report_breakdowns (${columns})
+VALUES (${values.join(", ")})
+ON DUPLICATE KEY UPDATE
+  section = VALUES(section),
+  record_type = VALUES(record_type),
+  field = VALUES(field),
+  metric_value = VALUES(metric_value);`;
+    case "mssql":
+      return `MERGE INTO dbo.report_breakdowns AS target
+USING (SELECT ${values[0]} AS id, ${values[1]} AS section, ${values[2]} AS record_type, ${values[3]} AS field, ${values[4]} AS metric_value) AS source
+ON target.id = source.id
+WHEN MATCHED THEN UPDATE SET section = source.section, record_type = source.record_type, field = source.field, metric_value = source.metric_value
+WHEN NOT MATCHED THEN INSERT (${columns}) VALUES (source.id, source.section, source.record_type, source.field, source.metric_value);`;
+    case "oracle":
+      return `MERGE INTO report_breakdowns target
+USING (SELECT ${values[0]} id, ${values[1]} section, ${values[2]} record_type, ${values[3]} field, ${values[4]} metric_value FROM DUAL) source
+ON (target.id = source.id)
+WHEN MATCHED THEN UPDATE SET target.section = source.section, target.record_type = source.record_type, target.field = source.field, target.metric_value = source.metric_value
+WHEN NOT MATCHED THEN INSERT (${columns}) VALUES (source.id, source.section, source.record_type, source.field, source.metric_value);`;
   }
 }
 

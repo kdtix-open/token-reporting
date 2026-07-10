@@ -231,6 +231,10 @@ describe("localInfrastructureSizing", () => {
       report.workloadScopeSummaries.find((scope) => scope.scope === "repo_automation_project")
         ?.notes.join(" ")
     ).toContain("Copilot CLI volume is reported separately");
+    expect(
+      report.workloadScopeSummaries.find((scope) => scope.scope === "repo_automation_project")
+        ?.notes.join(" ")
+    ).toContain("global long-context tail fallback");
   });
 
   it("workloadSummary_SplitsAllProviderFromSelectedRepoAutomationScope", () => {
@@ -285,10 +289,10 @@ describe("localInfrastructureSizing", () => {
     });
     expect(allProviderSteady?.targetTokensPerSecond).toBeCloseTo(4070.3, 1);
     expect(allProviderSteady?.explanation).toContain(
-      "$150K is not enough for all-provider replacement."
+      "not all-provider replacement authority"
     );
-    expect(allProviderSteady?.estimatedCapexLowUsd).toBe(1_200_000);
-    expect(allProviderSteady?.estimatedCapexHighUsd).toBe(2_000_000);
+    expect(allProviderSteady?.estimatedCapexLowUsd).toBe(630_000);
+    expect(allProviderSteady?.estimatedCapexHighUsd).toBe(900_000);
 
     expect(allProviderPeak).toMatchObject({
       requiredNodes: 17,
@@ -297,8 +301,8 @@ describe("localInfrastructureSizing", () => {
       fullReplacementAllowed: false
     });
     expect(allProviderPeak?.targetTokensPerSecond).toBeCloseTo(12210.9, 1);
-    expect(allProviderPeak?.estimatedCapexLowUsd).toBe(3_500_000);
-    expect(allProviderPeak?.estimatedCapexHighUsd).toBe(6_000_000);
+    expect(allProviderPeak?.estimatedCapexLowUsd).toBe(1_785_000);
+    expect(allProviderPeak?.estimatedCapexHighUsd).toBe(2_550_000);
   });
 
   it("hardwareBudgetScenarios_BlockP99FullReplacementWithoutBenchmarkEvidence", () => {
@@ -378,6 +382,25 @@ describe("localInfrastructureSizing", () => {
     expect(report.hardwareBudgetSummary.copilotDominanceWarning).not.toContain("dominates");
     expect(report.hardwareBudgetSummary.cfoSummaryLines[0]).toContain(
       "$150K is not enough for first-server"
+    );
+
+    const customBudgetReport = buildLocalInfrastructureSizing({
+      budgetHighUsd: 300_000,
+      budgetLowUsd: 250_000,
+      distribution: localDistribution,
+      hardwareProfiles: [customProfile],
+      localModelReport: {
+        contextConfidence: "high",
+        estimatedContextWindowNeeded: 131_072,
+        requiredTokensPerSec: 250
+      } as LocalModelMigrationReport,
+      summaries: noCopilotSummaries()
+    });
+    expect(customBudgetReport.hardwareBudgetSummary.cfoSummaryLines[0]).toContain(
+      "$300K is enough for first-server"
+    );
+    expect(customBudgetReport.hardwareBudgetSummary.cfoSummaryLines.join(" ")).not.toContain(
+      "$150K"
     );
   });
 
