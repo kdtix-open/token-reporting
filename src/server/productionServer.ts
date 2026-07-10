@@ -132,7 +132,7 @@ async function routeProductionRequest(args: {
     return;
   }
 
-  await routeDistRequest(args.response, args.distRoot, normalizedRequest.path);
+  await routeDistRequest(args.response, args.distRoot, normalizedRequest.path, args.basePath);
 }
 
 async function routeApiRequest(
@@ -165,13 +165,53 @@ async function routeApiRequest(
 async function routeDistRequest(
   response: ServerResponse,
   distRoot: string,
-  requestPath: string
+  requestPath: string,
+  basePath: string
 ): Promise<void> {
   const filePath = requestPath === "/" ? "index.html" : requestPath.slice(1);
+  if (filePath === "index.html") {
+    const served = await routeIndexHtml(response, distRoot, basePath);
+    if (served) return;
+  }
+
   const served = await routeStaticFile(response, distRoot, filePath, requestPath.startsWith("/assets/"));
   if (!served) {
-    await routeStaticFile(response, distRoot, "index.html", false);
+    await routeIndexHtml(response, distRoot, basePath);
   }
+}
+
+async function routeIndexHtml(
+  response: ServerResponse,
+  distRoot: string,
+  basePath: string
+): Promise<boolean> {
+  const resolvedPath = safeJoin(distRoot, "index.html");
+  if (!resolvedPath) {
+    writeJson(response, 403, { code: "invalid_path", message: "Invalid static file path." });
+    return true;
+  }
+
+  let html: string;
+  try {
+    html = await fs.readFile(resolvedPath, "utf8");
+  } catch (error) {
+    if (isMissingFileError(error)) return false;
+    throw error;
+  }
+
+  response.writeHead(200, {
+    "Cache-Control": noCacheControl,
+    "Content-Type": "text/html; charset=utf-8"
+  });
+  response.end(rewriteIndexHtmlAssetUrls(html, basePath));
+  return true;
+}
+
+function rewriteIndexHtmlAssetUrls(html: string, basePath: string): string {
+  if (!basePath) return html;
+  return html
+    .replace(/(href|src)="\/(assets\/)/gu, `$1="${basePath}/$2`)
+    .replace(/(href|src)="\/(favicon\.(?:svg|ico))"/gu, `$1="${basePath}/$2"`);
 }
 
 async function routeStaticFile(
@@ -233,6 +273,15 @@ function contentTypeForPath(filePath: string): string {
   if (extension === ".svg") return "image/svg+xml; charset=utf-8";
   if (extension === ".ico") return "image/x-icon";
   return "application/octet-stream";
+}
+
+function isMissingFileError(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error as { code?: unknown }).code === "ENOENT"
+  );
 }
 
 function createProductionLogger(env: NodeJS.ProcessEnv): ObservabilityLogger {

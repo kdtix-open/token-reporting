@@ -80,6 +80,35 @@ describe("productionServer", () => {
     expect(response.headers.get("location")).toBe("/tools/token-reporting/");
   });
 
+  it("createTokenReportingProductionServer_BasePathIndexHtml_RewritesRootAssetUrls", async () => {
+    const roots = await createFixtureRoots();
+    await fs.writeFile(
+      path.join(roots.distRoot, "index.html"),
+      [
+        "<!doctype html>",
+        '<link rel="icon" href="/favicon.svg">',
+        '<script type="module" src="/assets/index.js"></script>',
+        '<link rel="stylesheet" href="/assets/index.css">'
+      ].join("")
+    );
+    const server = createTokenReportingProductionServer({
+      basePath: "/tools/token-reporting",
+      dataRoot: roots.dataRoot,
+      distRoot: roots.distRoot,
+      handleApiRequest: async () => ({ body: {}, headers: {}, status: 200 })
+    });
+    const baseUrl = await listen(server);
+
+    const response = await fetch(`${baseUrl}/tools/token-reporting`);
+    const body = await response.text();
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toContain("text/html");
+    expect(body).toContain('href="/tools/token-reporting/favicon.svg"');
+    expect(body).toContain('src="/tools/token-reporting/assets/index.js"');
+    expect(body).toContain('href="/tools/token-reporting/assets/index.css"');
+  });
+
   it("createTokenReportingProductionServer_OperationalStatusWithoutBridgeEnv_ReportsForensicsNotConfigured", async () => {
     const roots = await createFixtureRoots();
     const server = createTokenReportingProductionServer({
