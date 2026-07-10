@@ -681,10 +681,72 @@ describe("integrationContractDynamic", () => {
       expect(statusResponse.body).toMatchObject({
         jobId: "dynamic-refresh-20260607T164500000Z",
         persistenceWarning: "refresh_job_terminal_not_persisted",
+        persistenceRetryAttempts: expect.any(Number),
         providerResults: [expect.objectContaining({ providerId: "codex", status: "completed" })],
         status: "completed"
       });
     });
+  });
+
+  it("createDynamicIntegrationContractHandler_RefreshStatus_RetriesTerminalPersistenceAfterStorageRecovers", async () => {
+    let getJob: Record<string, unknown> | undefined;
+    let setCalls = 0;
+    const refreshJobStore = {
+      async get() {
+        return getJob;
+      },
+      async set(_jobId: string, job: Record<string, unknown>) {
+        setCalls += 1;
+        if (setCalls === 2) {
+          throw new Error("transient disk full");
+        }
+        getJob = job;
+      }
+    };
+    const refreshExecutor = vi.fn().mockResolvedValue({
+      providerResults: [
+        {
+          accumulatedThrough: "2026-06-07",
+          completedAt: "2026-06-07T16:45:08.000Z",
+          providerId: "codex",
+          status: "completed"
+        }
+      ]
+    });
+    const handler = createDynamicIntegrationContractHandler({
+      asyncRefresh: true,
+      loadSummaries: async () => summaries,
+      now: () => new Date("2026-06-07T16:45:00.000Z"),
+      refreshExecutor,
+      refreshJobStore
+    });
+
+    await handler({
+      body: {
+        providers: ["codex"]
+      },
+      method: "POST",
+      path: "/api/refresh"
+    });
+    await vi.waitFor(() => expect(setCalls).toBeGreaterThanOrEqual(2));
+
+    const statusResponse = await handler({
+      method: "GET",
+      path: "/api/refresh/dynamic-refresh-20260607T164500000Z"
+    });
+
+    expect(statusResponse.status).toBe(200);
+    expect(statusResponse.body).toMatchObject({
+      jobId: "dynamic-refresh-20260607T164500000Z",
+      providerResults: [expect.objectContaining({ providerId: "codex", status: "completed" })],
+      status: "completed"
+    });
+    expect(statusResponse.body).not.toHaveProperty("persistenceWarning");
+    expect(getJob).toMatchObject({
+      jobId: "dynamic-refresh-20260607T164500000Z",
+      status: "completed"
+    });
+    expect(getJob).not.toHaveProperty("persistenceWarning");
   });
 
   it("createDynamicIntegrationContractHandler_RefreshStatus_ReconcilesPersistedRunningJobAfterRestart", async () => {

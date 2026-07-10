@@ -7,7 +7,9 @@ import { redactLogValue, type ObservabilityLogger } from "./observabilityLogger"
 
 type SdlcaBridgeProviderKind = "claude" | "codex" | "copilot" | "cursor";
 const bridgeSensitiveKeyPattern =
-  /(?:api[_-]?key|authorization|bearer|credential|password|secret|(?:access|auth|bridge|id|refresh|session)[_-]?token|^token$|[_-]token$)/i;
+  /(?:api[_-]?key|authorization|bearer|credential|password|secret|token)/i;
+const bridgeTokenTelemetryKeyPattern =
+  /^(?:cacheCreationTokens|cacheReadTokens|cacheWriteTokens|completionTokens|contextTokens|inputTokens|outputTokens|promptTokens|requiredContextTokens|requestTokens|tokenCount|tokenUsage|tokens|tokensPerSecond|totalTokens|uncachedInputTokens)$/i;
 
 interface SdlcaBridgeProvider {
   forensicCapabilities?: {
@@ -688,9 +690,13 @@ function redactBridgeArtifactValue(value: unknown, seen = new WeakSet<object>())
   return Object.fromEntries(
     Object.entries(value).map(([key, child]) => [
       key,
-      bridgeSensitiveKeyPattern.test(key) ? "[REDACTED]" : redactBridgeArtifactValue(child, seen)
+      isBridgeSensitiveKey(key) ? "[REDACTED]" : redactBridgeArtifactValue(child, seen)
     ])
   );
+}
+
+function isBridgeSensitiveKey(key: string): boolean {
+  return bridgeSensitiveKeyPattern.test(key) && !bridgeTokenTelemetryKeyPattern.test(key);
 }
 
 function redactFreeText(value: string): string {
@@ -738,7 +744,13 @@ function normalizeProvenance(raw: Record<string, unknown>): Record<string, unkno
 }
 
 function normalizeSeverity(value: unknown): "info" | "low" | "medium" | "high" {
-  return value === "low" || value === "medium" || value === "high" ? value : "info";
+  if (typeof value !== "string") return "info";
+  const normalized = value.trim().toLowerCase();
+  if (normalized === "critical") return "high";
+  if (normalized === "moderate") return "medium";
+  return normalized === "low" || normalized === "medium" || normalized === "high"
+    ? normalized
+    : "info";
 }
 
 function readString(record: Record<string, unknown>, field: string): string | undefined {

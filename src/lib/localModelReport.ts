@@ -515,6 +515,11 @@ function scaleCount(value: number, weight: number): number {
   return Math.round(value * weight);
 }
 
+function scalePositiveCount(value: number, weight: number): number {
+  if (value <= 0) return 0;
+  return Math.max(1, scaleCount(value, weight));
+}
+
 function scopedTokenProviders(
   providers: TokenObservedProvider[],
   scope: LocalModelWorkloadScope
@@ -530,14 +535,14 @@ function scopedTokenProviders(
       inputTokens: scaleCount(provider.inputTokens, weight),
       outputTokens: scaleCount(provider.outputTokens, weight),
       requestCount:
-        provider.requestCount === null ? null : Math.max(1, scaleCount(provider.requestCount, weight))
+        provider.requestCount === null ? null : scalePositiveCount(provider.requestCount, weight)
     };
     const hasUsage =
       scopedProvider.inputTokens +
         scopedProvider.outputTokens +
         scopedProvider.cacheCreationTokens +
         scopedProvider.cacheReadTokens >
-        0 || scopedProvider.requestCount !== null;
+        0 || (scopedProvider.requestCount !== null && scopedProvider.requestCount > 0);
     return hasUsage ? [scopedProvider] : [];
   });
 }
@@ -588,10 +593,31 @@ function normalizeTokenProviderWindows(
       inputTokens: scaleCount(provider.inputTokens, factor),
       outputTokens: scaleCount(provider.outputTokens, factor),
       requestCount:
-        provider.requestCount === null ? null : Math.max(1, scaleCount(provider.requestCount, factor)),
+        provider.requestCount === null ? null : scaleCount(provider.requestCount, factor),
       windowDays
     };
   });
+}
+
+function hasMixedProviderWindows(providers: TokenObservedProvider[], windowDays: number): boolean {
+  return providers.some((provider) => {
+    const providerWindowDays = provider.windowDays && provider.windowDays > 0
+      ? provider.windowDays
+      : windowDays;
+    return providerWindowDays !== windowDays;
+  });
+}
+
+function estimatedScopeForMixedWindows(
+  scope: LocalModelWorkloadScope,
+  windowDays: number
+): LocalModelWorkloadScope {
+  if (scope.allocationMode === "estimated") return scope;
+  return {
+    ...scope,
+    allocationMode: "estimated",
+    description: `${scope.description} Token totals are normalized to a ${windowDays}-day planning window from mixed provider windows.`
+  };
 }
 
 // ── Builder ─────────────────────────────────────────────────────────────────
@@ -674,6 +700,9 @@ export function buildLocalModelReport(
     selectedWorkloadScope
   );
   const windowDays = aggregateWindowDays(tokenObservedProviders);
+  const selectedReportWorkloadScope = hasMixedProviderWindows(tokenObservedProviders, windowDays)
+    ? estimatedScopeForMixedWindows(selectedWorkloadScope, windowDays)
+    : selectedWorkloadScope;
   const normalizedTokenObservedProviders = normalizeTokenProviderWindows(
     tokenObservedProviders,
     windowDays
@@ -790,7 +819,7 @@ export function buildLocalModelReport(
 
   return {
     tenant,
-    selectedWorkloadScope,
+    selectedWorkloadScope: selectedReportWorkloadScope,
     availableWorkloadScopes,
     tokenObservedProviders: normalizedTokenObservedProviders,
     requestOnlyProviders,

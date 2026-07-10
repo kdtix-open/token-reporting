@@ -390,6 +390,28 @@ describe("localInfrastructureSizing", () => {
     });
   });
 
+  it("hardwareBudgetScenarios_KeepZeroDemandScopesAtZeroNodes", () => {
+    const report = buildLocalInfrastructureSizing({
+      distribution: localDistribution,
+      localModelReport: {
+        contextConfidence: "high",
+        estimatedContextWindowNeeded: 131_072,
+        requiredTokensPerSec: 250
+      } as LocalModelMigrationReport,
+      summaries: noCopilotSummaries()
+    });
+
+    expect(
+      report.hardwareBudgetScenarios.find((scenario) => scenario.scope === "copilot_cli")
+    ).toMatchObject({
+      estimatedCapexHighUsd: 0,
+      estimatedCapexLowUsd: 0,
+      requiredGpuCount: 0,
+      requiredNodes: 0,
+      targetTokensPerSecond: 0
+    });
+  });
+
   it("hardwareBudgetSummary_ReflectsProviderMixAndSelectedProfileBudget", () => {
     const customProfile = customHardwareProfile({
       estimatedCapexHighUsd: 250_000,

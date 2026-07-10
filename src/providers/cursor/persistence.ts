@@ -151,6 +151,10 @@ function mergeCursorSnapshots<T extends {
   spend?: CursorTeamSpendResponse;
   events?: CursorFilteredUsageEventsResponse;
 }>(existing: T, incoming: T): T {
+  if (shouldResetCursorAccumulatedHistoryForRedactionMigration(existing, incoming)) {
+    return incoming;
+  }
+
   const dailyData = mergeByKey(
     existing.daily.data,
     incoming.daily.data,
@@ -207,4 +211,29 @@ function mergeCursorSnapshots<T extends {
         }
       : {})
   } as T;
+}
+
+function shouldResetCursorAccumulatedHistoryForRedactionMigration(
+  existing: Pick<CursorSnapshot, "daily" | "events">,
+  incoming: Pick<CursorSnapshot, "daily" | "events">
+): boolean {
+  return hasLegacyCursorAlias(existing) && hasHmacCursorAlias(incoming);
+}
+
+function hasLegacyCursorAlias(snapshot: Pick<CursorSnapshot, "daily" | "events">): boolean {
+  return (
+    snapshot.daily.data.some((item) => /^user_redacted_[a-f0-9]{12}$/u.test(item.userId)) ||
+    (snapshot.events?.usageEvents ?? []).some((event) =>
+      /^redacted-[a-f0-9]{12}@redacted\.local$/u.test(event.userEmail ?? "")
+    )
+  );
+}
+
+function hasHmacCursorAlias(snapshot: Pick<CursorSnapshot, "daily" | "events">): boolean {
+  return (
+    snapshot.daily.data.some((item) => /^user_redacted_hmac_[a-f0-9]{16}$/u.test(item.userId)) ||
+    (snapshot.events?.usageEvents ?? []).some((event) =>
+      /^redacted-hmac_[a-f0-9]{16}@redacted\.local$/u.test(event.userEmail ?? "")
+    )
+  );
 }

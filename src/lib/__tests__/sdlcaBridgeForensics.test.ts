@@ -128,6 +128,68 @@ describe("sdlcaBridgeForensics", () => {
     ]);
   });
 
+  it("createSdlcaBridgeForensicExecutor_ValidArtifact_RedactsTokenSecretsAndKeepsTokenTelemetry", async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse({
+          result: [
+            {
+              forensicCapabilities,
+              kind: "codex",
+              providerId: "codex-reviewer",
+              providerName: "Codex reviewer",
+              resolvedExecutable: "/usr/bin/codex"
+            }
+          ]
+        })
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({
+          result: {
+            ...forensicArtifact("codex", "Sensitive artifact"),
+            apiToken: "api-secret",
+            githubToken: "github-secret",
+            tokenUsage: {
+              apiToken: "nested-api-secret",
+              inputTokens: 123,
+              totalTokens: 456
+            },
+            tokenValue: "token-secret"
+          }
+        })
+      );
+
+    const executor = createSdlcaBridgeForensicExecutor({
+      bridgeToken: "bridge-token",
+      bridgeUrl: "http://127.0.0.1:4818",
+      fetcher,
+      workingDirectory: "/Users/ckreager/repos/kdtix/token_reporting"
+    });
+
+    const result = await executor({
+      createdAt: "2026-06-07T17:30:00.000Z",
+      evidencePacket,
+      huggingFaceCandidateSetId: "hf-candidates-test",
+      reviewerModels: ["gpt"],
+      runId: "dynamic-forensic-20260607T173000000Z",
+      usageSnapshotId: "dynamic-usage-codex-2026-06-07"
+    });
+
+    const artifact = result.reviewerArtifacts[0]?.artifact as Record<string, unknown>;
+    expect(JSON.stringify(artifact)).not.toContain("secret");
+    expect(artifact).toMatchObject({
+      apiToken: "[REDACTED]",
+      githubToken: "[REDACTED]",
+      tokenUsage: {
+        apiToken: "[REDACTED]",
+        inputTokens: 123,
+        totalTokens: 456
+      },
+      tokenValue: "[REDACTED]"
+    });
+  });
+
   it("createSdlcaBridgeForensicExecutor_RealSdlcaProviderResultShape_RunsReviewerArtifact", async () => {
     const fetcher = vi
       .fn()
@@ -1188,8 +1250,14 @@ describe("sdlcaBridgeForensics", () => {
               {
                 category: "snapshot_freshness",
                 detail: "Trend comparisons should account for asymmetric collection windows.",
-                severity: "medium",
+                severity: "CRITICAL",
                 summary: "Primary usage snapshot lags other providers"
+              },
+              {
+                category: "refresh_cadence",
+                detail: "Refresh cadence should stay visible in published reports.",
+                severity: "moderate",
+                summary: "Refresh cadence warning remains visible"
               }
             ],
             generatedAt: "2026-06-10T03:49:41.921Z",
@@ -1238,8 +1306,13 @@ describe("sdlcaBridgeForensics", () => {
         findings: [
           {
             details: "Trend comparisons should account for asymmetric collection windows.",
-            severity: "medium",
+            severity: "high",
             title: "Primary usage snapshot lags other providers"
+          },
+          {
+            details: "Refresh cadence should stay visible in published reports.",
+            severity: "medium",
+            title: "Refresh cadence warning remains visible"
           }
         ],
         providerKind: "claude",

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { mkdtemp, readFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
@@ -305,6 +305,75 @@ describe("persistCursorDailyUsageReport", () => {
     );
     expect(accumulated.spend.teamMemberSpend.map((item) => item.name)).toEqual(
       expect.arrayContaining([expect.stringMatching(/^Redacted user hmac_[a-f0-9]{16}$/)])
+    );
+  });
+
+  it("resets legacy accumulated redaction aliases during the HMAC migration window", async () => {
+    const tempRoot = await mkdtemp(path.join(os.tmpdir(), "token-reporting-"));
+    const outputPath = path.join(tempRoot, "latest-metadata.json");
+    const spend = cursorTeamSpendResponseSchema.parse(sampleSpend);
+    const events = cursorFilteredUsageEventsResponseSchema.parse(sampleEvents);
+    await mkdir(tempRoot, { recursive: true });
+    await writeFile(
+      path.join(tempRoot, "accumulated-metadata.json"),
+      `${JSON.stringify(
+        {
+          daily: {
+            data: [
+              {
+                ...sampleReport.data[0],
+                email: "redacted-111111111111@redacted.local",
+                userId: "user_redacted_111111111111"
+              },
+              {
+                ...sampleReport.data[1],
+                email: "redacted-222222222222@redacted.local",
+                userId: "user_redacted_222222222222"
+              },
+              {
+                ...sampleReport.data[1],
+                day: "2025-02-28",
+                email: "redacted-333333333333@redacted.local",
+                userId: "user_redacted_333333333333"
+              }
+            ],
+            period: sampleReport.period
+          },
+          events: {
+            ...events,
+            usageEvents: events.usageEvents.map((event, index) => ({
+              ...event,
+              userEmail: `redacted-${String(index + 1).repeat(12)}@redacted.local`
+            }))
+          },
+          generatedAt: "2026-06-01T00:00:00.000Z",
+          spend
+        },
+        null,
+        2
+      )}\n`,
+      "utf8"
+    );
+
+    await persistCursorDailyUsageReport({
+      report: sampleReport,
+      spend,
+      events,
+      outputPath,
+      env: testRedactionEnv
+    });
+
+    const accumulated = JSON.parse(
+      await readFile(path.join(tempRoot, "accumulated-metadata.json"), "utf8")
+    ) as {
+      daily: { data: Array<{ userId: string }> };
+      events: { usageEvents: Array<{ userEmail: string }> };
+    };
+
+    expect(accumulated.daily.data).toHaveLength(2);
+    expect(accumulated.events.usageEvents).toHaveLength(3);
+    expect(accumulated.daily.data.map((item) => item.userId)).toEqual(
+      expect.arrayContaining([expect.stringMatching(/^user_redacted_hmac_[a-f0-9]{16}$/)])
     );
   });
 

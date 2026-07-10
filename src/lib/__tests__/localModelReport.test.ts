@@ -112,6 +112,22 @@ describe("buildLocalModelReport", () => {
     expect(report.contextConfidence).toBe("low");
   });
 
+  it("preserves observed zero request counts instead of fabricating a minimum request", () => {
+    const zeroRequestSummary = {
+      ...codexSummary,
+      requestCount: 0
+    } as unknown as ProviderReportSummary;
+
+    const report = buildLocalModelReport([zeroRequestSummary]);
+
+    expect(report.tokenObservedProviders[0]).toMatchObject({
+      providerId: "codex",
+      requestCount: 0
+    });
+    expect(report.tokenObservedRequests).toBe(0);
+    expect(report.avgTokensPerObservedRequest).toBeNull();
+  });
+
   it("uses empirical p99 from local distribution snapshot when present (high confidence)", () => {
     const distribution = {
       generatedAt: "2025-01-01T00:00:00.000Z",
@@ -202,6 +218,13 @@ describe("buildLocalModelReport", () => {
     );
 
     expect(report.windowDays).toBe(28);
+    expect(report.selectedWorkloadScope).toMatchObject({
+      allocationMode: "estimated",
+      id: "all_provider_traffic"
+    });
+    expect(report.selectedWorkloadScope.description).toContain(
+      "normalized to a 28-day planning window"
+    );
     expect(copilot).toMatchObject({
       inputTokens: 28_000,
       requestCount: 28,
@@ -457,6 +480,7 @@ describe("buildLocalModelReport", () => {
     ]);
     expect(report.dailyAvgComputeTokens).toBe(100_000);
     expect(report.requiredTokensPerSec).toBeCloseTo(100_000 / 28_800, 3);
+    expect(report.selectedWorkloadScope.allocationMode).toBe("observed");
   });
 
   it("does not double-scale scoped request context by the workload multiplier", () => {

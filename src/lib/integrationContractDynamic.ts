@@ -101,7 +101,16 @@ export interface DynamicIntegrationContractOptions {
 
 const dynamicContractVersion = "sdlca-token-reporting-dynamic-v0.1";
 const activeDynamicRefreshJobIds = new Set<string>();
-const terminalDynamicRefreshJobs = new Map<string, Record<string, unknown>>();
+const terminalRefreshJobCacheLimit = 50;
+const terminalRefreshJobCacheTtlMs = 30 * 60 * 1000;
+
+interface TerminalRefreshJobCacheEntry {
+  cachedAtMs: number;
+  job: Record<string, unknown>;
+  persistenceAttempts: number;
+}
+
+const terminalDynamicRefreshJobs = new Map<string, TerminalRefreshJobCacheEntry>();
 
 export function createDynamicIntegrationContractHandler(
   options: DynamicIntegrationContractOptions = {}
@@ -409,16 +418,56 @@ async function persistTerminalRefreshJob(
   jobId: string,
   job: Record<string, unknown>
 ): Promise<void> {
-  terminalDynamicRefreshJobs.set(jobId, job);
+  cacheTerminalRefreshJob(jobId, job);
   await refreshJobStore
     .set(jobId, job)
     .then(() => terminalDynamicRefreshJobs.delete(jobId))
-    .catch(() =>
-      terminalDynamicRefreshJobs.set(jobId, {
-        ...job,
-        persistenceWarning: "refresh_job_terminal_not_persisted"
-      })
-    );
+    .catch(() => cacheTerminalRefreshJob(jobId, terminalJobWithWarning(job, 1), 1));
+}
+
+function cacheTerminalRefreshJob(
+  jobId: string,
+  job: Record<string, unknown>,
+  persistenceAttempts = 0
+): void {
+  pruneTerminalRefreshJobs();
+  terminalDynamicRefreshJobs.set(jobId, {
+    cachedAtMs: Date.now(),
+    job,
+    persistenceAttempts
+  });
+  pruneTerminalRefreshJobs();
+}
+
+function pruneTerminalRefreshJobs(now = Date.now()): void {
+  for (const [jobId, entry] of terminalDynamicRefreshJobs) {
+    if (now - entry.cachedAtMs > terminalRefreshJobCacheTtlMs) {
+      terminalDynamicRefreshJobs.delete(jobId);
+    }
+  }
+  while (terminalDynamicRefreshJobs.size > terminalRefreshJobCacheLimit) {
+    const oldestJobId = terminalDynamicRefreshJobs.keys().next().value as string | undefined;
+    if (!oldestJobId) return;
+    terminalDynamicRefreshJobs.delete(oldestJobId);
+  }
+}
+
+function terminalJobWithWarning(
+  job: Record<string, unknown>,
+  persistenceAttempts: number
+): Record<string, unknown> {
+  return {
+    ...job,
+    persistenceRetryAttempts: persistenceAttempts,
+    persistenceWarning: "refresh_job_terminal_not_persisted"
+  };
+}
+
+function durableTerminalJob(job: Record<string, unknown>): Record<string, unknown> {
+  const durableJob = { ...job };
+  delete durableJob.persistenceRetryAttempts;
+  delete durableJob.persistenceWarning;
+  return durableJob;
 }
 
 function forensicRunIdForRefreshJob(jobId: string, generatedAt: Date): string {
@@ -712,7 +761,10 @@ async function dynamicRefreshStatusResponse(
   const jobId = requestPath.split("/").at(-1) ?? "";
   const terminalJob = terminalDynamicRefreshJobs.get(jobId);
   if (terminalJob && !activeDynamicRefreshJobIds.has(jobId)) {
-    return jsonResponse(200, terminalJob);
+    return jsonResponse(
+      200,
+      await retryTerminalRefreshJobPersistence(jobId, terminalJob, refreshJobStore, env)
+    );
   }
 
   const job = await refreshJobStore.get(jobId);
@@ -738,6 +790,35 @@ async function dynamicRefreshStatusResponse(
   }
 
   return jsonResponse(200, job);
+}
+
+async function retryTerminalRefreshJobPersistence(
+  jobId: string,
+  entry: TerminalRefreshJobCacheEntry,
+  refreshJobStore: RefreshJobStore,
+  env: NodeJS.ProcessEnv
+): Promise<Record<string, unknown>> {
+  pruneTerminalRefreshJobs();
+  try {
+    assertWritableOperationAllowed("Token Reporting terminal refresh job retry", env);
+  } catch {
+    return {
+      ...entry.job,
+      persistenceWarning: "refresh_job_terminal_not_persisted_read_only"
+    };
+  }
+
+  const durableJob = durableTerminalJob(entry.job);
+  try {
+    await refreshJobStore.set(jobId, durableJob);
+    terminalDynamicRefreshJobs.delete(jobId);
+    return durableJob;
+  } catch {
+    const persistenceAttempts = entry.persistenceAttempts + 1;
+    const cachedJob = terminalJobWithWarning(durableJob, persistenceAttempts);
+    cacheTerminalRefreshJob(jobId, cachedJob, persistenceAttempts);
+    return cachedJob;
+  }
 }
 
 function refreshJobIsNonTerminal(job: Record<string, unknown>): boolean {

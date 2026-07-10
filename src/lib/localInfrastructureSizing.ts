@@ -1797,7 +1797,9 @@ function hardwareBudgetScenario(input: {
 }): HardwareBudgetScenario {
   const estimatedNodeThroughputTps = aggregateTpsEstimate(input.profile);
   const requiredNodes =
-    estimatedNodeThroughputTps === null || estimatedNodeThroughputTps <= 0
+    input.targetTokensPerSecond <= 0
+      ? 0
+      : estimatedNodeThroughputTps === null || estimatedNodeThroughputTps <= 0
       ? null
       : Math.max(1, Math.ceil(input.targetTokensPerSecond / estimatedNodeThroughputTps));
   const requiredGpuCount =
