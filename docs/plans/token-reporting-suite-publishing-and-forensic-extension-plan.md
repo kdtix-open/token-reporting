@@ -112,6 +112,8 @@ Shared coordination journal: `kdtix-open/agent-project-queue#1244`.
   shared KDTIX suite extension registry.
 - Define stable API contracts for refresh, accumulated provider telemetry,
   export artifacts, and local-model forensic recommendations.
+- Define measured tenant/pipeline telemetry so scoped analytics can distinguish
+  observed pipeline data from weighted estimates and global source evidence.
 - Keep provider credentials server-side or local-bridge-side only. Browser code
   must never hold provider secrets or MCP credentials.
 - Support the current hybrid local Docker to Cloudflare Tunnel publishing lane.
@@ -533,6 +535,14 @@ BUSL-1.1 implementation code.
 - Move refresh scripts behind a guarded API/service layer.
 - Add provider cursor storage and idempotent job records.
 - Add historical bootstrap and incremental resume endpoints.
+- Add tenant pipeline telemetry records for all-provider traffic, Repo
+  Automation, Agent Memory, Copilot CLI, Agentic Worker, Reviewer, and future
+  tenant-defined pipelines.
+- Persist provenance on every scoped metric: measured, estimated allocation,
+  unattributed, or global evidence source.
+- Feed measured tenant pipeline telemetry into local-model, infrastructure,
+  export, and forensic evidence builders before falling back to weighted
+  estimates.
 - Add read-only mode enforcement for all mutating refresh/write operations.
 
 ### Initiative 4: Hugging Face Candidate Refresh

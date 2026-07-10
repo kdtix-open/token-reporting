@@ -34,6 +34,17 @@ export type CapacityConfidence =
   | "measured"
   | "unknown"
   | "vendor_claim";
+export type HardwareBudgetConfidence =
+  | "derived_estimate"
+  | "measured"
+  | "quote_required"
+  | "unknown";
+export type HardwareReplacementGoal =
+  | "shadow_only"
+  | "safe_canary"
+  | "steady_state_replacement"
+  | "peak_safe_replacement"
+  | "p99_full_replacement";
 export type LocalInfrastructureConfidence = "high" | "low" | "medium";
 export type MigrationPhaseId =
   | "cloud_baseline"
@@ -146,6 +157,12 @@ export interface LocalInfrastructureWorkloadSummary {
   totalSessions: number | null;
   dailyAvgComputeTokens: number;
   dailyAvgCacheReadTokens: number;
+  allProviderComputeTps: number;
+  allProviderPeakTps: number;
+  selectedScopeComputeTps: number;
+  selectedScopePeakTps: number;
+  repoAutomationComputeTps: number;
+  repoAutomationPeakTps: number;
   currentProjectLaneComputeTps: number;
   currentProjectLanePeakTps: number;
   currentProjectLaneP50Context: number | null;
@@ -176,6 +193,33 @@ export interface WorkloadScopeSummary {
     max: number | null;
   };
   notes: string[];
+}
+
+export interface HardwareBudgetScenario {
+  scope: WorkloadScope;
+  replacementGoal: HardwareReplacementGoal;
+  targetTokensPerSecond: number;
+  requiredContextTokens: number;
+  hardwareProfileId: string;
+  hardwareProfileName: string;
+  estimatedNodeThroughputTps: number | null;
+  requiredNodes: number | null;
+  requiredGpuCount: number | null;
+  estimatedCapexLowUsd: number | null;
+  estimatedCapexHighUsd: number | null;
+  estimatedAnnualOpexUsd: number | null;
+  estimatedSystemPowerKw: number | null;
+  rackUnitsRequired: number | null;
+  fullReplacementAllowed: boolean;
+  cloudFallbackRequired: boolean;
+  confidence: HardwareBudgetConfidence;
+  explanation: string;
+}
+
+export interface HardwareBudgetSummary {
+  selectedScope: WorkloadScope;
+  cfoSummaryLines: string[];
+  copilotDominanceWarning: string;
 }
 
 export interface MigrationPolicy {
@@ -332,6 +376,8 @@ export interface LocalInfrastructureSizingReport {
   localCoverageSummary: LocalCoverageSummary;
   hardwareProfiles: HardwareProfile[];
   hardwareCapacityEstimates: HardwareCapacityEstimate[];
+  hardwareBudgetScenarios: HardwareBudgetScenario[];
+  hardwareBudgetSummary: HardwareBudgetSummary;
   recommendedFirstServer: FirstServerRecommendation;
   alternativeFirstServers: FirstServerRecommendation[];
   scaleRamp: ScaleRampPhase[];
@@ -356,6 +402,7 @@ export interface BuildLocalInfrastructureSizingInput {
   localModelReport?: LocalModelMigrationReport;
   migrationPolicy?: Partial<MigrationPolicy>;
   reservedCapacityAssumptions?: Partial<ReservedCapacityAssumptions>;
+  selectedWorkloadScope?: WorkloadScope;
   summaries: ProviderReportSummary[];
 }
 
@@ -430,11 +477,11 @@ export function buildLocalInfrastructureSizing(
       input.forensicRun ?? null
     );
   const providerCoverage = normalizeProviderUsage(input.summaries);
-  const workloadSummary = buildWorkloadSummary(providerCoverage, input.distribution ?? null, localModelReport);
+  const baseWorkloadSummary = buildWorkloadSummary(providerCoverage, input.distribution ?? null, localModelReport);
   const dataQualityWarnings = buildDataQualityWarnings(providerCoverage, input.summaries);
   const routeClasses = buildRouteClasses(
     providerCoverage,
-    workloadSummary,
+    baseWorkloadSummary,
     localModelReport.profiles ?? []
   );
   const workloadScopeConfig: WorkloadScopeConfig = {
@@ -444,13 +491,35 @@ export function buildLocalInfrastructureSizing(
   const workloadScopeSummaries = buildWorkloadScopeSummaries(
     providerCoverage,
     routeClasses,
-    workloadSummary
+    baseWorkloadSummary
+  );
+  const selectedWorkloadScope =
+    input.selectedWorkloadScope ?? workloadScopeConfig.defaultSizingScope;
+  const workloadSummary = applySelectedWorkloadScope(
+    baseWorkloadSummary,
+    workloadScopeSummaries,
+    selectedWorkloadScope
   );
   const migrationPolicy = buildMigrationPolicy(input.migrationPolicy, budgetLowUsd, budgetHighUsd);
   const localMigrationPlan = buildLocalMigrationPlan(routeClasses, migrationPolicy);
   const hardwareCapacityEstimates = hardwareProfiles.flatMap((profile) =>
     buildCapacityEstimates(profile, workloadSummary, localModelReport.profiles ?? [])
   );
+  const benchmarkGates = buildBenchmarkGates();
+  const productionRoutingBlocked = benchmarkGates.some((gate) => gate.status !== "passed");
+  const hardwareBudgetScenarios = buildHardwareBudgetScenarios(
+    hardwareProfiles,
+    workloadSummary,
+    workloadScopeSummaries,
+    productionRoutingBlocked,
+    budgetHighUsd
+  );
+  const hardwareBudgetSummary = buildHardwareBudgetSummary({
+    budgetHighUsd,
+    providerCoverage,
+    scenarios: hardwareBudgetScenarios,
+    selectedScope: selectedWorkloadScope
+  });
   const recommendedFirstServer = recommendFirstServer({
     budgetHighUsd,
     budgetLowUsd,
@@ -479,8 +548,6 @@ export function buildLocalInfrastructureSizing(
     localCoverageSummary,
     input.reservedCapacityAssumptions
   );
-  const benchmarkGates = buildBenchmarkGates();
-  const productionRoutingBlocked = benchmarkGates.some((gate) => gate.status !== "passed");
   const allWarnings = buildReportWarnings(
     dataQualityWarnings,
     providerCoverage,
@@ -502,6 +569,8 @@ export function buildLocalInfrastructureSizing(
     executiveSummary,
     financials,
     generatedAt: input.generatedAt ?? new Date().toISOString(),
+    hardwareBudgetScenarios,
+    hardwareBudgetSummary,
     hardwareCapacityEstimates,
     hardwareProfiles,
     localCoverageSummary,
@@ -650,8 +719,12 @@ function buildWorkloadSummary(
   const totalPureComputeTokens = sum(usages.map((usage) => pureComputeTokens(usage)));
   const dailyAvgComputeTokens = sum(usages.map((usage) => dailyAverage(pureComputeTokens(usage), usage.windowDays)));
   const dailyAvgCacheReadTokens = sum(usages.map((usage) => dailyAverage(usage.cacheReadTokens, usage.windowDays)));
-  const currentProjectLaneComputeTps =
-    finiteNumber(localModelReport.requiredTokensPerSec) ?? dailyAvgComputeTokens / ACTIVE_SECONDS_PER_DAY;
+  const allProviderComputeTps = Math.max(
+    dailyAvgComputeTokens / ACTIVE_SECONDS_PER_DAY,
+    finiteNumber(localModelReport.requiredTokensPerSec) ?? 0
+  );
+  const legacyProjectLaneComputeTps =
+    finiteNumber(localModelReport.requiredTokensPerSec) ?? allProviderComputeTps;
   const p50 = finiteNumber(distribution?.combined.p50);
   const p95 = finiteNumber(distribution?.combined.p95);
   const p99 = finiteNumber(distribution?.combined.p99);
@@ -659,13 +732,15 @@ function buildWorkloadSummary(
 
   return {
     contextConfidence: localModelReport.contextConfidence ?? "insufficient_data",
-    currentProjectLaneComputeTps,
+    allProviderComputeTps,
+    allProviderPeakTps: allProviderComputeTps * 3,
+    currentProjectLaneComputeTps: legacyProjectLaneComputeTps,
     currentProjectLaneMaxContext: max,
     currentProjectLaneP50Context: p50,
     currentProjectLaneP95Context: p95,
     currentProjectLaneP99Context:
       finiteNumber(localModelReport.estimatedContextWindowNeeded) ?? p99,
-    currentProjectLanePeakTps: currentProjectLaneComputeTps * 3,
+    currentProjectLanePeakTps: legacyProjectLaneComputeTps * 3,
     dailyAvgCacheReadTokens,
     dailyAvgComputeTokens,
     estimatedContextWindowNeeded:
@@ -676,6 +751,10 @@ function buildWorkloadSummary(
     totalOutputTokens,
     totalPureComputeTokens,
     totalRequests: nullableSum(usages.map((usage) => usage.requestsCount)),
+    repoAutomationComputeTps: allProviderComputeTps,
+    repoAutomationPeakTps: allProviderComputeTps * 3,
+    selectedScopeComputeTps: allProviderComputeTps,
+    selectedScopePeakTps: allProviderComputeTps * 3,
     totalSessions: nullableSum(usages.map((usage) => usage.sessionsCount)),
     totalUncachedInputTokens
   };
@@ -989,11 +1068,11 @@ function buildCapacityEstimates(
     const memoryFit = profile.totalVramGb >= Math.max(model.vramGbMin, 48);
     const throughputFit =
       aggregateTps !== null &&
-      aggregateTps >= workload.currentProjectLaneComputeTps * 0.3;
+      aggregateTps >= workload.allProviderComputeTps * 0.3;
     const estimatedProjectLaneCapacity =
-      aggregateTps === null || workload.currentProjectLaneComputeTps <= 0
+      aggregateTps === null || workload.allProviderComputeTps <= 0
         ? null
-        : round2(aggregateTps / workload.currentProjectLaneComputeTps);
+        : round2(aggregateTps / workload.allProviderComputeTps);
 
     return {
       bottlenecks: capacityBottlenecks(profile, contextFit, throughputFit, memoryFit),
@@ -1309,8 +1388,8 @@ function buildLocalCoverageSummary(
       (estimate) => estimate.estimatedAggregateTokensPerSecond !== null
     )?.estimatedAggregateTokensPerSecond ?? null;
   const estimatedFullWorkloadCapacityPct =
-    aggregateTps !== null && workload.currentProjectLaneComputeTps > 0
-      ? round2((aggregateTps / workload.currentProjectLaneComputeTps) * 100)
+    aggregateTps !== null && workload.allProviderComputeTps > 0
+      ? round2((aggregateTps / workload.allProviderComputeTps) * 100)
       : 0;
   const safeInitialProductionRoutingPct = Math.min(
     10,
@@ -1348,6 +1427,10 @@ function buildWorkloadScopeSummaries(
     p95: workload.currentProjectLaneP95Context,
     p99: workload.currentProjectLaneP99Context
   };
+  const repoRouteClassIds = ["repo_agent_worker", "repo_agent_reviewer", "long_context_tail"];
+  const cloudOnlyTailRoute = routeById.get("long_context_tail");
+  const cloudOnlyTailRouteClassIds = ["long_context_tail"];
+  const repoContext = contextForRouteClasses(routeClasses, repoRouteClassIds);
   const repoCompute =
     (routeById.get("repo_agent_worker")?.computeTokensPerDay ?? 0) +
     (routeById.get("repo_agent_reviewer")?.computeTokensPerDay ?? 0);
@@ -1363,14 +1446,26 @@ function buildWorkloadScopeSummaries(
       scope: "all_provider_traffic"
     }),
     scopeSummary({
+      computeTokensPerDay: cloudOnlyTailRoute?.computeTokensPerDay ?? 0,
+      context: contextForRouteClasses(routeClasses, cloudOnlyTailRouteClassIds),
+      label: "Cloud-only tail sizing",
+      notes: [
+        "Long-context p95/p99 tail is explicitly modeled as hosted fallback until route-specific tail samples and benchmark evidence are available."
+      ],
+      providerIds: cloudOnlyTailRoute?.providerIds ?? [],
+      routeClassIds: cloudOnlyTailRouteClassIds,
+      scope: "cloud_only_tail"
+    }),
+    scopeSummary({
       computeTokensPerDay: repoCompute,
-      context: allContext,
+      context: repoContext,
       label: "Repo Automation project-lane sizing",
       notes: [
-        "Default sizing scope. Copilot CLI volume is reported separately so it does not define one project lane by itself."
+        "Default sizing scope. Copilot CLI volume is reported separately so it does not define one project lane by itself.",
+        "Context requirement is derived from repo route classes and includes the global long-context tail fallback until route-specific tail samples exist."
       ],
       providerIds: ["claude-code", "codex", "claude", "cursor"],
-      routeClassIds: ["repo_agent_worker", "repo_agent_reviewer", "long_context_tail"],
+      routeClassIds: repoRouteClassIds,
       scope: "repo_automation_project"
     }),
     scopeSummary({
@@ -1403,6 +1498,19 @@ function buildWorkloadScopeSummaries(
   ];
 }
 
+function contextForRouteClasses(
+  routeClasses: WorkloadRouteClass[],
+  routeClassIds: string[]
+): WorkloadScopeSummary["contextRequirementTokens"] {
+  const selectedRoutes = routeClasses.filter((route) => routeClassIds.includes(route.id));
+  return {
+    max: maxNullable(selectedRoutes.map((route) => route.contextRequirementTokens.max)),
+    p50: maxNullable(selectedRoutes.map((route) => route.contextRequirementTokens.p50)),
+    p95: maxNullable(selectedRoutes.map((route) => route.contextRequirementTokens.p95)),
+    p99: maxNullable(selectedRoutes.map((route) => route.contextRequirementTokens.p99))
+  };
+}
+
 function scopeSummary(input: {
   computeTokensPerDay: number;
   context: WorkloadScopeSummary["contextRequirementTokens"];
@@ -1424,6 +1532,374 @@ function scopeSummary(input: {
     routeClassIds: input.routeClassIds,
     scope: input.scope
   };
+}
+
+function applySelectedWorkloadScope(
+  workload: LocalInfrastructureWorkloadSummary,
+  scopes: WorkloadScopeSummary[],
+  selectedScope: WorkloadScope
+): LocalInfrastructureWorkloadSummary {
+  const scopeById = new Map(scopes.map((scope) => [scope.scope, scope]));
+  const selected = scopeById.get(selectedScope);
+  const repoAutomation = scopeById.get("repo_automation_project");
+
+  return {
+    ...workload,
+    repoAutomationComputeTps:
+      repoAutomation?.currentProjectLaneComputeTps ?? workload.allProviderComputeTps,
+    repoAutomationPeakTps:
+      repoAutomation?.peakTokensPerSecond ?? workload.allProviderPeakTps,
+    selectedScopeComputeTps:
+      selected?.currentProjectLaneComputeTps ?? workload.allProviderComputeTps,
+    selectedScopePeakTps:
+      selected?.peakTokensPerSecond ?? workload.allProviderPeakTps
+  };
+}
+
+function buildHardwareBudgetSummary(input: {
+  budgetHighUsd: number;
+  providerCoverage: NormalizedProviderUsage[];
+  scenarios: HardwareBudgetScenario[];
+  selectedScope: WorkloadScope;
+}): HardwareBudgetSummary {
+  const budgetLabel = formatBudgetUsd(input.budgetHighUsd);
+  return {
+    cfoSummaryLines: [
+      firstServerBudgetLine(input.scenarios, input.budgetHighUsd),
+      allProviderSteadyBudgetLine(input.scenarios, input.budgetHighUsd),
+      `For Repo Automation project-lane only, the ${budgetLabel} server may be sufficient for initial local worker testing, but full p99 replacement remains blocked by context, quality, and benchmark gates.`,
+      planningEnvelopeLine(
+        input.scenarios,
+        "steady_state_replacement",
+        "production-pod planning"
+      ),
+      planningEnvelopeLine(
+        input.scenarios,
+        "peak_safe_replacement",
+        "expansion"
+      ),
+      "NVL72-class rack scale should be tied to sold reserved-capacity product demand, not internal provider displacement alone."
+    ],
+    copilotDominanceWarning: copilotBudgetWarning(input.providerCoverage),
+    selectedScope: input.selectedScope
+  };
+}
+
+function buildHardwareBudgetScenarios(
+  profiles: HardwareProfile[],
+  workload: LocalInfrastructureWorkloadSummary,
+  scopes: WorkloadScopeSummary[],
+  productionRoutingBlocked: boolean,
+  budgetHighUsd: number
+): HardwareBudgetScenario[] {
+  const preferredProfile = selectPreferredBudgetProfile(profiles);
+  const rackProfile = selectRackScaleBudgetProfile(profiles, preferredProfile);
+  const budgetLabel = formatBudgetUsd(budgetHighUsd);
+
+  return [
+    hardwareBudgetScenario({
+      cloudFallbackRequired: true,
+      explanation: `${capexRange(
+        preferredProfile
+      )} is enough for first-server shadow/canary and benchmark collection.`,
+      fullReplacementAllowed: false,
+      goal: "safe_canary",
+      profile: preferredProfile,
+      scope: "repo_automation_project",
+      scopes,
+      targetTokensPerSecond: workload.repoAutomationComputeTps
+    }),
+    hardwareBudgetScenario({
+      cloudFallbackRequired: true,
+      explanation: `For Repo Automation project-lane only, the ${budgetLabel} server may be sufficient for initial local worker testing, but full p99 replacement remains blocked by context, quality, and benchmark gates.`,
+      fullReplacementAllowed:
+        !productionRoutingBlocked && preferredProfile.fullProjectLaneClaimAllowed,
+      goal: "steady_state_replacement",
+      profile: preferredProfile,
+      scope: "repo_automation_project",
+      scopes,
+      targetTokensPerSecond: workload.repoAutomationComputeTps
+    }),
+    hardwareBudgetScenario({
+      cloudFallbackRequired: true,
+      explanation:
+        "Repo Automation peak-safe replacement requires at least two first-server-class nodes before benchmark gates and cloud fallback can be relaxed.",
+      fullReplacementAllowed: false,
+      goal: "peak_safe_replacement",
+      profile: preferredProfile,
+      scope: "repo_automation_project",
+      scopes,
+      targetTokensPerSecond: workload.repoAutomationPeakTps
+    }),
+    hardwareBudgetScenario({
+      cloudFallbackRequired: true,
+      explanation:
+        "Long-context p95/p99 tail remains a hosted fallback sizing lane until route-specific tail samples and benchmark evidence prove local parity.",
+      fullReplacementAllowed: false,
+      goal: "steady_state_replacement",
+      profile: preferredProfile,
+      scope: "cloud_only_tail",
+      scopes,
+      targetTokensPerSecond: scopeTps(scopes, "cloud_only_tail", 0)
+    }),
+    hardwareBudgetScenario({
+      cloudFallbackRequired: true,
+      explanation: `Treat ${budgetLabel} as first-server budget only, not all-provider replacement authority. Use the computed all-provider steady-state scenario for the production-pod planning envelope.`,
+      fullReplacementAllowed: false,
+      goal: "steady_state_replacement",
+      profile: preferredProfile,
+      scope: "all_provider_traffic",
+      scopes,
+      targetTokensPerSecond: workload.allProviderComputeTps
+    }),
+    hardwareBudgetScenario({
+      cloudFallbackRequired: true,
+      explanation:
+        "Use the computed all-provider peak-safe scenario for the expansion envelope.",
+      fullReplacementAllowed: false,
+      goal: "peak_safe_replacement",
+      profile: preferredProfile,
+      scope: "all_provider_traffic",
+      scopes,
+      targetTokensPerSecond: workload.allProviderPeakTps
+    }),
+    hardwareBudgetScenario({
+      cloudFallbackRequired: true,
+      explanation:
+        "Copilot CLI-specific replacement is a separate economic decision because seat-based Copilot volume dominates all-provider traffic.",
+      fullReplacementAllowed: false,
+      goal: "steady_state_replacement",
+      profile: preferredProfile,
+      scope: "copilot_cli",
+      scopes,
+      targetTokensPerSecond: scopeTps(scopes, "copilot_cli", workload.allProviderComputeTps)
+    }),
+    hardwareBudgetScenario({
+      cloudFallbackRequired: true,
+      confidence: "quote_required",
+      explanation:
+        "NVL72-class rack scale should be tied to sold reserved-capacity product demand, not internal provider displacement alone. p99 full replacement remains blocked by context, quality, and benchmark gates.",
+      fullReplacementAllowed: false,
+      goal: "p99_full_replacement",
+      profile: rackProfile,
+      scope: "all_provider_traffic",
+      scopes,
+      targetTokensPerSecond: workload.allProviderPeakTps
+    })
+  ];
+}
+
+function firstServerBudgetLine(
+  scenarios: HardwareBudgetScenario[],
+  budgetHighUsd: number
+): string {
+  const budgetLabel = formatBudgetUsd(budgetHighUsd);
+  const safeCanary = scenarios.find(
+    (scenario) =>
+      scenario.scope === "repo_automation_project" &&
+      scenario.replacementGoal === "safe_canary"
+  );
+  if (!safeCanary) {
+    return "First-server shadow/canary budget fit is unknown until hardware profiles are selected.";
+  }
+  if (safeCanary.estimatedCapexHighUsd === null) {
+    return `${budgetLabel} first-server shadow/canary fit requires a vendor quote before approval.`;
+  }
+  if (safeCanary.estimatedCapexHighUsd <= budgetHighUsd) {
+    return `${budgetLabel} is enough for first-server shadow/canary and benchmark collection.`;
+  }
+  return `${budgetLabel} is not enough for first-server shadow/canary with the selected hardware profile.`;
+}
+
+function allProviderSteadyBudgetLine(
+  scenarios: HardwareBudgetScenario[],
+  budgetHighUsd: number
+): string {
+  const budgetLabel = formatBudgetUsd(budgetHighUsd);
+  const steadyState = scenarios.find(
+    (scenario) =>
+      scenario.scope === "all_provider_traffic" &&
+      scenario.replacementGoal === "steady_state_replacement"
+  );
+  if (!steadyState) return "All-provider replacement budget fit is unknown.";
+  if (steadyState.estimatedCapexHighUsd === null) {
+    return `${budgetLabel} all-provider replacement fit requires a vendor quote before approval.`;
+  }
+  if (steadyState.estimatedCapexHighUsd <= budgetHighUsd) {
+    return `${budgetLabel} appears enough for all-provider steady-state replacement under the selected workload.`;
+  }
+  return `${budgetLabel} is not enough for all-provider replacement.`;
+}
+
+function planningEnvelopeLine(
+  scenarios: HardwareBudgetScenario[],
+  goal: HardwareReplacementGoal,
+  envelopeKind: string
+): string {
+  const scenario = scenarios.find(
+    (candidate) =>
+      candidate.scope === "all_provider_traffic" &&
+      candidate.replacementGoal === goal
+  );
+  const goalLabel =
+    goal === "steady_state_replacement" ? "steady-state replacement" : "peak-safe replacement";
+  if (!scenario || scenario.estimatedCapexLowUsd === null || scenario.estimatedCapexHighUsd === null) {
+    return `For all-provider ${goalLabel}, request a vendor quote before setting the ${envelopeKind} envelope.`;
+  }
+  return `For all-provider ${goalLabel}, create a ${formatBudgetRange(
+    scenario.estimatedCapexLowUsd,
+    scenario.estimatedCapexHighUsd
+  )} ${envelopeKind} envelope.`;
+}
+
+function copilotBudgetWarning(providerCoverage: NormalizedProviderUsage[]): string {
+  const totalComputeTokens = sum(providerCoverage.map((provider) => pureComputeTokens(provider)));
+  const copilotComputeTokens = sum(
+    providerCoverage
+      .filter((provider) => provider.providerId === "github-copilot")
+      .map((provider) => pureComputeTokens(provider))
+  );
+  if (totalComputeTokens <= 0 || copilotComputeTokens <= 0) {
+    return "GitHub Copilot CLI token telemetry is not present in this sizing window; budget guidance is based on observed providers only.";
+  }
+
+  const copilotShare = copilotComputeTokens / totalComputeTokens;
+  if (copilotShare >= 0.5) {
+    return "GitHub Copilot CLI dominates all-provider token volume. Do not let Copilot CLI define the Repo Automation project-lane budget unless the user explicitly selects all-provider or Copilot CLI replacement.";
+  }
+
+  return `GitHub Copilot CLI represents ${Math.round(
+    copilotShare * 100
+  )}% of observed compute tokens; budget guidance should follow the selected workload scope.`;
+}
+
+function selectPreferredBudgetProfile(profiles: HardwareProfile[]): HardwareProfile {
+  return (
+    profiles.find((profile) => profile.id === "preferred_quad_rtxpro6000_blackwell_server") ??
+    profiles.find(
+      (profile) => profile.quotePriority === "quote_now" && profile.firstServerRole === "worker_pool"
+    ) ??
+    profiles.find(
+      (profile) => profile.quotePriority === "quote_now" && isQuoteableFloorOrPilot(profile)
+    ) ??
+    profiles.find((profile) => isQuoteableFloorOrPilot(profile)) ??
+    profiles.find((profile) => profile.estimatedCapexHighUsd !== null) ??
+    profiles[0] ??
+    fallbackPreferredBudgetProfile()
+  );
+}
+
+function selectRackScaleBudgetProfile(
+  profiles: HardwareProfile[],
+  preferredProfile: HardwareProfile
+): HardwareProfile {
+  return (
+    profiles.find((profile) => profile.id === "rack_scale_gb200_nvl72") ??
+    profiles.find(
+      (profile) => profile.phase === "rack_scale" || profile.firstServerRole === "rack_scale"
+    ) ??
+    preferredProfile
+  );
+}
+
+function fallbackPreferredBudgetProfile(): HardwareProfile {
+  const fallback =
+    HARDWARE_PROFILES.find(
+      (profile) => profile.id === "preferred_quad_rtxpro6000_blackwell_server"
+    ) ?? HARDWARE_PROFILES[0];
+  if (!fallback) throw new Error("No hardware profiles are available for budget planning.");
+  return fallback;
+}
+
+function hardwareBudgetScenario(input: {
+  cloudFallbackRequired: boolean;
+  confidence?: HardwareBudgetConfidence;
+  explanation: string;
+  fullReplacementAllowed: boolean;
+  goal: HardwareReplacementGoal;
+  profile: HardwareProfile;
+  scope: WorkloadScope;
+  scopes: WorkloadScopeSummary[];
+  targetTokensPerSecond: number;
+}): HardwareBudgetScenario {
+  const estimatedNodeThroughputTps = aggregateTpsEstimate(input.profile);
+  const requiredNodes =
+    input.targetTokensPerSecond <= 0
+      ? 0
+      : estimatedNodeThroughputTps === null || estimatedNodeThroughputTps <= 0
+      ? null
+      : Math.max(1, Math.ceil(input.targetTokensPerSecond / estimatedNodeThroughputTps));
+  const requiredGpuCount =
+    requiredNodes === null ? null : requiredNodes * input.profile.gpuCount;
+  const capexLow = multiplyNullable(input.profile.estimatedCapexLowUsd, requiredNodes);
+  const capexHigh = multiplyNullable(input.profile.estimatedCapexHighUsd, requiredNodes);
+  const requiredContextTokens = requiredContextForScope(input.scopes, input.scope);
+
+  return {
+    cloudFallbackRequired: input.cloudFallbackRequired,
+    confidence: input.confidence ?? hardwareBudgetConfidence(input.profile),
+    estimatedAnnualOpexUsd: estimateAnnualOpex(input.profile, requiredNodes, capexHigh),
+    estimatedCapexHighUsd: capexHigh,
+    estimatedCapexLowUsd: capexLow,
+    estimatedNodeThroughputTps,
+    estimatedSystemPowerKw: multiplyNullable(input.profile.estimatedSystemPowerKw, requiredNodes),
+    explanation: input.explanation,
+    fullReplacementAllowed: input.fullReplacementAllowed,
+    hardwareProfileId: input.profile.id,
+    hardwareProfileName: input.profile.profileName,
+    rackUnitsRequired: multiplyNullable(input.profile.rackUnits, requiredNodes),
+    replacementGoal: input.goal,
+    requiredContextTokens,
+    requiredGpuCount,
+    requiredNodes,
+    scope: input.scope,
+    targetTokensPerSecond: round2(input.targetTokensPerSecond)
+  };
+}
+
+function hardwareBudgetConfidence(profile: HardwareProfile): HardwareBudgetConfidence {
+  if (profile.pricingConfidence === "quote_required") return "quote_required";
+  if (profile.pricingConfidence === "unknown") return "unknown";
+  return "derived_estimate";
+}
+
+function scopeTps(
+  scopes: WorkloadScopeSummary[],
+  scope: WorkloadScope,
+  fallback: number
+): number {
+  return scopes.find((candidate) => candidate.scope === scope)?.currentProjectLaneComputeTps ?? fallback;
+}
+
+function requiredContextForScope(
+  scopes: WorkloadScopeSummary[],
+  scope: WorkloadScope
+): number {
+  const summary = scopes.find((candidate) => candidate.scope === scope);
+  return (
+    summary?.contextRequirementTokens.p99 ??
+    summary?.contextRequirementTokens.p95 ??
+    131_072
+  );
+}
+
+function estimateAnnualOpex(
+  profile: HardwareProfile,
+  requiredNodes: number | null,
+  capexHigh: number | null
+): number | null {
+  if (requiredNodes === null || capexHigh === null || profile.estimatedSystemPowerKw === null) {
+    return null;
+  }
+  const support = capexHigh * 0.12;
+  const powerCooling = profile.estimatedSystemPowerKw * requiredNodes * 24 * 365 * 0.18;
+  const software = 10_000 * requiredNodes;
+  return roundMoney(support + powerCooling + software);
+}
+
+function multiplyNullable(value: number | null, multiplier: number | null): number | null {
+  if (value === null || multiplier === null) return null;
+  return round2(value * multiplier);
 }
 
 function buildFinancials(
@@ -1843,6 +2319,12 @@ function aggregateTpsEstimate(profile: HardwareProfile): number | null {
   if (profile.id === "production_8x_rtxpro6000_blackwell_server") return 1440;
   if (profile.id === "production_node_hgx_h200_b200_8gpu") return 2200;
   if (profile.id === "rack_scale_gb200_nvl72") return 18_000;
+  if (profile.gpuType.includes("RTX PRO 6000")) {
+    return profile.gpuCount * 180;
+  }
+  if (profile.gpuType.includes("H200") || profile.gpuType.includes("B200")) {
+    return profile.gpuCount * 275;
+  }
   return null;
 }
 
@@ -1881,8 +2363,8 @@ function routeCapacityEstimate(
   routeCoverageFactor: number
 ): number | null {
   const aggregateTps = aggregateTpsEstimate(profile);
-  if (aggregateTps === null || workload.currentProjectLaneComputeTps <= 0) return null;
-  return round2((aggregateTps / workload.currentProjectLaneComputeTps) / routeCoverageFactor);
+  if (aggregateTps === null || workload.allProviderComputeTps <= 0) return null;
+  return round2((aggregateTps / workload.allProviderComputeTps) / routeCoverageFactor);
 }
 
 function isQuoteableFloorOrPilot(profile: HardwareProfile): boolean {
@@ -1946,6 +2428,11 @@ function nullableSum(values: Array<number | null>): number | null {
   return present.length > 0 ? sum(present) : null;
 }
 
+function maxNullable(values: Array<number | null>): number | null {
+  const present = values.filter((value): value is number => value !== null);
+  return present.length > 0 ? Math.max(...present) : null;
+}
+
 function sum(values: number[]): number {
   return values.reduce((total, value) => total + value, 0);
 }
@@ -1961,6 +2448,16 @@ function round2(value: number): number {
 
 function roundMoney(value: number): number {
   return Math.round(value * 100) / 100;
+}
+
+function formatBudgetUsd(value: number): string {
+  if (value >= 1_000_000) return `$${(value / 1_000_000).toLocaleString()}M`;
+  if (value >= 1_000 && value % 1_000 === 0) return `$${(value / 1_000).toLocaleString()}K`;
+  return `$${value.toLocaleString()}`;
+}
+
+function formatBudgetRange(lowUsd: number, highUsd: number): string {
+  return `${formatBudgetUsd(lowUsd)}-${formatBudgetUsd(highUsd)}`;
 }
 
 function capexRange(profile: HardwareProfile | null): string {

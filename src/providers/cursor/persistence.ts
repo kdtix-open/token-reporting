@@ -1,3 +1,4 @@
+import { createHmac } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -10,8 +11,11 @@ import {
 import type {
   CursorDailyUsageResponse,
   CursorFilteredUsageEventsResponse,
+  CursorSnapshot,
   CursorTeamSpendResponse
 } from "./types";
+
+const cursorRedactionSchemeVersion = "cursor-hmac-v1";
 
 interface PersistReportArgs {
   /** Daily usage response (legacy) — wrapped under `daily` in the new snapshot. */
@@ -39,28 +43,138 @@ export async function persistCursorDailyUsageReport({
 }: PersistReportArgs): Promise<string> {
   assertWritableOperationAllowed("Persisting Cursor usage data", env);
 
-  const snapshot: { generatedAt: string; daily: CursorDailyUsageResponse; spend?: CursorTeamSpendResponse; events?: CursorFilteredUsageEventsResponse } = {
+  const snapshot: CursorSnapshot = {
     generatedAt: new Date().toISOString(),
     daily: report
   };
   if (spend) snapshot.spend = spend;
   if (events) snapshot.events = events;
+  const redactionSalt = cursorRedactionSalt(env);
+  const redactedSnapshot = redactCursorSnapshot(snapshot, redactionSalt);
 
   const accumulatedPath = accumulatedPathForLatest(outputPath);
-  const existing = await readJsonIfExists<typeof snapshot>(accumulatedPath);
-  const accumulated = existing ? mergeCursorSnapshots(existing, snapshot) : snapshot;
+  const existing = await readJsonIfExists<CursorSnapshot>(accumulatedPath);
+  const accumulated = existing
+    ? mergeCursorSnapshots(sanitizeExistingCursorSnapshot(existing, redactionSalt), redactedSnapshot)
+    : redactedSnapshot;
 
   await mkdir(path.dirname(outputPath), { recursive: true });
-  await writeFile(outputPath, `${JSON.stringify(snapshot, null, 2)}\n`, "utf8");
+  await writeFile(outputPath, `${JSON.stringify(redactedSnapshot, null, 2)}\n`, "utf8");
   await writeFile(accumulatedPath, `${JSON.stringify(accumulated, null, 2)}\n`, "utf8");
   return outputPath;
 }
 
-function mergeCursorSnapshots<T extends {
-  daily: CursorDailyUsageResponse;
-  spend?: CursorTeamSpendResponse;
-  events?: CursorFilteredUsageEventsResponse;
-}>(existing: T, incoming: T): T {
+function redactCursorSnapshot(snapshot: CursorSnapshot, redactionSalt: string): CursorSnapshot {
+  return {
+    ...snapshot,
+    daily: {
+      ...snapshot.daily,
+      data: snapshot.daily.data.map((item) => ({
+        ...item,
+        email: redactCursorEmail(item.email, redactionSalt),
+        userId: redactCursorUserId(item.userId, redactionSalt)
+      }))
+    },
+    ...(snapshot.spend
+      ? {
+          spend: {
+            ...snapshot.spend,
+            teamMemberSpend: snapshot.spend.teamMemberSpend.map((item) => ({
+              ...item,
+              email: redactCursorEmail(item.email, redactionSalt),
+              name: redactCursorName(item.name, redactionSalt),
+              userId: redactCursorUserId(item.userId, redactionSalt)
+            }))
+          }
+        }
+      : {}),
+    ...(snapshot.events
+      ? {
+          events: {
+            ...snapshot.events,
+            usageEvents: snapshot.events.usageEvents.map((event) => ({
+              ...event,
+              userEmail: redactCursorEmail(event.userEmail, redactionSalt)
+            }))
+          }
+        }
+      : {}),
+    redactionKeyFingerprint: cursorRedactionKeyFingerprint(redactionSalt),
+    redactionSchemeVersion: cursorRedactionSchemeVersion
+  };
+}
+
+function sanitizeExistingCursorSnapshot(
+  snapshot: CursorSnapshot,
+  redactionSalt: string
+): CursorSnapshot {
+  const redacted = redactCursorSnapshot(snapshot, redactionSalt);
+  return {
+    ...redacted,
+    redactionKeyFingerprint:
+      snapshot.redactionKeyFingerprint ?? redacted.redactionKeyFingerprint,
+    redactionSchemeVersion: snapshot.redactionSchemeVersion ?? redacted.redactionSchemeVersion
+  };
+}
+
+function cursorRedactionSalt(env: NodeJS.ProcessEnv): string {
+  const salt =
+    env.TOKEN_REPORTING_CURSOR_REDACTION_SALT ??
+    env.TOKEN_REPORTING_REDACTION_SALT ??
+    env.CURSOR_ADMIN_API_KEY;
+  if (!salt) {
+    throw new Error(
+      "TOKEN_REPORTING_CURSOR_REDACTION_SALT, TOKEN_REPORTING_REDACTION_SALT, or CURSOR_ADMIN_API_KEY is required to persist redacted Cursor identity fields."
+    );
+  }
+  return salt;
+}
+
+function redactCursorUserId(value: string, redactionSalt: string): string {
+  if (/^user_redacted_(?:hmac_[a-f0-9]{16}|[a-f0-9]{12})$/u.test(value)) return value;
+  return `user_redacted_hmac_${stableCursorHash(value, redactionSalt)}`;
+}
+
+function redactCursorEmail(value: string, redactionSalt: string): string;
+function redactCursorEmail(value: null, redactionSalt: string): null;
+function redactCursorEmail(value: undefined, redactionSalt: string): undefined;
+function redactCursorEmail(value: string | undefined, redactionSalt: string): string | undefined;
+function redactCursorEmail(value: string | null | undefined, redactionSalt: string): string | null | undefined;
+function redactCursorEmail(value: string | null | undefined, redactionSalt: string): string | null | undefined {
+  if (value === null || value === undefined) return value;
+  if (/^redacted-(?:hmac_[a-f0-9]{16}|[a-f0-9]{12})@redacted\.local$/u.test(value)) {
+    return value;
+  }
+  return `redacted-hmac_${stableCursorHash(value, redactionSalt)}@redacted.local`;
+}
+
+function redactCursorName(value: string | undefined, redactionSalt: string): string | undefined {
+  if (value === undefined) return value;
+  if (/^Redacted user (?:hmac_[a-f0-9]{16}|[a-f0-9]{12})$/u.test(value)) return value;
+  return `Redacted user hmac_${stableCursorHash(value, redactionSalt)}`;
+}
+
+function stableCursorHash(value: string, redactionSalt: string): string {
+  return createHmac("sha256", redactionSalt)
+    .update("cursor-identity-redaction-v1")
+    .update("\0")
+    .update(value)
+    .digest("hex")
+    .slice(0, 16);
+}
+
+function cursorRedactionKeyFingerprint(redactionSalt: string): string {
+  return createHmac("sha256", redactionSalt)
+    .update("cursor-redaction-key-fingerprint-v1")
+    .digest("hex")
+    .slice(0, 16);
+}
+
+function mergeCursorSnapshots(existing: CursorSnapshot, incoming: CursorSnapshot): CursorSnapshot {
+  if (shouldResetCursorAccumulatedHistoryForRedactionMigration(existing, incoming)) {
+    return incoming;
+  }
+
   const dailyData = mergeByKey(
     existing.daily.data,
     incoming.daily.data,
@@ -116,5 +230,41 @@ function mergeCursorSnapshots<T extends {
           }
         }
       : {})
-  } as T;
+  };
+}
+
+function shouldResetCursorAccumulatedHistoryForRedactionMigration(
+  existing: CursorSnapshot,
+  incoming: CursorSnapshot
+): boolean {
+  return (
+    (hasLegacyCursorAlias(existing) && hasHmacCursorAlias(incoming)) ||
+    cursorRedactionKeyChanged(existing, incoming)
+  );
+}
+
+function cursorRedactionKeyChanged(existing: CursorSnapshot, incoming: CursorSnapshot): boolean {
+  if (!incoming.redactionKeyFingerprint || !incoming.redactionSchemeVersion) return false;
+  return (
+    existing.redactionKeyFingerprint !== incoming.redactionKeyFingerprint ||
+    existing.redactionSchemeVersion !== incoming.redactionSchemeVersion
+  );
+}
+
+function hasLegacyCursorAlias(snapshot: Pick<CursorSnapshot, "daily" | "events">): boolean {
+  return (
+    snapshot.daily.data.some((item) => /^user_redacted_[a-f0-9]{12}$/u.test(item.userId)) ||
+    (snapshot.events?.usageEvents ?? []).some((event) =>
+      /^redacted-[a-f0-9]{12}@redacted\.local$/u.test(event.userEmail ?? "")
+    )
+  );
+}
+
+function hasHmacCursorAlias(snapshot: Pick<CursorSnapshot, "daily" | "events">): boolean {
+  return (
+    snapshot.daily.data.some((item) => /^user_redacted_hmac_[a-f0-9]{16}$/u.test(item.userId)) ||
+    (snapshot.events?.usageEvents ?? []).some((event) =>
+      /^redacted-hmac_[a-f0-9]{16}@redacted\.local$/u.test(event.userEmail ?? "")
+    )
+  );
 }

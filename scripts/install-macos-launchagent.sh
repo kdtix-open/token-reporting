@@ -82,10 +82,8 @@ xml_escape() {
   printf '%s' "${value}"
 }
 
-mkdir -p "${PLIST_DIR}" "${LOG_ROOT}" "$(dirname "${PID_FILE}")"
-chmod +x "${REPO_ROOT}/scripts/run-production-service.sh"
-
-cat >"${PLIST_PATH}" <<EOF
+render_plist() {
+  cat <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
   "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -144,6 +142,11 @@ cat >"${PLIST_PATH}" <<EOF
 </dict>
 </plist>
 EOF
+}
+
+mkdir -p "${PLIST_DIR}" "${LOG_ROOT}" "$(dirname "${PID_FILE}")"
+chmod +x "${REPO_ROOT}/scripts/run-production-service.sh"
+render_plist >"${PLIST_PATH}"
 
 if [[ "${DRY_RUN}" == "true" ]]; then
   echo "install-macos-launchagent: dry run wrote ${PLIST_PATH}"

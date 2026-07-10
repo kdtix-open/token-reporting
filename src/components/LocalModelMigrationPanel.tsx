@@ -1,5 +1,13 @@
+import type { ReactNode } from "react";
+
 import { buildLocalModelReport } from "../lib/localModelReport";
-import type { ContextConfidence, LocalModelMigrationReport, LocalModelProfile, ModelTier } from "../lib/localModelReport";
+import type {
+  ContextConfidence,
+  LocalModelMigrationReport,
+  LocalModelProfile,
+  LocalModelWorkloadScopeId,
+  ModelTier
+} from "../lib/localModelReport";
 import {
   type HuggingFaceCandidateSet
 } from "../lib/huggingFaceCandidates";
@@ -224,8 +232,8 @@ function WorkloadCallout({ report }: { report: LocalModelMigrationReport }) {
   }
 
   return (
-    <div className="lm-workload-callout lm-workload-callout--gap">
-      ⚠ <strong>No on-prem profile covers your full workload:</strong>{" "}
+      <div className="lm-workload-callout lm-workload-callout--gap">
+      ⚠ <strong>No on-prem profile covers the selected {report.selectedWorkloadScope.label} workload:</strong>{" "}
       {parts.join("; ")}.
     </div>
   );
@@ -237,25 +245,29 @@ interface LocalModelMigrationPanelProps {
   distribution: LocalSessionDistribution | null;
   forensicRun: ReportForensicRun | null;
   huggingFaceCandidateSet: HuggingFaceCandidateSet | null;
+  workloadScopeId: LocalModelWorkloadScopeId;
+  onWorkloadScopeChange: (scopeId: LocalModelWorkloadScopeId) => void;
 }
 
 export function LocalModelMigrationPanel({
   summaries,
   distribution,
   forensicRun,
-  huggingFaceCandidateSet
+  huggingFaceCandidateSet,
+  workloadScopeId,
+  onWorkloadScopeChange
 }: LocalModelMigrationPanelProps) {
+  const forensicRunAppliesToScope = workloadScopeId === "all_provider_traffic";
   const report = buildLocalModelReport(
     summaries,
     distribution,
     huggingFaceCandidateSet,
-    forensicRun
+    forensicRunAppliesToScope ? forensicRun : null,
+    { workloadScopeId }
   );
 
-  if (report.tokenObservedProviders.length === 0 && report.requestOnlyProviders.length === 0) {
-    return null;
-  }
-
+  const hasProviderTraffic =
+    report.tokenObservedProviders.length > 0 || report.requestOnlyProviders.length > 0;
   const hasMissingTokenData =
     report.requestOnlyProviders.length > 0 ||
     report.tokenObservedProviders.some((p) => p.requestCount === null);
@@ -266,16 +278,51 @@ export function LocalModelMigrationPanel({
         Local model migration sizing
       </h2>
       <p className="lm-panel__subtitle">
-        Aggregated token load across providers · {report.windowDays}-day window ·
+        {report.selectedWorkloadScope.label} · {report.windowDays}-day window ·
         model profiles sourced from{" "}
         <a href="https://huggingface.co" target="_blank" rel="noreferrer">
           HuggingFace
         </a>
       </p>
 
+      <div className="lm-scope-bar">
+        <label className="lm-scope-field">
+          <span>Tenant pipeline scope</span>
+          <select
+            aria-describedby="lm-scope-description"
+            value={workloadScopeId}
+            onChange={(event) =>
+              onWorkloadScopeChange(event.target.value as LocalModelWorkloadScopeId)
+            }
+          >
+            {report.availableWorkloadScopes.map((scope) => (
+              <option key={scope.id} value={scope.id}>
+                {scope.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <div className="lm-scope-summary" id="lm-scope-description">
+          <strong>Current tenant: {report.tenant.tenantName}</strong>
+          <span>Pipeline allocation: {report.selectedWorkloadScope.allocationMode}</span>
+          <span>{report.selectedWorkloadScope.description}</span>
+        </div>
+      </div>
+
+      {!hasProviderTraffic ? (
+        <div className="lm-section">
+          <p className="lm-warn-banner">
+            No provider telemetry matched {report.selectedWorkloadScope.label}. Choose another tenant
+            pipeline scope or refresh provider data before sizing this lane.
+          </p>
+        </div>
+      ) : (
+        <>
       {/* ── Token load breakdown ─────────────────────────────────────── */}
       <div className="lm-section">
-        <h3 className="lm-section__heading">Token load ({report.windowDays}-day total)</h3>
+        <h3 className="lm-section__heading">
+          Token load · {report.selectedWorkloadScope.label} ({report.windowDays}-day total)
+        </h3>
         <div className="lm-token-grid">
           <div className="lm-metric">
             <span className="lm-metric__value">{fmtM(report.totalInputTokens)}</span>
@@ -318,6 +365,9 @@ export function LocalModelMigrationPanel({
           {report.tokenObservedProviders.map((p) => (
             <span key={p.providerId} className="lm-attr-chip lm-attr-chip--token">
               {p.providerId} — token data ✓
+              {p.allocationWeight !== undefined && p.allocationWeight < 1
+                ? ` (${Math.round(p.allocationWeight * 100)}% scope allocation)`
+                : ""}
             </span>
           ))}
           {report.requestOnlyProviders.map((p) => (
@@ -387,8 +437,7 @@ export function LocalModelMigrationPanel({
               ) : report.contextConfidence === "low" ? (
                 <>
                   <span className="lm-confidence lm-confidence--low">Low confidence</span>
-                  {" "}avg {fmtM(Math.round(report.avgTokensPerObservedRequest ?? 0))} tok/req × 2.5 safety factor → rounded to standard size. Does not reflect tail requests. Run{" "}
-                  <code>npm run report:local-sessions</code> to upgrade to empirical p99.
+                  {lowConfidenceContextNote(report)}
                 </>
               ) : (
                 <span className="lm-confidence lm-confidence--insufficient">
@@ -428,8 +477,10 @@ export function LocalModelMigrationPanel({
           Actual performance varies by hardware, batch size, prompt length, and KV-cache configuration.
         </p>
       </div>
+        </>
+      )}
 
-      {forensicRun?.parentSynthesis && (
+      {hasProviderTraffic && forensicRunAppliesToScope && forensicRun?.parentSynthesis && (
         <div className="lm-section lm-forensic">
           <h3 className="lm-section__heading">Forensic reviewer consensus</h3>
           <div className="lm-forensic__summary">
@@ -488,4 +539,24 @@ export function LocalModelMigrationPanel({
 function readFindingText(value: Record<string, unknown>, field: string): string {
   const fieldValue = value[field];
   return typeof fieldValue === "string" && fieldValue ? fieldValue : "unknown";
+}
+
+function lowConfidenceContextNote(report: LocalModelMigrationReport): ReactNode {
+  if (report.contextEvidenceSource === "global_local_session_distribution_scaled_to_scope") {
+    return (
+      <>
+        {" "}global local-session p99 scaled to {report.selectedWorkloadScope.label}; pipeline-specific
+        distributions are still pending. Collect local sessions for this tenant lane before treating the
+        context target as measured.
+      </>
+    );
+  }
+
+  return (
+    <>
+      {" "}avg {fmtM(Math.round(report.avgTokensPerObservedRequest ?? 0))} tok/req × 2.5 safety factor
+      → rounded to standard size. Does not reflect tail requests. Run{" "}
+      <code>npm run report:local-sessions</code> to upgrade to empirical p99.
+    </>
+  );
 }

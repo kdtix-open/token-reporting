@@ -1,25 +1,51 @@
 {
-  "generatedAt": "2026-06-10T01:24:51.844Z",
+  "generatedAt": "2026-07-10T22:42:03.349Z",
   "daily": {
     "data": [
       {
-        "userId": "user_6SPHHLfZB2hOegWEViUzY7KvGb",
-        "day": "2026-06-10",
-        "date": 1781049600000,
-        "email": "chris.kreager@kdtix.com",
+        "userId": "user_redacted_hmac_8513e011b7453dcb",
+        "day": "2026-07-08",
+        "date": 1783468800000,
+        "email": "redacted-hmac_aba203049e67e26f@redacted.local",
         "cmdkUsages": 0,
         "composerRequests": 0,
         "chatRequests": 0,
-        "agentRequests": 1,
-        "usageBasedReqs": 1,
-        "subscriptionIncludedReqs": 0,
+        "agentRequests": 21,
+        "usageBasedReqs": 0,
+        "subscriptionIncludedReqs": 21,
         "bugbotUsages": 0
       },
       {
-        "userId": "user_6SPHHLfZB2hOegWEViUzY7KvGb",
-        "day": "2026-06-11",
-        "date": 1781136000000,
-        "email": "chris.kreager@kdtix.com",
+        "userId": "user_redacted_hmac_8513e011b7453dcb",
+        "day": "2026-07-09",
+        "date": 1783555200000,
+        "email": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cmdkUsages": 0,
+        "composerRequests": 0,
+        "chatRequests": 0,
+        "agentRequests": 36,
+        "usageBasedReqs": 0,
+        "subscriptionIncludedReqs": 36,
+        "bugbotUsages": 0
+      },
+      {
+        "userId": "user_redacted_hmac_8513e011b7453dcb",
+        "day": "2026-07-10",
+        "date": 1783641600000,
+        "email": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cmdkUsages": 0,
+        "composerRequests": 0,
+        "chatRequests": 0,
+        "agentRequests": 18,
+        "usageBasedReqs": 0,
+        "subscriptionIncludedReqs": 18,
+        "bugbotUsages": 0
+      },
+      {
+        "userId": "user_redacted_hmac_8513e011b7453dcb",
+        "day": "2026-07-11",
+        "date": 1783728000000,
+        "email": "redacted-hmac_aba203049e67e26f@redacted.local",
         "cmdkUsages": 0,
         "composerRequests": 0,
         "chatRequests": 0,
@@ -30,31 +56,31 @@
       }
     ],
     "period": {
-      "startDate": 1781049600000,
-      "endDate": 1781136000000
+      "startDate": 1783468800000,
+      "endDate": 1783728000000
     }
   },
   "spend": {
     "teamMemberSpend": [
       {
-        "userId": "user_6SPHHLfZB2hOegWEViUzY7KvGb",
-        "name": "Chris Kreager",
-        "email": "chris.kreager@kdtix.com",
+        "userId": "user_redacted_hmac_8513e011b7453dcb",
+        "name": "Redacted user hmac_0eb9292e02fae90a",
+        "email": "redacted-hmac_aba203049e67e26f@redacted.local",
         "role": "owner",
-        "spendCents": 30184.726927,
-        "includedSpendCents": 8212.30008,
+        "spendCents": 0,
+        "includedSpendCents": 735.87044,
         "fastPremiumRequests": 0,
         "monthlyLimitDollars": null,
         "hardLimitOverrideDollars": 0
       }
     ],
-    "subscriptionCycleStart": 1778942747000,
+    "subscriptionCycleStart": 1783459946000,
     "totalMembers": 1,
     "limitedUsersCount": 0,
-    "maxUserSpendCents": 30184.726927
+    "maxUserSpendCents": 0
   },
   "events": {
-    "totalUsageEventsCount": 1,
+    "totalUsageEventsCount": 85,
     "pagination": {
       "numPages": 1,
       "currentPage": 1,
@@ -64,29 +90,1711 @@
     },
     "usageEvents": [
       {
-        "timestamp": "1781051265200",
-        "model": "composer-2.5-fast",
-        "kind": "Usage-based",
+        "timestamp": "1783713281577",
+        "model": "default",
+        "kind": "Included in Business",
         "maxMode": false,
-        "requestsCosts": 11,
+        "requestsCosts": 4.3,
         "isTokenBasedCall": true,
         "tokenUsage": {
-          "inputTokens": 75318,
-          "outputTokens": 3697,
+          "inputTokens": 41520,
+          "outputTokens": 1488,
           "cacheWriteTokens": 0,
-          "cacheReadTokens": 317755,
-          "totalCents": 44.02865
+          "cacheReadTokens": 50656,
+          "totalCents": 17.2208
         },
-        "userEmail": "chris.kreager@kdtix.com",
-        "cursorTokenFee": 9.91925,
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
         "isChargeable": true,
         "isHeadless": false,
-        "chargedCents": 53.9479
+        "chargedCents": 7.3492
+      },
+      {
+        "timestamp": "1783713249587",
+        "model": "default",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 2.8,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 10966,
+          "outputTokens": 1719,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 105205,
+          "totalCents": 11.12855
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 5.032275
+      },
+      {
+        "timestamp": "1783713226166",
+        "model": "default",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 2,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 7180,
+          "outputTokens": 1449,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 75113,
+          "totalCents": 8.08315
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 3.644725
+      },
+      {
+        "timestamp": "1783713208411",
+        "model": "default",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 10.7,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 63259,
+          "outputTokens": 4422,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 340352,
+          "totalCents": 42.6283
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 19.069375
+      },
+      {
+        "timestamp": "1783712324037",
+        "model": "composer-2.5",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 1,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 75058,
+          "outputTokens": 127,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 4360,
+          "totalCents": 3.87185
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 3.87185
+      },
+      {
+        "timestamp": "1783703676955",
+        "model": "composer-2.5",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 0.4,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 523,
+          "outputTokens": 129,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 78380,
+          "totalCents": 1.626
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 1.626
+      },
+      {
+        "timestamp": "1783703345069",
+        "model": "composer-2.5",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 0.9,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 72438,
+          "outputTokens": 134,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 5943,
+          "totalCents": 3.77426
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 3.77426
+      },
+      {
+        "timestamp": "1783702510523",
+        "model": "composer-2.5",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 0.4,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 523,
+          "outputTokens": 130,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 77340,
+          "totalCents": 1.60545
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 1.60545
+      },
+      {
+        "timestamp": "1783702192038",
+        "model": "composer-2.5",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 0.4,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 520,
+          "outputTokens": 133,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 76821,
+          "totalCents": 1.59567
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 1.59567
+      },
+      {
+        "timestamp": "1783701953564",
+        "model": "composer-2.5",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 0.4,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 515,
+          "outputTokens": 128,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 76307,
+          "totalCents": 1.58389
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 1.58389
+      },
+      {
+        "timestamp": "1783701728781",
+        "model": "composer-2.5",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 0.4,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 517,
+          "outputTokens": 128,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 75791,
+          "totalCents": 1.57367
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 1.57367
+      },
+      {
+        "timestamp": "1783701316169",
+        "model": "composer-2.5",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 0.9,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 69849,
+          "outputTokens": 129,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 5943,
+          "totalCents": 3.64356
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 3.64356
+      },
+      {
+        "timestamp": "1783689973596",
+        "model": "composer-2.5",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 0.9,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 69333,
+          "outputTokens": 127,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 5944,
+          "totalCents": 3.61728
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 3.61728
+      },
+      {
+        "timestamp": "1783689161976",
+        "model": "composer-2.5",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 0.9,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 68797,
+          "outputTokens": 129,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 5965,
+          "totalCents": 3.5914
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 3.5914
+      },
+      {
+        "timestamp": "1783687629951",
+        "model": "composer-2.5",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 0.9,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 69449,
+          "outputTokens": 130,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 4795,
+          "totalCents": 3.60085
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 3.60085
+      },
+      {
+        "timestamp": "1783686220289",
+        "model": "composer-2.5",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 0.9,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 67778,
+          "outputTokens": 134,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 5944,
+          "totalCents": 3.54128
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 3.54128
+      },
+      {
+        "timestamp": "1783685617603",
+        "model": "composer-2.5",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 0.4,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 518,
+          "outputTokens": 128,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 72688,
+          "totalCents": 1.51166
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 1.51166
+      },
+      {
+        "timestamp": "1783685134764",
+        "model": "composer-2.5",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 0.9,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 66745,
+          "outputTokens": 132,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 5944,
+          "totalCents": 3.48913
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 3.48913
+      },
+      {
+        "timestamp": "1783684300489",
+        "model": "composer-2.5",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 0.9,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 66223,
+          "outputTokens": 132,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 5944,
+          "totalCents": 3.46303
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 3.46303
+      },
+      {
+        "timestamp": "1783683472681",
+        "model": "composer-2.5",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 0.9,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 65711,
+          "outputTokens": 127,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 5944,
+          "totalCents": 3.43618
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 3.43618
+      },
+      {
+        "timestamp": "1783682826838",
+        "model": "composer-2.5",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 0.9,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 65192,
+          "outputTokens": 134,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 5943,
+          "totalCents": 3.41196
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 3.41196
+      },
+      {
+        "timestamp": "1783680239018",
+        "model": "composer-2.5",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 0.8,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 64672,
+          "outputTokens": 131,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 5944,
+          "totalCents": 3.38523
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 3.38523
+      },
+      {
+        "timestamp": "1783648815824",
+        "model": "default",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 1,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 15210,
+          "outputTokens": 1933,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 142976,
+          "totalCents": 4.10327
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 6.63545
+      },
+      {
+        "timestamp": "1783640484528",
+        "model": "default",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 13.1,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 82319,
+          "outputTokens": 4101,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 433824,
+          "totalCents": 52.5384
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 23.596075
+      },
+      {
+        "timestamp": "1783640466270",
+        "model": "default",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 2.1,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 12410,
+          "outputTokens": 1077,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 57728,
+          "totalCents": 8.2249
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 3.64065
+      },
+      {
+        "timestamp": "1783640443594",
+        "model": "default",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 7.6,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 60940,
+          "outputTokens": 2603,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 161792,
+          "totalCents": 30.2761
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 13.2241
+      },
+      {
+        "timestamp": "1783627163096",
+        "model": "default",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 1.9,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 5497,
+          "outputTokens": 1400,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 79616,
+          "totalCents": 7.7299
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 3.517525
+      },
+      {
+        "timestamp": "1783622107413",
+        "model": "composer-2.5-fast",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 6.1,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 23522,
+          "outputTokens": 2806,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 266075,
+          "totalCents": 24.56935
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 24.56935
+      },
+      {
+        "timestamp": "1783622084913",
+        "model": "default",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 1.1,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 53505,
+          "outputTokens": 1387,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 74592,
+          "totalCents": 4.51384
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 9.385125
+      },
+      {
+        "timestamp": "1783621803034",
+        "model": "composer-2.5-fast",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 3,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 16040,
+          "outputTokens": 1233,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 103622,
+          "totalCents": 11.8426
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 11.8426
+      },
+      {
+        "timestamp": "1783621738578",
+        "model": "default",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 1.6,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 30880,
+          "outputTokens": 3385,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 202304,
+          "totalCents": 6.43633
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 10.9486
+      },
+      {
+        "timestamp": "1783621300274",
+        "model": "default",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 0.6,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 28683,
+          "outputTokens": 980,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 41056,
+          "totalCents": 2.50027
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 5.199775
+      },
+      {
+        "timestamp": "1783621251209",
+        "model": "default",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 3.3,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 91216,
+          "outputTokens": 4428,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 380736,
+          "totalCents": 13.28252
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 23.5772
+      },
+      {
+        "timestamp": "1783620816584",
+        "model": "default",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 2.8,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 25296,
+          "outputTokens": 4244,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 442092,
+          "totalCents": 11.16764
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 16.7607
+      },
+      {
+        "timestamp": "1783620773581",
+        "model": "default",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 2.7,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 54473,
+          "outputTokens": 3997,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 345984,
+          "totalCents": 10.64258
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 17.856925
+      },
+      {
+        "timestamp": "1783620282860",
+        "model": "default",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 0.8,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 18968,
+          "outputTokens": 1482,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 92846,
+          "totalCents": 3.17582
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 5.58135
+      },
+      {
+        "timestamp": "1783618533801",
+        "model": "default",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 2.5,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 23956,
+          "outputTokens": 3634,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 397414,
+          "totalCents": 10.05458
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 15.11025
+      },
+      {
+        "timestamp": "1783618523777",
+        "model": "default",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 0.4,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 9015,
+          "outputTokens": 757,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 39000,
+          "totalCents": 1.42
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 2.556075
+      },
+      {
+        "timestamp": "1783618494671",
+        "model": "default",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 2.4,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 39790,
+          "outputTokens": 3499,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 331072,
+          "totalCents": 9.48569
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 15.34995
+      },
+      {
+        "timestamp": "1783607205497",
+        "model": "composer-2.5",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 0.8,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 63905,
+          "outputTokens": 135,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 5944,
+          "totalCents": 3.34788
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 3.34788
+      },
+      {
+        "timestamp": "1783589673172",
+        "model": "composer-2.5",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 0.8,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 63384,
+          "outputTokens": 134,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 5944,
+          "totalCents": 3.32158
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 3.32158
+      },
+      {
+        "timestamp": "1783586363753",
+        "model": "composer-2.5",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 0.8,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 62848,
+          "outputTokens": 147,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 5944,
+          "totalCents": 3.29803
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 3.29803
+      },
+      {
+        "timestamp": "1783578667414",
+        "model": "composer-2.5",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 0.8,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 62187,
+          "outputTokens": 137,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 5944,
+          "totalCents": 3.26248
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 3.26248
+      },
+      {
+        "timestamp": "1783576045641",
+        "model": "default",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 0.6,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 23183,
+          "outputTokens": 968,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 49141,
+          "totalCents": 2.38397
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 4.7072
+      },
+      {
+        "timestamp": "1783574724941",
+        "model": "composer-2.5",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 0.8,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 61652,
+          "outputTokens": 148,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 5944,
+          "totalCents": 3.23848
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 3.23848
+      },
+      {
+        "timestamp": "1783572958332",
+        "model": "default",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 1.8,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 42348,
+          "outputTokens": 2494,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 222897,
+          "totalCents": 7.19884
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 12.362325
+      },
+      {
+        "timestamp": "1783572843658",
+        "model": "default",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 21.5,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 132326,
+          "outputTokens": 7567,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 702176,
+          "totalCents": 86.1571
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 38.63535
+      },
+      {
+        "timestamp": "1783572504309",
+        "model": "composer-2.5",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 0.8,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 60893,
+          "outputTokens": 374,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 5943,
+          "totalCents": 3.25701
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 3.25701
+      },
+      {
+        "timestamp": "1783572371375",
+        "model": "composer-2.5-fast",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 3.3,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 16071,
+          "outputTokens": 1609,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 118288,
+          "totalCents": 13.1492
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 13.1492
+      },
+      {
+        "timestamp": "1783572335214",
+        "model": "default",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 8.4,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 55205,
+          "outputTokens": 3709,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 232736,
+          "totalCents": 33.7618
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 14.944425
+      },
+      {
+        "timestamp": "1783571679317",
+        "model": "composer-2.5",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 0.3,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 1008,
+          "outputTokens": 147,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 65299,
+          "totalCents": 1.39313
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 1.39313
+      },
+      {
+        "timestamp": "1783571644348",
+        "model": "composer-2.5",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 0.8,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 59356,
+          "outputTokens": 472,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 5944,
+          "totalCents": 3.20468
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 3.20468
+      },
+      {
+        "timestamp": "1783571616380",
+        "model": "composer-2.5",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 1.4,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 77300,
+          "outputTokens": 26,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 77446,
+          "totalCents": 5.42042
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 5.42042
+      },
+      {
+        "timestamp": "1783569782397",
+        "model": "default",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 1,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 23185,
+          "outputTokens": 2506,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 108704,
+          "totalCents": 3.95983
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 7.119325
+      },
+      {
+        "timestamp": "1783568957617",
+        "model": "composer-2.5",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 0.4,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 513,
+          "outputTokens": 126,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 76350,
+          "totalCents": 1.58415
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 1.58415
+      },
+      {
+        "timestamp": "1783568517087",
+        "model": "composer-2.5",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 0.9,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 70171,
+          "outputTokens": 127,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 6180,
+          "totalCents": 3.6639
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 3.6639
+      },
+      {
+        "timestamp": "1783568224299",
+        "model": "composer-2.5",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 0.4,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 508,
+          "outputTokens": 122,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 75348,
+          "totalCents": 1.56286
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 1.56286
+      },
+      {
+        "timestamp": "1783567969275",
+        "model": "composer-2.5",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 0.4,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 507,
+          "outputTokens": 127,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 74842,
+          "totalCents": 1.55394
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 1.55394
+      },
+      {
+        "timestamp": "1783567740644",
+        "model": "composer-2.5",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 0.4,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 507,
+          "outputTokens": 121,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 74336,
+          "totalCents": 1.54232
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 1.54232
+      },
+      {
+        "timestamp": "1783567516897",
+        "model": "composer-2.5",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 0.9,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 68393,
+          "outputTokens": 126,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 5944,
+          "totalCents": 3.57003
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 3.57003
+      },
+      {
+        "timestamp": "1783558622151",
+        "model": "default",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 1.2,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 13993,
+          "outputTokens": 2492,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 175338,
+          "totalCents": 4.82941
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 7.627775
+      },
+      {
+        "timestamp": "1783555410717",
+        "model": "default",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 5.1,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 23566,
+          "outputTokens": 2370,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 195397,
+          "totalCents": 20.39465
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 9.252675
+      },
+      {
+        "timestamp": "1783555310192",
+        "model": "default",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 8.1,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 54843,
+          "outputTokens": 3138,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 222752,
+          "totalCents": 32.2975
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 14.306975
+      },
+      {
+        "timestamp": "1783555295975",
+        "model": "default",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 2.8,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 11613,
+          "outputTokens": 1748,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 99706,
+          "totalCents": 11.0912
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 4.993075
+      },
+      {
+        "timestamp": "1783554507345",
+        "model": "composer-2.5-fast",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 7.3,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 78048,
+          "outputTokens": 1809,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 59712,
+          "totalCents": 29.1135
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 29.1135
+      },
+      {
+        "timestamp": "1783554484893",
+        "model": "default",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 4.5,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 31168,
+          "outputTokens": 1920,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 113664,
+          "totalCents": 17.9136
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 7.8896
+      },
+      {
+        "timestamp": "1783554394250",
+        "model": "composer-2.5-fast",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 3.8,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 13957,
+          "outputTokens": 2372,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 146930,
+          "totalCents": 15.0916
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 15.0916
+      },
+      {
+        "timestamp": "1783554375234",
+        "model": "default",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 3.4,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 14813,
+          "outputTokens": 2222,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 119711,
+          "totalCents": 13.76245
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 6.1776
+      },
+      {
+        "timestamp": "1783553587906",
+        "model": "composer-2.5-fast",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 2.3,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 10693,
+          "outputTokens": 1130,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 84261,
+          "totalCents": 9.11595
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 9.11595
+      },
+      {
+        "timestamp": "1783553555585",
+        "model": "default",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 9.9,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 42446,
+          "outputTokens": 4359,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 404736,
+          "totalCents": 39.5091
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 18.03955
+      },
+      {
+        "timestamp": "1783553397163",
+        "model": "default",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 7.4,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 49684,
+          "outputTokens": 3841,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 179456,
+          "totalCents": 29.6395
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 13.0015
+      },
+      {
+        "timestamp": "1783552700906",
+        "model": "composer-2.5-fast",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 2,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 6718,
+          "outputTokens": 1642,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 73545,
+          "totalCents": 8.15565
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 8.15565
+      },
+      {
+        "timestamp": "1783552645258",
+        "model": "default",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 10.5,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 45364,
+          "outputTokens": 4745,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 422752,
+          "totalCents": 41.8643
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 19.0863
+      },
+      {
+        "timestamp": "1783552508671",
+        "model": "default",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 3.6,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 17665,
+          "outputTokens": 2351,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 110111,
+          "totalCents": 14.33155
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 6.3715
+      },
+      {
+        "timestamp": "1783552473559",
+        "model": "default",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 8.3,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 36023,
+          "outputTokens": 4053,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 324416,
+          "totalCents": 33.1072
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 15.045075
+      },
+      {
+        "timestamp": "1783549852348",
+        "model": "default",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 1.2,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 10531,
+          "outputTokens": 400,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 22701,
+          "totalCents": 4.89435
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 2.1239
+      },
+      {
+        "timestamp": "1783549656073",
+        "model": "default",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 3.8,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 26569,
+          "outputTokens": 1232,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 109984,
+          "totalCents": 15.3179
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 6.809925
+      },
+      {
+        "timestamp": "1783546137899",
+        "model": "default",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 4.7,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 39650,
+          "outputTokens": 2042,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 73792,
+          "totalCents": 18.6476
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 8.02625
+      },
+      {
+        "timestamp": "1783545935961",
+        "model": "default",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 2,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 18703,
+          "outputTokens": 634,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 29344,
+          "totalCents": 8.0291
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 3.451875
+      },
+      {
+        "timestamp": "1783545209223",
+        "model": "default",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 1.7,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 17487,
+          "outputTokens": 512,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 16672,
+          "totalCents": 6.8477
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 2.909875
+      },
+      {
+        "timestamp": "1783545013883",
+        "model": "default",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 0.4,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 16027,
+          "outputTokens": 541,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 29696,
+          "totalCents": 1.53052
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 3.070375
+      },
+      {
+        "timestamp": "1783543359106",
+        "model": "default",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 1.1,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 57401,
+          "outputTokens": 1234,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 54385,
+          "totalCents": 4.26625
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 9.27515
+      },
+      {
+        "timestamp": "1783543160550",
+        "model": "default",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 1,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 34788,
+          "outputTokens": 1201,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 105696,
+          "totalCents": 4.15357
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 7.7115
+      },
+      {
+        "timestamp": "1783540594895",
+        "model": "default",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 0.4,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 22179,
+          "outputTokens": 644,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 12768,
+          "totalCents": 1.52531
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 3.477975
+      },
+      {
+        "timestamp": "1783540389939",
+        "model": "default",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 1.5,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 69218,
+          "outputTokens": 1776,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 104736,
+          "totalCents": 5.99962
+        },
+        "userEmail": "redacted-hmac_aba203049e67e26f@redacted.local",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 12.33625
       }
     ],
     "period": {
-      "startDate": 1781049600000,
-      "endDate": 1781136000000
+      "startDate": 1783468800000,
+      "endDate": 1783728000000
     }
-  }
+  },
+  "redactionKeyFingerprint": "52178cbd464874b0",
+  "redactionSchemeVersion": "cursor-hmac-v1"
 }

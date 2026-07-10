@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-10T01:24:52.742Z",
+  "generatedAt": "2026-07-08T17:17:34.866Z",
   "monthlySeatCost": 200,
   "sessionCount": 1195,
   "modelsUsed": [
@@ -729,28 +729,14 @@
     },
     {
       "date": "2026-05-11",
-      "inputTokens": 9222,
-      "outputTokens": 6420790,
-      "cacheReadTokens": 398897059,
-      "cacheCreationTokens": 31394737,
-      "requestCount": 5995,
+      "inputTokens": 27,
+      "outputTokens": 14635,
+      "cacheReadTokens": 1510488,
+      "cacheCreationTokens": 623911,
+      "requestCount": 7,
       "webSearchRequests": 0,
       "webFetchRequests": 0,
       "models": {
-        "claude-sonnet-4-6": {
-          "inputTokens": 9069,
-          "outputTokens": 6401652,
-          "cacheReadTokens": 391587154,
-          "cacheCreationTokens": 30363696,
-          "requestCount": 5946
-        },
-        "claude-haiku-4-5-20251001": {
-          "inputTokens": 126,
-          "outputTokens": 4503,
-          "cacheReadTokens": 5799417,
-          "cacheCreationTokens": 407130,
-          "requestCount": 42
-        },
         "claude-opus-4-7": {
           "inputTokens": 27,
           "outputTokens": 14635,
@@ -788,54 +774,33 @@
     },
     {
       "date": "2026-05-13",
-      "inputTokens": 13566,
-      "outputTokens": 3130037,
-      "cacheReadTokens": 417373426,
-      "cacheCreationTokens": 22056277,
-      "requestCount": 5501,
+      "inputTokens": 23,
+      "outputTokens": 2880,
+      "cacheReadTokens": 503287,
+      "cacheCreationTokens": 104371,
+      "requestCount": 13,
       "webSearchRequests": 0,
       "webFetchRequests": 0,
       "models": {
         "claude-sonnet-4-6": {
-          "inputTokens": 13459,
-          "outputTokens": 3123578,
-          "cacheReadTokens": 409379148,
-          "cacheCreationTokens": 21398623,
-          "requestCount": 5443
-        },
-        "claude-haiku-4-5-20251001": {
-          "inputTokens": 107,
-          "outputTokens": 6459,
-          "cacheReadTokens": 7994278,
-          "cacheCreationTokens": 657654,
-          "requestCount": 58
+          "inputTokens": 23,
+          "outputTokens": 2880,
+          "cacheReadTokens": 503287,
+          "cacheCreationTokens": 104371,
+          "requestCount": 13
         }
       }
     },
     {
       "date": "2026-05-14",
-      "inputTokens": 5767,
-      "outputTokens": 3074628,
-      "cacheReadTokens": 386946878,
-      "cacheCreationTokens": 17554215,
-      "requestCount": 4772,
+      "inputTokens": 267,
+      "outputTokens": 101827,
+      "cacheReadTokens": 29210952,
+      "cacheCreationTokens": 1321200,
+      "requestCount": 162,
       "webSearchRequests": 0,
       "webFetchRequests": 0,
       "models": {
-        "claude-sonnet-4-6": {
-          "inputTokens": 5253,
-          "outputTokens": 2946836,
-          "cacheReadTokens": 342436680,
-          "cacheCreationTokens": 15085494,
-          "requestCount": 4495
-        },
-        "claude-haiku-4-5-20251001": {
-          "inputTokens": 247,
-          "outputTokens": 25965,
-          "cacheReadTokens": 15299246,
-          "cacheCreationTokens": 1147521,
-          "requestCount": 115
-        },
         "claude-opus-4-7": {
           "inputTokens": 267,
           "outputTokens": 101827,
@@ -847,27 +812,20 @@
     },
     {
       "date": "2026-05-15",
-      "inputTokens": 15660,
-      "outputTokens": 2490028,
-      "cacheReadTokens": 313728562,
-      "cacheCreationTokens": 18604078,
-      "requestCount": 3103,
+      "inputTokens": 4354,
+      "outputTokens": 729622,
+      "cacheReadTokens": 155890003,
+      "cacheCreationTokens": 8801734,
+      "requestCount": 885,
       "webSearchRequests": 0,
       "webFetchRequests": 0,
       "models": {
-        "claude-sonnet-4-6": {
-          "inputTokens": 11104,
-          "outputTokens": 1770861,
-          "cacheReadTokens": 148998303,
-          "cacheCreationTokens": 9161336,
-          "requestCount": 2162
-        },
         "claude-haiku-4-5-20251001": {
-          "inputTokens": 288,
-          "outputTokens": 17023,
-          "cacheReadTokens": 13965406,
-          "cacheCreationTokens": 969219,
-          "requestCount": 115
+          "inputTokens": 57,
+          "outputTokens": 8204,
+          "cacheReadTokens": 4517250,
+          "cacheCreationTokens": 216379,
+          "requestCount": 46
         },
         "claude-opus-4-7": {
           "inputTokens": 4268,
@@ -875,25 +833,32 @@
           "cacheReadTokens": 150764853,
           "cacheCreationTokens": 8473523,
           "requestCount": 826
+        },
+        "claude-sonnet-4-6": {
+          "inputTokens": 29,
+          "outputTokens": 19274,
+          "cacheReadTokens": 607900,
+          "cacheCreationTokens": 111832,
+          "requestCount": 13
         }
       }
     },
     {
       "date": "2026-05-16",
-      "inputTokens": 46586,
-      "outputTokens": 3191901,
-      "cacheReadTokens": 1020433202,
-      "cacheCreationTokens": 26610087,
-      "requestCount": 4157,
+      "inputTokens": 46292,
+      "outputTokens": 3162990,
+      "cacheReadTokens": 1015986476,
+      "cacheCreationTokens": 23836873,
+      "requestCount": 4011,
       "webSearchRequests": 0,
       "webFetchRequests": 0,
       "models": {
         "claude-sonnet-4-6": {
-          "inputTokens": 39369,
-          "outputTokens": 453134,
-          "cacheReadTokens": 38566049,
-          "cacheCreationTokens": 5126719,
-          "requestCount": 573
+          "inputTokens": 39075,
+          "outputTokens": 424223,
+          "cacheReadTokens": 34119323,
+          "cacheCreationTokens": 2353505,
+          "requestCount": 427
         },
         "claude-haiku-4-5-20251001": {
           "inputTokens": 235,
@@ -913,21 +878,14 @@
     },
     {
       "date": "2026-05-17",
-      "inputTokens": 16051,
-      "outputTokens": 1048798,
-      "cacheReadTokens": 419261964,
-      "cacheCreationTokens": 12048873,
-      "requestCount": 1522,
+      "inputTokens": 15596,
+      "outputTokens": 971017,
+      "cacheReadTokens": 408960651,
+      "cacheCreationTokens": 8389704,
+      "requestCount": 1255,
       "webSearchRequests": 0,
       "webFetchRequests": 0,
       "models": {
-        "claude-sonnet-4-6": {
-          "inputTokens": 455,
-          "outputTokens": 77781,
-          "cacheReadTokens": 10301313,
-          "cacheCreationTokens": 3659169,
-          "requestCount": 267
-        },
         "claude-opus-4-7": {
           "inputTokens": 15596,
           "outputTokens": 971017,
@@ -939,21 +897,14 @@
     },
     {
       "date": "2026-05-18",
-      "inputTokens": 1691,
-      "outputTokens": 1589492,
-      "cacheReadTokens": 286915499,
-      "cacheCreationTokens": 7001232,
-      "requestCount": 922,
+      "inputTokens": 1390,
+      "outputTokens": 1532735,
+      "cacheReadTokens": 275834392,
+      "cacheCreationTokens": 5492615,
+      "requestCount": 695,
       "webSearchRequests": 0,
       "webFetchRequests": 0,
       "models": {
-        "claude-sonnet-4-6": {
-          "inputTokens": 301,
-          "outputTokens": 56757,
-          "cacheReadTokens": 11081107,
-          "cacheCreationTokens": 1508617,
-          "requestCount": 227
-        },
         "claude-opus-4-7": {
           "inputTokens": 1390,
           "outputTokens": 1532735,
@@ -965,21 +916,14 @@
     },
     {
       "date": "2026-05-19",
-      "inputTokens": 27750,
-      "outputTokens": 2330127,
-      "cacheReadTokens": 879239754,
-      "cacheCreationTokens": 28548004,
-      "requestCount": 2461,
+      "inputTokens": 27697,
+      "outputTokens": 2325941,
+      "cacheReadTokens": 878649070,
+      "cacheCreationTokens": 27958552,
+      "requestCount": 2438,
       "webSearchRequests": 0,
       "webFetchRequests": 0,
       "models": {
-        "claude-sonnet-4-6": {
-          "inputTokens": 16321,
-          "outputTokens": 310861,
-          "cacheReadTokens": 68279679,
-          "cacheCreationTokens": 4163342,
-          "requestCount": 429
-        },
         "claude-opus-4-7": {
           "inputTokens": 3628,
           "outputTokens": 1984089,
@@ -993,25 +937,32 @@
           "cacheReadTokens": 22532514,
           "cacheCreationTokens": 1723034,
           "requestCount": 218
+        },
+        "claude-sonnet-4-6": {
+          "inputTokens": 16268,
+          "outputTokens": 306675,
+          "cacheReadTokens": 67688995,
+          "cacheCreationTokens": 3573890,
+          "requestCount": 406
         }
       }
     },
     {
       "date": "2026-05-20",
-      "inputTokens": 3830,
-      "outputTokens": 1259682,
-      "cacheReadTokens": 210815387,
-      "cacheCreationTokens": 10585866,
-      "requestCount": 2304,
+      "inputTokens": 2875,
+      "outputTokens": 999865,
+      "cacheReadTokens": 164719374,
+      "cacheCreationTokens": 5763995,
+      "requestCount": 1572,
       "webSearchRequests": 0,
       "webFetchRequests": 0,
       "models": {
         "claude-sonnet-4-6": {
-          "inputTokens": 2652,
-          "outputTokens": 1242941,
-          "cacheReadTokens": 196103737,
-          "cacheCreationTokens": 9696074,
-          "requestCount": 2171
+          "inputTokens": 1697,
+          "outputTokens": 983124,
+          "cacheReadTokens": 150007724,
+          "cacheCreationTokens": 4874203,
+          "requestCount": 1439
         },
         "claude-haiku-4-5-20251001": {
           "inputTokens": 1178,
@@ -1024,53 +975,53 @@
     },
     {
       "date": "2026-05-21",
-      "inputTokens": 21460,
-      "outputTokens": 1004324,
-      "cacheReadTokens": 623834201,
-      "cacheCreationTokens": 6984357,
-      "requestCount": 2568,
+      "inputTokens": 20902,
+      "outputTokens": 871879,
+      "cacheReadTokens": 602759156,
+      "cacheCreationTokens": 3554773,
+      "requestCount": 2168,
       "webSearchRequests": 0,
       "webFetchRequests": 0,
       "models": {
-        "claude-sonnet-4-6": {
-          "inputTokens": 21237,
-          "outputTokens": 993590,
-          "cacheReadTokens": 613063471,
-          "cacheCreationTokens": 6595762,
-          "requestCount": 2470
-        },
         "claude-haiku-4-5-20251001": {
           "inputTokens": 223,
           "outputTokens": 10734,
           "cacheReadTokens": 10770730,
           "cacheCreationTokens": 388595,
           "requestCount": 98
+        },
+        "claude-sonnet-4-6": {
+          "inputTokens": 20679,
+          "outputTokens": 861145,
+          "cacheReadTokens": 591988426,
+          "cacheCreationTokens": 3166178,
+          "requestCount": 2070
         }
       }
     },
     {
       "date": "2026-05-22",
-      "inputTokens": 4008,
-      "outputTokens": 806267,
-      "cacheReadTokens": 258495521,
-      "cacheCreationTokens": 8930414,
-      "requestCount": 696,
+      "inputTokens": 3969,
+      "outputTokens": 802670,
+      "cacheReadTokens": 257901858,
+      "cacheCreationTokens": 8524642,
+      "requestCount": 677,
       "webSearchRequests": 0,
       "webFetchRequests": 0,
       "models": {
-        "claude-sonnet-4-6": {
-          "inputTokens": 344,
-          "outputTokens": 77386,
-          "cacheReadTokens": 133691590,
-          "cacheCreationTokens": 562649,
-          "requestCount": 204
-        },
         "claude-haiku-4-5-20251001": {
           "inputTokens": 156,
           "outputTokens": 3153,
           "cacheReadTokens": 3113879,
           "cacheCreationTokens": 396721,
           "requestCount": 28
+        },
+        "claude-sonnet-4-6": {
+          "inputTokens": 305,
+          "outputTokens": 73789,
+          "cacheReadTokens": 133097927,
+          "cacheCreationTokens": 156877,
+          "requestCount": 185
         },
         "claude-opus-4-7": {
           "inputTokens": 3508,
@@ -1147,11 +1098,11 @@
     },
     {
       "date": "2026-05-26",
-      "inputTokens": 94,
-      "outputTokens": 90869,
-      "cacheReadTokens": 34709531,
-      "cacheCreationTokens": 1932351,
-      "requestCount": 45,
+      "inputTokens": 82,
+      "outputTokens": 88647,
+      "cacheReadTokens": 34657373,
+      "cacheCreationTokens": 1799823,
+      "requestCount": 41,
       "webSearchRequests": 0,
       "webFetchRequests": 0,
       "models": {
@@ -1161,13 +1112,6 @@
           "cacheReadTokens": 34657373,
           "cacheCreationTokens": 1799823,
           "requestCount": 41
-        },
-        "claude-sonnet-4-6": {
-          "inputTokens": 12,
-          "outputTokens": 2222,
-          "cacheReadTokens": 52158,
-          "cacheCreationTokens": 132528,
-          "requestCount": 4
         }
       }
     },
@@ -1251,21 +1195,14 @@
     },
     {
       "date": "2026-06-05",
-      "inputTokens": 49961,
-      "outputTokens": 576414,
-      "cacheReadTokens": 225366721,
-      "cacheCreationTokens": 7640124,
-      "requestCount": 297,
+      "inputTokens": 49911,
+      "outputTokens": 563704,
+      "cacheReadTokens": 224606962,
+      "cacheCreationTokens": 7509729,
+      "requestCount": 273,
       "webSearchRequests": 0,
       "webFetchRequests": 0,
       "models": {
-        "claude-sonnet-4-6": {
-          "inputTokens": 50,
-          "outputTokens": 12710,
-          "cacheReadTokens": 759759,
-          "cacheCreationTokens": 130395,
-          "requestCount": 24
-        },
         "claude-opus-4-8": {
           "inputTokens": 49911,
           "outputTokens": 563704,
@@ -1277,34 +1214,20 @@
     },
     {
       "date": "2026-06-06",
-      "inputTokens": 437559,
-      "outputTokens": 1415962,
-      "cacheReadTokens": 360733761,
-      "cacheCreationTokens": 16315191,
-      "requestCount": 1086,
+      "inputTokens": 175838,
+      "outputTokens": 1340067,
+      "cacheReadTokens": 347790899,
+      "cacheCreationTokens": 13545073,
+      "requestCount": 773,
       "webSearchRequests": 0,
       "webFetchRequests": 0,
       "models": {
-        "claude-sonnet-4-6": {
-          "inputTokens": 45,
-          "outputTokens": 14561,
-          "cacheReadTokens": 602851,
-          "cacheCreationTokens": 161774,
-          "requestCount": 19
-        },
         "claude-opus-4-8": {
-          "inputTokens": 436964,
-          "outputTokens": 1362743,
-          "cacheReadTokens": 352541695,
-          "cacheCreationTokens": 15536552,
-          "requestCount": 872
-        },
-        "claude-haiku-4-5-20251001": {
-          "inputTokens": 550,
-          "outputTokens": 38658,
-          "cacheReadTokens": 7589215,
-          "cacheCreationTokens": 616865,
-          "requestCount": 195
+          "inputTokens": 175838,
+          "outputTokens": 1340067,
+          "cacheReadTokens": 347790899,
+          "cacheCreationTokens": 13545073,
+          "requestCount": 773
         }
       }
     },
@@ -1374,27 +1297,27 @@
     },
     {
       "date": "2026-06-10",
-      "inputTokens": 57380,
-      "outputTokens": 126181,
-      "cacheReadTokens": 18087783,
-      "cacheCreationTokens": 682552,
-      "requestCount": 173,
+      "inputTokens": 58936,
+      "outputTokens": 710645,
+      "cacheReadTokens": 110248880,
+      "cacheCreationTokens": 4512621,
+      "requestCount": 1093,
       "webSearchRequests": 0,
       "webFetchRequests": 0,
       "models": {
         "claude-sonnet-4-6": {
-          "inputTokens": 39,
-          "outputTokens": 18658,
-          "cacheReadTokens": 2836077,
-          "cacheCreationTokens": 239055,
-          "requestCount": 33
+          "inputTokens": 1023,
+          "outputTokens": 528863,
+          "cacheReadTokens": 91455662,
+          "cacheCreationTokens": 2651495,
+          "requestCount": 925
         },
         "claude-fable-5": {
-          "inputTokens": 57338,
-          "outputTokens": 107522,
-          "cacheReadTokens": 15132852,
-          "cacheCreationTokens": 443359,
-          "requestCount": 139
+          "inputTokens": 57910,
+          "outputTokens": 181781,
+          "cacheReadTokens": 18674364,
+          "cacheCreationTokens": 1860988,
+          "requestCount": 167
         },
         "claude-haiku-4-5-20251001": {
           "inputTokens": 3,
@@ -1402,6 +1325,375 @@
           "cacheReadTokens": 118854,
           "cacheCreationTokens": 138,
           "requestCount": 1
+        }
+      }
+    },
+    {
+      "date": "2026-06-18",
+      "inputTokens": 86,
+      "outputTokens": 51072,
+      "cacheReadTokens": 6864529,
+      "cacheCreationTokens": 152522,
+      "requestCount": 82,
+      "webSearchRequests": 0,
+      "webFetchRequests": 0,
+      "models": {
+        "claude-sonnet-4-6": {
+          "inputTokens": 86,
+          "outputTokens": 51072,
+          "cacheReadTokens": 6864529,
+          "cacheCreationTokens": 152522,
+          "requestCount": 82
+        }
+      }
+    },
+    {
+      "date": "2026-06-19",
+      "inputTokens": 473314,
+      "outputTokens": 1026229,
+      "cacheReadTokens": 115073540,
+      "cacheCreationTokens": 11025507,
+      "requestCount": 1358,
+      "webSearchRequests": 0,
+      "webFetchRequests": 0,
+      "models": {
+        "claude-sonnet-4-6": {
+          "inputTokens": 1420,
+          "outputTokens": 775437,
+          "cacheReadTokens": 108121276,
+          "cacheCreationTokens": 7253051,
+          "requestCount": 1206
+        },
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 5757,
+          "outputTokens": 100970,
+          "cacheReadTokens": 3732858,
+          "cacheCreationTokens": 1544891,
+          "requestCount": 76
+        },
+        "claude-opus-4-8": {
+          "inputTokens": 466137,
+          "outputTokens": 149822,
+          "cacheReadTokens": 3219406,
+          "cacheCreationTokens": 2227565,
+          "requestCount": 76
+        }
+      }
+    },
+    {
+      "date": "2026-06-23",
+      "inputTokens": 2950871,
+      "outputTokens": 2346454,
+      "cacheReadTokens": 529155496,
+      "cacheCreationTokens": 24193317,
+      "requestCount": 2472,
+      "webSearchRequests": 0,
+      "webFetchRequests": 0,
+      "models": {
+        "claude-opus-4-8": {
+          "inputTokens": 2950746,
+          "outputTokens": 2341340,
+          "cacheReadTokens": 528321162,
+          "cacheCreationTokens": 23899704,
+          "requestCount": 2448
+        },
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 125,
+          "outputTokens": 5114,
+          "cacheReadTokens": 834334,
+          "cacheCreationTokens": 293613,
+          "requestCount": 24
+        }
+      }
+    },
+    {
+      "date": "2026-06-24",
+      "inputTokens": 1155032,
+      "outputTokens": 2655271,
+      "cacheReadTokens": 705551978,
+      "cacheCreationTokens": 20433188,
+      "requestCount": 2268,
+      "webSearchRequests": 0,
+      "webFetchRequests": 0,
+      "models": {
+        "claude-sonnet-4-6": {
+          "inputTokens": 144,
+          "outputTokens": 77850,
+          "cacheReadTokens": 7630801,
+          "cacheCreationTokens": 778874,
+          "requestCount": 116
+        },
+        "claude-opus-4-8": {
+          "inputTokens": 1154888,
+          "outputTokens": 2577421,
+          "cacheReadTokens": 697921177,
+          "cacheCreationTokens": 19654314,
+          "requestCount": 2152
+        }
+      }
+    },
+    {
+      "date": "2026-06-25",
+      "inputTokens": 2371601,
+      "outputTokens": 2235237,
+      "cacheReadTokens": 498248220,
+      "cacheCreationTokens": 21122038,
+      "requestCount": 2417,
+      "webSearchRequests": 0,
+      "webFetchRequests": 0,
+      "models": {
+        "claude-opus-4-8": {
+          "inputTokens": 2371375,
+          "outputTokens": 2220173,
+          "cacheReadTokens": 493463649,
+          "cacheCreationTokens": 20783554,
+          "requestCount": 2332
+        },
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 226,
+          "outputTokens": 15064,
+          "cacheReadTokens": 4784571,
+          "cacheCreationTokens": 338484,
+          "requestCount": 85
+        }
+      }
+    },
+    {
+      "date": "2026-06-26",
+      "inputTokens": 1662264,
+      "outputTokens": 2538628,
+      "cacheReadTokens": 520248179,
+      "cacheCreationTokens": 15822252,
+      "requestCount": 2288,
+      "webSearchRequests": 0,
+      "webFetchRequests": 0,
+      "models": {
+        "claude-opus-4-8": {
+          "inputTokens": 1662264,
+          "outputTokens": 2538628,
+          "cacheReadTokens": 520248179,
+          "cacheCreationTokens": 15822252,
+          "requestCount": 2288
+        }
+      }
+    },
+    {
+      "date": "2026-06-27",
+      "inputTokens": 2093829,
+      "outputTokens": 1849286,
+      "cacheReadTokens": 517987322,
+      "cacheCreationTokens": 19486117,
+      "requestCount": 2145,
+      "webSearchRequests": 0,
+      "webFetchRequests": 0,
+      "models": {
+        "claude-sonnet-4-6": {
+          "inputTokens": 494,
+          "outputTokens": 6484,
+          "cacheReadTokens": 831999,
+          "cacheCreationTokens": 68359,
+          "requestCount": 24
+        },
+        "claude-opus-4-8": {
+          "inputTokens": 2081179,
+          "outputTokens": 1835557,
+          "cacheReadTokens": 515227753,
+          "cacheCreationTokens": 19240730,
+          "requestCount": 2079
+        },
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 12156,
+          "outputTokens": 7245,
+          "cacheReadTokens": 1927570,
+          "cacheCreationTokens": 177028,
+          "requestCount": 42
+        }
+      }
+    },
+    {
+      "date": "2026-06-28",
+      "inputTokens": 2911831,
+      "outputTokens": 2728597,
+      "cacheReadTokens": 1320008074,
+      "cacheCreationTokens": 45189258,
+      "requestCount": 3957,
+      "webSearchRequests": 0,
+      "webFetchRequests": 0,
+      "models": {
+        "claude-opus-4-8": {
+          "inputTokens": 2911831,
+          "outputTokens": 2728597,
+          "cacheReadTokens": 1320008074,
+          "cacheCreationTokens": 45189258,
+          "requestCount": 3957
+        }
+      }
+    },
+    {
+      "date": "2026-06-29",
+      "inputTokens": 2449113,
+      "outputTokens": 2363762,
+      "cacheReadTokens": 506063311,
+      "cacheCreationTokens": 29089295,
+      "requestCount": 1730,
+      "webSearchRequests": 0,
+      "webFetchRequests": 0,
+      "models": {
+        "claude-opus-4-8": {
+          "inputTokens": 2420000,
+          "outputTokens": 2300570,
+          "cacheReadTokens": 492848711,
+          "cacheCreationTokens": 28023552,
+          "requestCount": 1466
+        },
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 29113,
+          "outputTokens": 63192,
+          "cacheReadTokens": 13214600,
+          "cacheCreationTokens": 1065743,
+          "requestCount": 264
+        }
+      }
+    },
+    {
+      "date": "2026-07-01",
+      "inputTokens": 1911120,
+      "outputTokens": 3512293,
+      "cacheReadTokens": 1225430293,
+      "cacheCreationTokens": 46515219,
+      "requestCount": 3764,
+      "webSearchRequests": 0,
+      "webFetchRequests": 0,
+      "models": {
+        "claude-opus-4-8": {
+          "inputTokens": 1911120,
+          "outputTokens": 3512293,
+          "cacheReadTokens": 1225430293,
+          "cacheCreationTokens": 46515219,
+          "requestCount": 3764
+        }
+      }
+    },
+    {
+      "date": "2026-07-02",
+      "inputTokens": 2655019,
+      "outputTokens": 1264404,
+      "cacheReadTokens": 299805295,
+      "cacheCreationTokens": 19172387,
+      "requestCount": 1730,
+      "webSearchRequests": 0,
+      "webFetchRequests": 0,
+      "models": {
+        "claude-opus-4-8": {
+          "inputTokens": 94344,
+          "outputTokens": 187358,
+          "cacheReadTokens": 31407709,
+          "cacheCreationTokens": 2638101,
+          "requestCount": 192
+        },
+        "claude-fable-5": {
+          "inputTokens": 2560675,
+          "outputTokens": 1077046,
+          "cacheReadTokens": 268397586,
+          "cacheCreationTokens": 16534286,
+          "requestCount": 1538
+        }
+      }
+    },
+    {
+      "date": "2026-07-03",
+      "inputTokens": 1867716,
+      "outputTokens": 1669667,
+      "cacheReadTokens": 665038717,
+      "cacheCreationTokens": 18720148,
+      "requestCount": 2735,
+      "webSearchRequests": 0,
+      "webFetchRequests": 0,
+      "models": {
+        "claude-fable-5": {
+          "inputTokens": 1867716,
+          "outputTokens": 1669667,
+          "cacheReadTokens": 665038717,
+          "cacheCreationTokens": 18720148,
+          "requestCount": 2735
+        }
+      }
+    },
+    {
+      "date": "2026-07-05",
+      "inputTokens": 634251,
+      "outputTokens": 344610,
+      "cacheReadTokens": 29816673,
+      "cacheCreationTokens": 4832366,
+      "requestCount": 292,
+      "webSearchRequests": 0,
+      "webFetchRequests": 0,
+      "models": {
+        "claude-fable-5": {
+          "inputTokens": 621317,
+          "outputTokens": 337183,
+          "cacheReadTokens": 29440279,
+          "cacheCreationTokens": 4730235,
+          "requestCount": 270
+        },
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 12934,
+          "outputTokens": 7427,
+          "cacheReadTokens": 376394,
+          "cacheCreationTokens": 102131,
+          "requestCount": 22
+        }
+      }
+    },
+    {
+      "date": "2026-07-07",
+      "inputTokens": 384588,
+      "outputTokens": 245644,
+      "cacheReadTokens": 45412182,
+      "cacheCreationTokens": 3031355,
+      "requestCount": 284,
+      "webSearchRequests": 0,
+      "webFetchRequests": 0,
+      "models": {
+        "claude-haiku-4-5-20251001": {
+          "inputTokens": 590,
+          "outputTokens": 8545,
+          "cacheReadTokens": 965048,
+          "cacheCreationTokens": 261399,
+          "requestCount": 25
+        },
+        "claude-fable-5": {
+          "inputTokens": 383998,
+          "outputTokens": 237099,
+          "cacheReadTokens": 44447134,
+          "cacheCreationTokens": 2769956,
+          "requestCount": 259
+        }
+      }
+    },
+    {
+      "date": "2026-07-08",
+      "inputTokens": 1286783,
+      "outputTokens": 615078,
+      "cacheReadTokens": 185655168,
+      "cacheCreationTokens": 9638026,
+      "requestCount": 1051,
+      "webSearchRequests": 0,
+      "webFetchRequests": 0,
+      "models": {
+        "claude-fable-5": {
+          "inputTokens": 1269145,
+          "outputTokens": 535931,
+          "cacheReadTokens": 156574832,
+          "cacheCreationTokens": 7881433,
+          "requestCount": 939
+        },
+        "claude-opus-4-8": {
+          "inputTokens": 17638,
+          "outputTokens": 79147,
+          "cacheReadTokens": 29080336,
+          "cacheCreationTokens": 1756593,
+          "requestCount": 112
         }
       }
     }

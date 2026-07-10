@@ -83,8 +83,16 @@ export async function requestReportRefresh(
   }
 
   if (response.ok) {
+    const job = parseRefreshJob(body);
+    if (!job) {
+      return {
+        httpStatus: response.status,
+        message: "Refresh request returned a malformed job payload.",
+        outcome: "failed"
+      };
+    }
     return {
-      job: body as ReportRefreshJob,
+      job,
       outcome: "accepted"
     };
   }
@@ -125,7 +133,7 @@ export async function pollReportRefreshJob(
       ]);
       body = response === "timeout" ? "timeout" : await readJsonBodyWithTimeout(response, timeout);
     } catch (error) {
-      if (timeout.didTimeout() || isAbortError(error)) {
+      if (timeout.didTimeout() || isAbortError(error) || isTransientPollingError(error)) {
         response = "timeout";
         body = "timeout";
       } else {
@@ -154,7 +162,7 @@ export async function pollReportRefreshJob(
     if (!job) {
       return {
         httpStatus: response.status,
-        message: "Refresh status response was invalid or did not match the requested job.",
+        message: refreshJobParseFailureMessage(body, jobId),
         outcome: "failed"
       };
     }
@@ -214,16 +222,42 @@ function isTerminalRefreshStatus(status: string): boolean {
   return status === "completed" || status === "degraded" || status === "failed";
 }
 
-function parseReportRefreshJob(body: unknown, expectedJobId: string): ReportRefreshJob | null {
+function parseRefreshJob(body: unknown): ReportRefreshJob | null {
   if (typeof body !== "object" || body === null || Array.isArray(body)) return null;
   const record = body as Record<string, unknown>;
-  if (record.jobId !== expectedJobId) return null;
+  if (typeof record.jobId !== "string") return null;
   if (!isKnownRefreshStatus(record.status)) return null;
   return record as ReportRefreshJob;
 }
 
+function parseReportRefreshJob(body: unknown, expectedJobId: string): ReportRefreshJob | null {
+  const record = parseRefreshJob(body);
+  if (!record) return null;
+  if (record.jobId !== expectedJobId) return null;
+  return record;
+}
+
+function refreshJobParseFailureMessage(body: unknown, expectedJobId: string): string {
+  if (typeof body === "object" && body !== null && !Array.isArray(body)) {
+    const record = body as Record<string, unknown>;
+    if (
+      typeof record.jobId === "string" &&
+      record.jobId !== expectedJobId &&
+      isKnownRefreshStatus(record.status)
+    ) {
+      return "Refresh status response was invalid or did not match the requested job.";
+    }
+  }
+
+  return "Refresh status request returned a malformed job payload.";
+}
+
 function isKnownRefreshStatus(status: unknown): status is string {
   return typeof status === "string" && (status === "running" || isTerminalRefreshStatus(status));
+}
+
+function isTransientPollingError(error: unknown): boolean {
+  return error instanceof TypeError;
 }
 
 function isAbortError(error: unknown): boolean {

@@ -5,13 +5,42 @@ import type { ProviderReportSummary } from "./types";
 // ── Types ───────────────────────────────────────────────────────────────────
 
 export type ContextConfidence = "high" | "low" | "insufficient_data";
+export type ContextEvidenceSource =
+  | "none"
+  | "global_local_session_distribution"
+  | "global_local_session_distribution_scaled_to_scope"
+  | "scoped_cloud_token_heuristic";
 export type CodeCapability = "excellent" | "good" | "fair";
 export type ModelTier = "min" | "recommended" | "pro" | "enterprise";
+export type LocalModelWorkloadScopeId =
+  | "all_provider_traffic"
+  | "repo_automation_project"
+  | "agent_memory"
+  | "copilot_cli"
+  | "agentic_worker"
+  | "reviewer";
 export type ForensicRoutingStrategy =
   | "hosted_guardrail"
   | "local_candidate"
   | "reviewer_consensus"
   | "tiered_hybrid";
+
+export interface LocalModelTenant {
+  tenantId: string;
+  tenantName: string;
+}
+
+export interface LocalModelWorkloadScope {
+  allocationMode: "observed" | "estimated";
+  contextWindowMultiplier: number;
+  description: string;
+  id: LocalModelWorkloadScopeId;
+  label: string;
+  pipelineKey: string;
+  providerWeights: Record<string, number>;
+  tenantId: string;
+  tenantName: string;
+}
 
 export interface LocalModelForensicFinding {
   details: string;
@@ -89,6 +118,7 @@ export interface LocalModelProfile {
 }
 
 export interface TokenObservedProvider {
+  allocationWeight?: number;
   providerId: string;
   inputTokens: number;
   outputTokens: number;
@@ -96,15 +126,28 @@ export interface TokenObservedProvider {
   requestCount: number | null;
   cacheReadTokens: number;
   cacheCreationTokens: number;
+  windowDays?: number | null;
 }
 
 export interface RequestOnlyProvider {
+  allocationWeight?: number;
   providerId: string;
   requestCount: number;
   note: string;
 }
 
+export interface BuildLocalModelReportOptions {
+  tenantId?: string;
+  tenantName?: string;
+  workloadScopeId?: LocalModelWorkloadScopeId;
+  workloadScopes?: LocalModelWorkloadScope[];
+}
+
 export interface LocalModelMigrationReport {
+  tenant: LocalModelTenant;
+  selectedWorkloadScope: LocalModelWorkloadScope;
+  availableWorkloadScopes: LocalModelWorkloadScope[];
+
   /** Providers that contributed real token counts */
   tokenObservedProviders: TokenObservedProvider[];
   /** Providers with request counts but no token telemetry */
@@ -133,6 +176,7 @@ export interface LocalModelMigrationReport {
    */
   estimatedContextWindowNeeded: number | null;
   contextConfidence: ContextConfidence;
+  contextEvidenceSource: ContextEvidenceSource;
   /** Populated when the local-sessions snapshot was used. */
   localDistribution: LocalSessionDistribution | null;
 
@@ -348,17 +392,250 @@ function getNum(s: ProviderReportSummary, field: string): number {
   return typeof val === "number" ? val : 0;
 }
 
+function defaultLocalModelWorkloadScopes(tenant: LocalModelTenant): LocalModelWorkloadScope[] {
+  return [
+    {
+      allocationMode: "observed",
+      contextWindowMultiplier: 1,
+      description: "All provider Admin/API token usage currently visible for this tenant.",
+      id: "all_provider_traffic",
+      label: `All ${tenant.tenantName} provider traffic`,
+      pipelineKey: "all",
+      providerWeights: {},
+      tenantId: tenant.tenantId,
+      tenantName: tenant.tenantName
+    },
+    {
+      allocationMode: "estimated",
+      contextWindowMultiplier: 0.55,
+      description:
+        "Repo automation project lane, excluding Copilot CLI dominance unless explicitly selected.",
+      id: "repo_automation_project",
+      label: "Repo Automation",
+      pipelineKey: "repo-automation",
+      providerWeights: {
+        claude: 0.45,
+        "claude-code": 0.25,
+        codex: 0.25,
+        cursor: 0.05
+      },
+      tenantId: tenant.tenantId,
+      tenantName: tenant.tenantName
+    },
+    {
+      allocationMode: "estimated",
+      contextWindowMultiplier: 1,
+      description: "Long-context memory, retrieval, and context-carrying agent work.",
+      id: "agent_memory",
+      label: "Agent Memory",
+      pipelineKey: "agent-memory",
+      providerWeights: {
+        claude: 0.5,
+        "claude-code": 0.2,
+        codex: 0.3
+      },
+      tenantId: tenant.tenantId,
+      tenantName: tenant.tenantName
+    },
+    {
+      allocationMode: "observed",
+      contextWindowMultiplier: 0.15,
+      description: "GitHub Copilot CLI token telemetry only.",
+      id: "copilot_cli",
+      label: "Copilot CLI",
+      pipelineKey: "copilot-cli",
+      providerWeights: {
+        "github-copilot": 1
+      },
+      tenantId: tenant.tenantId,
+      tenantName: tenant.tenantName
+    },
+    {
+      allocationMode: "estimated",
+      contextWindowMultiplier: 0.7,
+      description: "Agentic worker execution lane across hosted coding providers.",
+      id: "agentic_worker",
+      label: "Agentic Worker",
+      pipelineKey: "agentic-worker",
+      providerWeights: {
+        claude: 0.3,
+        "claude-code": 0.1,
+        codex: 0.45,
+        cursor: 0.15
+      },
+      tenantId: tenant.tenantId,
+      tenantName: tenant.tenantName
+    },
+    {
+      allocationMode: "estimated",
+      contextWindowMultiplier: 0.5,
+      description: "Reviewer and forensic validation lane.",
+      id: "reviewer",
+      label: "Reviewer",
+      pipelineKey: "reviewer",
+      providerWeights: {
+        claude: 0.4,
+        codex: 0.45,
+        cursor: 0.15
+      },
+      tenantId: tenant.tenantId,
+      tenantName: tenant.tenantName
+    }
+  ];
+}
+
+function resolveWorkloadScope(
+  options: BuildLocalModelReportOptions | undefined
+): {
+  availableWorkloadScopes: LocalModelWorkloadScope[];
+  selectedWorkloadScope: LocalModelWorkloadScope;
+  tenant: LocalModelTenant;
+} {
+  const tenant = {
+    tenantId: options?.tenantId ?? "kdtix",
+    tenantName: options?.tenantName ?? "KDTIX"
+  };
+  const availableWorkloadScopes =
+    options?.workloadScopes && options.workloadScopes.length > 0
+      ? options.workloadScopes
+      : defaultLocalModelWorkloadScopes(tenant);
+  const selectedWorkloadScope =
+    availableWorkloadScopes.find((scope) => scope.id === options?.workloadScopeId) ??
+    availableWorkloadScopes[0]!;
+
+  return { availableWorkloadScopes, selectedWorkloadScope, tenant };
+}
+
+function scopeProviderWeight(scope: LocalModelWorkloadScope, providerId: string): number {
+  if (scope.id === "all_provider_traffic") return 1;
+  return scope.providerWeights[providerId] ?? 0;
+}
+
+function scaleCount(value: number, weight: number): number {
+  return Math.round(value * weight);
+}
+
+function scalePositiveCount(value: number, weight: number): number {
+  if (value <= 0) return 0;
+  return Math.max(1, scaleCount(value, weight));
+}
+
+function scopedTokenProviders(
+  providers: TokenObservedProvider[],
+  scope: LocalModelWorkloadScope
+): TokenObservedProvider[] {
+  return providers.flatMap((provider) => {
+    const weight = scopeProviderWeight(scope, provider.providerId);
+    if (weight <= 0) return [];
+    const scopedProvider = {
+      ...provider,
+      allocationWeight: weight,
+      cacheCreationTokens: scaleCount(provider.cacheCreationTokens, weight),
+      cacheReadTokens: scaleCount(provider.cacheReadTokens, weight),
+      inputTokens: scaleCount(provider.inputTokens, weight),
+      outputTokens: scaleCount(provider.outputTokens, weight),
+      requestCount:
+        provider.requestCount === null ? null : scalePositiveCount(provider.requestCount, weight)
+    };
+    const hasUsage =
+      scopedProvider.inputTokens +
+        scopedProvider.outputTokens +
+        scopedProvider.cacheCreationTokens +
+        scopedProvider.cacheReadTokens >
+        0 || (scopedProvider.requestCount !== null && scopedProvider.requestCount > 0);
+    return hasUsage ? [scopedProvider] : [];
+  });
+}
+
+function scopedRequestOnlyProviders(
+  providers: RequestOnlyProvider[],
+  scope: LocalModelWorkloadScope
+): RequestOnlyProvider[] {
+  return providers.flatMap((provider) => {
+    const weight = scopeProviderWeight(scope, provider.providerId);
+    if (weight <= 0) return [];
+    const requestCount = scaleCount(provider.requestCount, weight);
+    return requestCount > 0
+      ? [
+          {
+            ...provider,
+            allocationWeight: weight,
+            note:
+              weight === 1
+                ? provider.note
+                : `${provider.note}; ${Math.round(weight * 100)}% allocated to ${scope.label}`,
+            requestCount
+          }
+        ]
+      : [];
+  });
+}
+
+function aggregateWindowDays(providers: TokenObservedProvider[]): number {
+  return Math.max(0, ...providers.map((provider) => provider.windowDays ?? 0)) || 28;
+}
+
+function normalizeTokenProviderWindows(
+  providers: TokenObservedProvider[],
+  windowDays: number
+): TokenObservedProvider[] {
+  return providers.map((provider) => {
+    const providerWindowDays = provider.windowDays && provider.windowDays > 0
+      ? provider.windowDays
+      : windowDays;
+    if (providerWindowDays === windowDays) return { ...provider, windowDays };
+
+    const factor = windowDays / providerWindowDays;
+    return {
+      ...provider,
+      cacheCreationTokens: scaleCount(provider.cacheCreationTokens, factor),
+      cacheReadTokens: scaleCount(provider.cacheReadTokens, factor),
+      inputTokens: scaleCount(provider.inputTokens, factor),
+      outputTokens: scaleCount(provider.outputTokens, factor),
+      requestCount:
+        provider.requestCount === null ? null : scaleCount(provider.requestCount, factor),
+      windowDays
+    };
+  });
+}
+
+function hasMixedProviderWindows(providers: TokenObservedProvider[], windowDays: number): boolean {
+  return providers.some((provider) => {
+    const providerWindowDays = provider.windowDays && provider.windowDays > 0
+      ? provider.windowDays
+      : windowDays;
+    return providerWindowDays !== windowDays;
+  });
+}
+
+function estimatedScopeForMixedWindows(
+  scope: LocalModelWorkloadScope,
+  windowDays: number
+): LocalModelWorkloadScope {
+  if (scope.allocationMode === "estimated") return scope;
+  return {
+    ...scope,
+    allocationMode: "estimated",
+    description: `${scope.description} Token totals are normalized to a ${windowDays}-day planning window from mixed provider windows.`
+  };
+}
+
 // ── Builder ─────────────────────────────────────────────────────────────────
 
 export function buildLocalModelReport(
   summaries: ProviderReportSummary[],
   localDistribution: LocalSessionDistribution | null = null,
   huggingFaceCandidateSet: HuggingFaceCandidateSet | null = null,
-  forensicRun: LocalModelForensicRunInput | null = null
+  forensicRun: LocalModelForensicRunInput | null = null,
+  options?: BuildLocalModelReportOptions
 ): LocalModelMigrationReport {
-  const tokenObservedProviders: TokenObservedProvider[] = [];
-  const requestOnlyProviders: RequestOnlyProvider[] = [];
-  const appliedForensicGuidance = buildAppliedForensicGuidance(forensicRun);
+  const rawTokenObservedProviders: TokenObservedProvider[] = [];
+  const rawRequestOnlyProviders: RequestOnlyProvider[] = [];
+  const { availableWorkloadScopes, selectedWorkloadScope, tenant } = resolveWorkloadScope(options);
+  const appliedForensicGuidance =
+    selectedWorkloadScope.id === "all_provider_traffic"
+      ? buildAppliedForensicGuidance(forensicRun)
+      : null;
 
   for (const s of summaries) {
     if (hasTokenFields(s)) {
@@ -367,13 +644,14 @@ export function buildLocalModelReport(
       const uncached = (s as unknown as Record<string, unknown>)["uncachedInputTokens"];
       const inputForCompute =
         typeof uncached === "number" ? uncached : getNum(s, "inputTokens");
-      tokenObservedProviders.push({
+      rawTokenObservedProviders.push({
         providerId: s.providerId,
         inputTokens: inputForCompute,
         outputTokens: getNum(s, "outputTokens"),
         requestCount: "requestCount" in s ? getNum(s, "requestCount") : null,
         cacheReadTokens: getNum(s, "cacheReadTokens"),
-        cacheCreationTokens: getNum(s, "cacheCreationTokens")
+        cacheCreationTokens: getNum(s, "cacheCreationTokens"),
+        windowDays: reportWindowDays(s)
       });
     } else if (s.providerId === "cursor") {
       const totalReqs =
@@ -382,7 +660,7 @@ export function buildLocalModelReport(
         getNum(s, "totalChatRequests") +
         getNum(s, "totalAgentRequests");
       if (totalReqs > 0) {
-        requestOnlyProviders.push({
+        rawRequestOnlyProviders.push({
           providerId: s.providerId,
           requestCount: totalReqs,
           note: "Request counts only — token telemetry not available via Cursor admin API"
@@ -398,16 +676,17 @@ export function buildLocalModelReport(
         // CLI token telemetry available — treat as token-observed.
         // cliRequestCount is CLI API calls, used as request denominator for sizing.
         // Note: coverage is CLI-only; IDE chat/agent interactions are not counted.
-        tokenObservedProviders.push({
+        rawTokenObservedProviders.push({
           providerId: s.providerId,
           inputTokens: cliInput,
           outputTokens: cliOutput,
           requestCount: cliReqs > 0 ? cliReqs : null,
           cacheReadTokens: 0,
-          cacheCreationTokens: 0
+          cacheCreationTokens: 0,
+          windowDays: reportWindowDays(s)
         });
       } else if (interactions > 0) {
-        requestOnlyProviders.push({
+        rawRequestOnlyProviders.push({
           providerId: s.providerId,
           requestCount: interactions,
           note: "Interaction counts only — CLI token telemetry not available in this snapshot"
@@ -416,30 +695,53 @@ export function buildLocalModelReport(
     }
   }
 
+  const tokenObservedProviders = scopedTokenProviders(
+    rawTokenObservedProviders,
+    selectedWorkloadScope
+  );
+  const windowDays = aggregateWindowDays(tokenObservedProviders);
+  const selectedReportWorkloadScope = hasMixedProviderWindows(tokenObservedProviders, windowDays)
+    ? estimatedScopeForMixedWindows(selectedWorkloadScope, windowDays)
+    : selectedWorkloadScope;
+  const normalizedTokenObservedProviders = normalizeTokenProviderWindows(
+    tokenObservedProviders,
+    windowDays
+  );
+  const requestOnlyProviders = scopedRequestOnlyProviders(
+    rawRequestOnlyProviders,
+    selectedWorkloadScope
+  );
+
   // ── Token aggregates ──────────────────────────────────────────────────────
-  const totalInputTokens = tokenObservedProviders.reduce((a, p) => a + p.inputTokens, 0);
-  const totalOutputTokens = tokenObservedProviders.reduce((a, p) => a + p.outputTokens, 0);
-  const totalCacheReadTokens = tokenObservedProviders.reduce((a, p) => a + p.cacheReadTokens, 0);
-  const totalCacheCreationTokens = tokenObservedProviders.reduce((a, p) => a + p.cacheCreationTokens, 0);
+  const totalInputTokens = normalizedTokenObservedProviders.reduce((a, p) => a + p.inputTokens, 0);
+  const totalOutputTokens = normalizedTokenObservedProviders.reduce((a, p) => a + p.outputTokens, 0);
+  const totalCacheReadTokens = normalizedTokenObservedProviders.reduce((a, p) => a + p.cacheReadTokens, 0);
+  const totalCacheCreationTokens = normalizedTokenObservedProviders.reduce((a, p) => a + p.cacheCreationTokens, 0);
   // Cache reads hit KV cache on local stack — exclude from pure compute cost
   const totalPureComputeTokens =
     totalInputTokens + totalOutputTokens + totalCacheCreationTokens;
 
   // ── Per-request sizing ────────────────────────────────────────────────────
-  const tokenObservedRequests = tokenObservedProviders.some((p) => p.requestCount !== null)
-    ? tokenObservedProviders.reduce((a, p) => a + (p.requestCount ?? 0), 0)
+  const tokenObservedRequests = normalizedTokenObservedProviders.some((p) => p.requestCount !== null)
+    ? normalizedTokenObservedProviders.reduce((a, p) => a + (p.requestCount ?? 0), 0)
     : null;
 
   let avgTokensPerObservedRequest: number | null = null;
   let estimatedContextWindowNeeded: number | null = null;
   let contextConfidence: ContextConfidence = "insufficient_data";
+  let contextEvidenceSource: ContextEvidenceSource = "none";
 
   // Prefer empirical p99 from local session telemetry when present.
   if (localDistribution && localDistribution.combined.sampleCount > 0) {
     estimatedContextWindowNeeded = ceilToStandardContext(
-      Math.ceil(localDistribution.combined.p99)
+      Math.ceil(localDistribution.combined.p99 * selectedWorkloadScope.contextWindowMultiplier)
     );
-    contextConfidence = "high";
+    contextConfidence =
+      selectedWorkloadScope.id === "all_provider_traffic" ? "high" : "low";
+    contextEvidenceSource =
+      selectedWorkloadScope.id === "all_provider_traffic"
+        ? "global_local_session_distribution"
+        : "global_local_session_distribution_scaled_to_scope";
     if (
       tokenObservedRequests !== null &&
       tokenObservedRequests > 0 &&
@@ -447,7 +749,8 @@ export function buildLocalModelReport(
     ) {
       avgTokensPerObservedRequest = totalPureComputeTokens / tokenObservedRequests;
     } else {
-      avgTokensPerObservedRequest = localDistribution.combined.mean;
+      avgTokensPerObservedRequest =
+        localDistribution.combined.mean * selectedWorkloadScope.contextWindowMultiplier;
     }
   } else if (
     tokenObservedRequests !== null &&
@@ -455,25 +758,17 @@ export function buildLocalModelReport(
     totalPureComputeTokens > 0
   ) {
     avgTokensPerObservedRequest = totalPureComputeTokens / tokenObservedRequests;
-    // 2.5× heuristic safety factor — avg×multiplier proxy for p95 (low confidence).
+    // Counts are already scoped by provider weights; apply only the p95 safety factor here.
     estimatedContextWindowNeeded = ceilToStandardContext(
       Math.ceil(avgTokensPerObservedRequest * 2.5)
     );
     contextConfidence = "low";
+    contextEvidenceSource = "scoped_cloud_token_heuristic";
   }
 
   // ── Throughput ────────────────────────────────────────────────────────────
-  // Infer window days from the first summary with a concrete report window
-  const first = summaries[0];
-  let windowDays = 28;
-  if (first?.reportStartDay && first?.reportEndDay) {
-    const start = new Date(first.reportStartDay + "T00:00:00Z").getTime();
-    const end = new Date(first.reportEndDay + "T00:00:00Z").getTime();
-    const computed = Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1;
-    if (computed > 0) windowDays = computed;
-  }
-
-  const dailyAvgComputeTokens = windowDays > 0 ? totalPureComputeTokens / windowDays : 0;
+  const dailyAvgComputeTokens =
+    (totalInputTokens + totalOutputTokens + totalCacheCreationTokens) / windowDays;
   // Assume 8-hour active development window per day
   const requiredTokensPerSec = dailyAvgComputeTokens / (8 * 3600);
 
@@ -523,7 +818,10 @@ export function buildLocalModelReport(
       : null;
 
   return {
-    tokenObservedProviders,
+    tenant,
+    selectedWorkloadScope: selectedReportWorkloadScope,
+    availableWorkloadScopes,
+    tokenObservedProviders: normalizedTokenObservedProviders,
     requestOnlyProviders,
     totalInputTokens,
     totalOutputTokens,
@@ -534,6 +832,7 @@ export function buildLocalModelReport(
     avgTokensPerObservedRequest,
     estimatedContextWindowNeeded,
     contextConfidence,
+    contextEvidenceSource,
     localDistribution,
     windowDays,
     dailyAvgComputeTokens,
@@ -638,6 +937,14 @@ function readForensicFindings(
 
 function readString(value: unknown): string {
   return typeof value === "string" && value.trim() ? value : "unknown";
+}
+
+function reportWindowDays(summary: ProviderReportSummary): number | null {
+  if (!summary.reportStartDay || !summary.reportEndDay) return null;
+  const start = new Date(`${summary.reportStartDay}T00:00:00Z`).getTime();
+  const end = new Date(`${summary.reportEndDay}T00:00:00Z`).getTime();
+  const computed = Math.round((end - start) / (1000 * 60 * 60 * 24)) + 1;
+  return computed > 0 ? computed : null;
 }
 
 function huggingFaceProfileMetadata(

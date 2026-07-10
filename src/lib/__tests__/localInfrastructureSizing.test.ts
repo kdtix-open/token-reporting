@@ -222,6 +222,7 @@ describe("localInfrastructureSizing", () => {
     });
     expect(report.workloadScopeSummaries.map((scope) => scope.scope)).toEqual([
       "all_provider_traffic",
+      "cloud_only_tail",
       "repo_automation_project",
       "copilot_cli",
       "agentic_worker",
@@ -231,6 +232,295 @@ describe("localInfrastructureSizing", () => {
       report.workloadScopeSummaries.find((scope) => scope.scope === "repo_automation_project")
         ?.notes.join(" ")
     ).toContain("Copilot CLI volume is reported separately");
+    expect(
+      report.workloadScopeSummaries.find((scope) => scope.scope === "repo_automation_project")
+        ?.notes.join(" ")
+    ).toContain("global long-context tail fallback");
+  });
+
+  it("workloadSummary_UsesCloudOnlyTailScopeInsteadOfAllProviderFallback", () => {
+    const report = buildLocalInfrastructureSizing({
+      distribution: localDistribution,
+      localModelReport: {
+        contextConfidence: "high",
+        estimatedContextWindowNeeded: 1_000_000,
+        requiredTokensPerSec: 4057.9145455344587
+      } as LocalModelMigrationReport,
+      selectedWorkloadScope: "cloud_only_tail",
+      summaries: fixtureSummaries()
+    });
+    const cloudOnlyTail = report.workloadScopeSummaries.find(
+      (scope) => scope.scope === "cloud_only_tail"
+    );
+    const cloudOnlyTailScenario = report.hardwareBudgetScenarios.find(
+      (scenario) => scenario.scope === "cloud_only_tail"
+    );
+
+    expect(cloudOnlyTail).toMatchObject({
+      label: "Cloud-only tail sizing",
+      routeClassIds: ["long_context_tail"]
+    });
+    expect(report.hardwareBudgetSummary.selectedScope).toBe("cloud_only_tail");
+    expect(report.workloadSummary.selectedScopeComputeTps).toBeCloseTo(
+      cloudOnlyTail?.currentProjectLaneComputeTps ?? 0,
+      6
+    );
+    expect(report.workloadSummary.selectedScopeComputeTps).toBeLessThan(
+      report.workloadSummary.allProviderComputeTps
+    );
+    expect(cloudOnlyTailScenario?.targetTokensPerSecond).toBeCloseTo(
+      cloudOnlyTail?.currentProjectLaneComputeTps ?? 0,
+      2
+    );
+  });
+
+  it("workloadSummary_SplitsAllProviderFromSelectedRepoAutomationScope", () => {
+    const report = buildJune10SizingReport();
+
+    expect(report.workloadSummary.allProviderComputeTps).toBeCloseTo(4070.3, 1);
+    expect(report.workloadSummary.allProviderPeakTps).toBeCloseTo(12210.9, 1);
+    expect(report.workloadSummary.repoAutomationComputeTps).toBeCloseTo(281.5, 1);
+    expect(report.workloadSummary.selectedScopeComputeTps).toBeCloseTo(281.5, 1);
+    expect(report.workloadSummary.repoAutomationComputeTps).not.toBeCloseTo(
+      report.workloadSummary.allProviderComputeTps,
+      1
+    );
+  });
+
+  it("hardwareBudgetScenarios_KeepFirstServerCanarySeparateFromAllProviderReplacement", () => {
+    const report = buildJune10SizingReport();
+    const firstServer = report.hardwareBudgetScenarios.find(
+      (scenario) =>
+        scenario.scope === "repo_automation_project" &&
+        scenario.replacementGoal === "safe_canary"
+    );
+    const allProviderSteady = report.hardwareBudgetScenarios.find(
+      (scenario) =>
+        scenario.scope === "all_provider_traffic" &&
+        scenario.replacementGoal === "steady_state_replacement" &&
+        scenario.hardwareProfileId === "preferred_quad_rtxpro6000_blackwell_server"
+    );
+    const allProviderPeak = report.hardwareBudgetScenarios.find(
+      (scenario) =>
+        scenario.scope === "all_provider_traffic" &&
+        scenario.replacementGoal === "peak_safe_replacement" &&
+        scenario.hardwareProfileId === "preferred_quad_rtxpro6000_blackwell_server"
+    );
+
+    expect(firstServer).toMatchObject({
+      cloudFallbackRequired: true,
+      confidence: "quote_required",
+      estimatedCapexHighUsd: 150_000,
+      fullReplacementAllowed: false,
+      scope: "repo_automation_project"
+    });
+    expect(firstServer?.explanation).toContain(
+      "$105,000-$150,000 is enough for first-server shadow/canary and benchmark collection."
+    );
+    expect(firstServer?.explanation).not.toContain("full all-provider replacement");
+
+    expect(allProviderSteady).toMatchObject({
+      requiredNodes: 6,
+      requiredGpuCount: 24,
+      estimatedNodeThroughputTps: 720,
+      fullReplacementAllowed: false
+    });
+    expect(allProviderSteady?.targetTokensPerSecond).toBeCloseTo(4070.3, 1);
+    expect(allProviderSteady?.explanation).toContain(
+      "not all-provider replacement authority"
+    );
+    expect(allProviderSteady?.estimatedCapexLowUsd).toBe(630_000);
+    expect(allProviderSteady?.estimatedCapexHighUsd).toBe(900_000);
+    expect(report.hardwareBudgetSummary.cfoSummaryLines).toContain(
+      "For all-provider steady-state replacement, create a $630K-$900K production-pod planning envelope."
+    );
+    expect(allProviderSteady).toMatchObject({
+      confidence: "quote_required"
+    });
+
+    expect(allProviderPeak).toMatchObject({
+      requiredNodes: 17,
+      requiredGpuCount: 68,
+      estimatedNodeThroughputTps: 720,
+      fullReplacementAllowed: false
+    });
+    expect(allProviderPeak?.targetTokensPerSecond).toBeCloseTo(12210.9, 1);
+    expect(allProviderPeak?.estimatedCapexLowUsd).toBe(1_785_000);
+    expect(allProviderPeak?.estimatedCapexHighUsd).toBe(2_550_000);
+    expect(report.hardwareBudgetSummary.cfoSummaryLines).toContain(
+      "For all-provider peak-safe replacement, create a $1.785M-$2.55M expansion envelope."
+    );
+  });
+
+  it("hardwareBudgetScenarios_ApplySelectedWorkloadScopeToBudgetSummaryAndWorkload", () => {
+    const report = buildLocalInfrastructureSizing({
+      distribution: localDistribution,
+      localModelReport: {
+        contextConfidence: "high",
+        estimatedContextWindowNeeded: 1_000_000,
+        requiredTokensPerSec: 4057.9145455344587
+      } as LocalModelMigrationReport,
+      selectedWorkloadScope: "all_provider_traffic",
+      summaries: fixtureSummaries()
+    });
+
+    expect(report.hardwareBudgetSummary.selectedScope).toBe("all_provider_traffic");
+    expect(report.workloadSummary.selectedScopeComputeTps).toBeCloseTo(
+      report.workloadSummary.allProviderComputeTps,
+      6
+    );
+    expect(report.workloadSummary.selectedScopePeakTps).toBeCloseTo(
+      report.workloadSummary.allProviderPeakTps,
+      6
+    );
+  });
+
+  it("hardwareBudgetScenarios_BlockP99FullReplacementWithoutBenchmarkEvidence", () => {
+    const report = buildJune10SizingReport();
+    const p99Planning = report.hardwareBudgetScenarios.find(
+      (scenario) => scenario.replacementGoal === "p99_full_replacement"
+    );
+
+    expect(p99Planning).toMatchObject({
+      cloudFallbackRequired: true,
+      confidence: "quote_required",
+      fullReplacementAllowed: false,
+      requiredContextTokens: 1_000_000
+    });
+    expect(p99Planning?.explanation).toContain(
+      "blocked by context, quality, and benchmark gates"
+    );
+  });
+
+  it("hardwareBudgetScenarios_AcceptCustomHardwareProfilesWithoutBuiltInIds", () => {
+    const customProfile = customHardwareProfile({
+      estimatedCapexHighUsd: 145_000,
+      estimatedCapexLowUsd: 120_000,
+      firstServerRole: "worker_pool",
+      id: "custom-worker-pool",
+      phase: "pilot_server",
+      profileName: "Custom worker-pool profile",
+      quotePriority: "quote_now"
+    });
+    const report = buildLocalInfrastructureSizing({
+      distribution: localDistribution,
+      hardwareProfiles: [customProfile],
+      localModelReport: {
+        contextConfidence: "high",
+        estimatedContextWindowNeeded: 131_072,
+        requiredTokensPerSec: 250
+      } as LocalModelMigrationReport,
+      summaries: fixtureSummaries()
+    });
+
+    expect(
+      report.hardwareBudgetScenarios.some(
+        (scenario) => scenario.hardwareProfileId === "custom-worker-pool"
+      )
+    ).toBe(true);
+    expect(
+      report.hardwareBudgetScenarios.find(
+        (scenario) => scenario.replacementGoal === "p99_full_replacement"
+      )
+    ).toMatchObject({
+      hardwareProfileId: "custom-worker-pool"
+    });
+  });
+
+  it("hardwareBudgetScenarios_DoNotEstimateOpexWhenPowerDrawIsUnknown", () => {
+    const customProfile = customHardwareProfile({
+      estimatedSystemPowerKw: null,
+      id: "custom-worker-pool-without-power",
+      profileName: "Custom worker-pool profile without power"
+    });
+    const report = buildLocalInfrastructureSizing({
+      distribution: localDistribution,
+      hardwareProfiles: [customProfile],
+      localModelReport: {
+        contextConfidence: "high",
+        estimatedContextWindowNeeded: 131_072,
+        requiredTokensPerSec: 250
+      } as LocalModelMigrationReport,
+      summaries: fixtureSummaries()
+    });
+
+    expect(
+      report.hardwareBudgetScenarios.find(
+        (scenario) => scenario.hardwareProfileId === "custom-worker-pool-without-power"
+      )
+    ).toMatchObject({
+      estimatedAnnualOpexUsd: null,
+      estimatedSystemPowerKw: null
+    });
+  });
+
+  it("hardwareBudgetScenarios_KeepZeroDemandScopesAtZeroNodes", () => {
+    const report = buildLocalInfrastructureSizing({
+      distribution: localDistribution,
+      localModelReport: {
+        contextConfidence: "high",
+        estimatedContextWindowNeeded: 131_072,
+        requiredTokensPerSec: 250
+      } as LocalModelMigrationReport,
+      summaries: noCopilotSummaries()
+    });
+
+    expect(
+      report.hardwareBudgetScenarios.find((scenario) => scenario.scope === "copilot_cli")
+    ).toMatchObject({
+      estimatedCapexHighUsd: 0,
+      estimatedCapexLowUsd: 0,
+      requiredGpuCount: 0,
+      requiredNodes: 0,
+      targetTokensPerSecond: 0
+    });
+  });
+
+  it("hardwareBudgetSummary_ReflectsProviderMixAndSelectedProfileBudget", () => {
+    const customProfile = customHardwareProfile({
+      estimatedCapexHighUsd: 250_000,
+      estimatedCapexLowUsd: 200_000,
+      firstServerRole: "worker_pool",
+      id: "custom-expensive-worker-pool",
+      phase: "pilot_server",
+      profileName: "Custom expensive worker-pool profile",
+      quotePriority: "quote_now"
+    });
+    const report = buildLocalInfrastructureSizing({
+      distribution: localDistribution,
+      hardwareProfiles: [customProfile],
+      localModelReport: {
+        contextConfidence: "high",
+        estimatedContextWindowNeeded: 131_072,
+        requiredTokensPerSec: 250
+      } as LocalModelMigrationReport,
+      summaries: noCopilotSummaries()
+    });
+
+    expect(report.hardwareBudgetSummary.copilotDominanceWarning).toContain("not present");
+    expect(report.hardwareBudgetSummary.copilotDominanceWarning).not.toContain("dominates");
+    expect(report.hardwareBudgetSummary.cfoSummaryLines[0]).toContain(
+      "$150K is not enough for first-server"
+    );
+
+    const customBudgetReport = buildLocalInfrastructureSizing({
+      budgetHighUsd: 300_000,
+      budgetLowUsd: 250_000,
+      distribution: localDistribution,
+      hardwareProfiles: [customProfile],
+      localModelReport: {
+        contextConfidence: "high",
+        estimatedContextWindowNeeded: 131_072,
+        requiredTokensPerSec: 250
+      } as LocalModelMigrationReport,
+      summaries: noCopilotSummaries()
+    });
+    expect(customBudgetReport.hardwareBudgetSummary.cfoSummaryLines[0]).toContain(
+      "$300K is enough for first-server"
+    );
+    expect(customBudgetReport.hardwareBudgetSummary.cfoSummaryLines.join(" ")).not.toContain(
+      "$150K"
+    );
   });
 
   it("financials_ExcludeSeatBasedSpendFromCloudDisplacementPayback", () => {
@@ -343,6 +633,51 @@ function buildCurrentSizingReport(): LocalInfrastructureSizingReport {
   });
 }
 
+function buildJune10SizingReport(): LocalInfrastructureSizingReport {
+  return buildLocalInfrastructureSizing({
+    distribution: localDistribution,
+    forensicRun: {
+      parentSynthesis: {
+        confidence: 0.95,
+        recommendation:
+          "Use tiered routing: local candidates for short-context work, hosted providers for tail-context work.",
+        reviewerCount: 7
+      },
+      runId: "dynamic-forensic-test",
+      status: "completed",
+      updatedAt: "2026-06-10T00:00:00.000Z"
+    },
+    localModelReport: {
+      contextConfidence: "high",
+      estimatedContextWindowNeeded: 1_000_000,
+      requiredTokensPerSec: 4057.9145455344587
+    } as LocalModelMigrationReport,
+    summaries: fixtureSummaries()
+  });
+}
+
+function customHardwareProfile(
+  overrides: Partial<(typeof HARDWARE_PROFILES)[number]>
+): (typeof HARDWARE_PROFILES)[number] {
+  const base = HARDWARE_PROFILES.find(
+    (profile) => profile.id === "preferred_quad_rtxpro6000_blackwell_server"
+  );
+  if (!base) throw new Error("Missing preferred hardware fixture");
+  return {
+    ...base,
+    ...overrides
+  };
+}
+
+function noCopilotSummaries(): ProviderReportSummary[] {
+  return [
+    cursorWithTokens({ reportStartDay: "2026-04-01", reportEndDay: "2026-05-25" }),
+    seededClaudeReportSummary,
+    seededClaudeCodeReportSummary,
+    seededCodexReportSummary
+  ];
+}
+
 function githubWithCliTokens(): ProviderReportSummary {
   return {
     ...seededGitHubCopilotReportSummary,
@@ -387,59 +722,60 @@ function fixtureSummaries(): ProviderReportSummary[] {
   return [
     {
       ...seededGitHubCopilotReportSummary,
-      cliInputTokens: 8_403_935_513,
-      cliOutputTokens: 48_200_000,
-      cliRequestCount: 103_003,
-      reportEndDay: "2026-06-07",
-      reportStartDay: "2026-03-12",
+      cliInputTokens: 8_541_179_314,
+      cliOutputTokens: 49_790_531,
+      cliRequestCount: 104_841,
+      reportEndDay: "2026-06-08",
+      reportStartDay: "2026-03-22",
       spendProjection: {
         ...seededGitHubCopilotReportSummary.spendProjection,
         totalUsd: 70.93,
-        windowDays: 88
+        windowDays: 79
       }
     } as ProviderReportSummary,
     {
       ...seededCursorReportSummary,
-      cacheReadTokens: 429_142_210,
+      cacheReadTokens: 430_004_836,
       cacheWriteTokens: 490_831,
-      inputTokens: 30_213_514,
-      outputTokens: 1_574_967,
-      reportEndDay: "2026-06-10",
-      reportStartDay: "2026-04-17",
+      inputTokens: 30_374_981,
+      outputTokens: 1_582_909,
+      reportEndDay: "2026-06-11",
+      reportStartDay: "2026-03-22",
       spendProjection: {
         ...seededCursorReportSummary.spendProjection,
-        totalUsd: 386.41,
-        windowDays: 55
+        totalUsd: 387.71,
+        windowDays: 82
       },
-      usageEventCount: 423
+      usageEventCount: 425
     } as ProviderReportSummary,
     {
       ...seededClaudeReportSummary,
-      cacheCreationTokens: 37_939_134,
-      cacheReadTokens: 689_752_831,
-      inputTokens: 2_407_186,
-      outputTokens: 6_201_395,
-      reportEndDay: "2026-06-09",
-      reportStartDay: "2026-03-22"
+      cacheCreationTokens: 37_974_280,
+      cacheReadTokens: 689_880_109,
+      inputTokens: 2_408_747,
+      outputTokens: 6_207_516,
+      reportEndDay: "2026-06-10",
+      reportStartDay: "2025-06-06"
     } as ProviderReportSummary,
     {
       ...seededClaudeCodeReportSummary,
-      cacheCreationTokens: 474_059_860,
-      cacheReadTokens: 17_380_507_677,
-      inputTokens: 2_202_744,
-      outputTokens: 60_047_013,
-      reportEndDay: "2026-06-08",
-      reportStartDay: "2026-03-20",
-      requestCount: 73_784
+      cacheCreationTokens: 460_559_832,
+      cacheReadTokens: 17_241_136_639,
+      inputTokens: 2_558_015,
+      outputTokens: 58_373_310,
+      reportEndDay: "2026-06-10",
+      reportStartDay: "2026-04-02",
+      requestCount: 71_054
     } as ProviderReportSummary,
     {
       ...seededCodexReportSummary,
-      cacheReadTokens: 309_151_424,
-      inputTokens: 347_834_641,
-      outputTokens: 2_152_064,
-      reportEndDay: "2026-06-10",
-      reportStartDay: "2026-04-01",
-      requestCount: 6_962
+      cacheReadTokens: 310_311_616,
+      inputTokens: 349_684_946,
+      outputTokens: 2_184_409,
+      reportEndDay: "2026-06-11",
+      reportStartDay: "2026-03-22",
+      requestCount: 7_038,
+      uncachedInputTokens: 39_373_330
     } as ProviderReportSummary
   ];
 }

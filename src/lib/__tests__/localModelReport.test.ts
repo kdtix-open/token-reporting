@@ -75,6 +75,13 @@ const copilotSummary: ProviderReportSummary = {
   billedSeats: 5
 } as unknown as ProviderReportSummary;
 
+const copilotCliSummary: ProviderReportSummary = {
+  ...copilotSummary,
+  cliInputTokens: 120_000_000,
+  cliOutputTokens: 8_000_000,
+  cliRequestCount: 20_000
+} as unknown as ProviderReportSummary;
+
 describe("buildLocalModelReport", () => {
   it("returns empty report for summaries with no token data", () => {
     const report = buildLocalModelReport([cursorSummary, copilotSummary]);
@@ -103,6 +110,22 @@ describe("buildLocalModelReport", () => {
     expect(report.tokenObservedRequests).toBe(1_000);
     expect(report.avgTokensPerObservedRequest).toBe(260);
     expect(report.contextConfidence).toBe("low");
+  });
+
+  it("preserves observed zero request counts instead of fabricating a minimum request", () => {
+    const zeroRequestSummary = {
+      ...codexSummary,
+      requestCount: 0
+    } as unknown as ProviderReportSummary;
+
+    const report = buildLocalModelReport([zeroRequestSummary]);
+
+    expect(report.tokenObservedProviders[0]).toMatchObject({
+      providerId: "codex",
+      requestCount: 0
+    });
+    expect(report.tokenObservedRequests).toBe(0);
+    expect(report.avgTokensPerObservedRequest).toBeNull();
   });
 
   it("uses empirical p99 from local distribution snapshot when present (high confidence)", () => {
@@ -178,6 +201,38 @@ describe("buildLocalModelReport", () => {
   it("computes window days from report dates", () => {
     const report = buildLocalModelReport([codexSummary]); // 2026-03-01 to 2026-03-28 = 28 days
     expect(report.windowDays).toBe(28);
+  });
+
+  it("normalizes mixed provider windows before reporting aggregate totals", () => {
+    const shortCopilotWindow = {
+      ...copilotCliSummary,
+      reportEndDay: "2026-03-14",
+      cliInputTokens: 14_000,
+      cliOutputTokens: 0,
+      cliRequestCount: 14
+    } as unknown as ProviderReportSummary;
+
+    const report = buildLocalModelReport([codexSummary, shortCopilotWindow]);
+    const copilot = report.tokenObservedProviders.find(
+      (provider) => provider.providerId === "github-copilot"
+    );
+
+    expect(report.windowDays).toBe(28);
+    expect(report.selectedWorkloadScope).toMatchObject({
+      allocationMode: "estimated",
+      id: "all_provider_traffic"
+    });
+    expect(report.selectedWorkloadScope.description).toContain(
+      "normalized to a 28-day planning window"
+    );
+    expect(copilot).toMatchObject({
+      inputTokens: 28_000,
+      requestCount: 28,
+      windowDays: 28
+    });
+    expect(report.totalInputTokens).toBe(238_000);
+    expect(report.totalPureComputeTokens).toBe(288_000);
+    expect(report.dailyAvgComputeTokens).toBeCloseTo(288_000 / 28);
   });
 
   it("all 5 model profiles are present with expected tiers", () => {
@@ -372,6 +427,118 @@ describe("buildLocalModelReport", () => {
     expect(report.alternativeProfiles).toHaveLength(0);
   });
 
+  it("scopes model-profile sizing to the selected tenant pipeline instead of inheriting all-provider traffic", () => {
+    const allTraffic = buildLocalModelReport([copilotCliSummary, claudeSummary, codexSummary]);
+    const repoAutomation = buildLocalModelReport(
+      [copilotCliSummary, claudeSummary, codexSummary],
+      null,
+      null,
+      null,
+      { workloadScopeId: "repo_automation_project" }
+    );
+
+    expect(allTraffic.selectedWorkloadScope.id).toBe("all_provider_traffic");
+    expect(repoAutomation.selectedWorkloadScope.id).toBe("repo_automation_project");
+    expect(repoAutomation.tenant).toMatchObject({ tenantId: "kdtix", tenantName: "KDTIX" });
+    expect(repoAutomation.requiredTokensPerSec).toBeLessThan(allTraffic.requiredTokensPerSec);
+    expect(repoAutomation.requiredTokensPerSec).not.toBe(allTraffic.requiredTokensPerSec);
+    expect(repoAutomation.tokenObservedProviders.map((provider) => provider.providerId)).not.toContain(
+      "github-copilot"
+    );
+  });
+
+  it("scoped throughput uses each included provider window instead of the first summary window", () => {
+    const shortWindowCodex = {
+      ...codexSummary,
+      inputTokens: 10_000,
+      outputTokens: 0,
+      reportEndDay: "2026-03-28",
+      reportStartDay: "2026-03-28"
+    } as unknown as ProviderReportSummary;
+    const longWindowCopilotCli = {
+      ...copilotCliSummary,
+      cliInputTokens: 2_800_000,
+      cliOutputTokens: 0,
+      reportEndDay: "2026-03-28",
+      reportStartDay: "2026-03-01"
+    } as unknown as ProviderReportSummary;
+
+    const report = buildLocalModelReport(
+      [shortWindowCodex, longWindowCopilotCli],
+      null,
+      null,
+      null,
+      { workloadScopeId: "copilot_cli" }
+    );
+
+    expect(report.windowDays).toBe(28);
+    expect(report.tokenObservedProviders).toEqual([
+      expect.objectContaining({
+        providerId: "github-copilot",
+        windowDays: 28
+      })
+    ]);
+    expect(report.dailyAvgComputeTokens).toBe(100_000);
+    expect(report.requiredTokensPerSec).toBeCloseTo(100_000 / 28_800, 3);
+    expect(report.selectedWorkloadScope.allocationMode).toBe("observed");
+  });
+
+  it("does not double-scale scoped request context by the workload multiplier", () => {
+    const heavyCopilotCli = {
+      ...copilotCliSummary,
+      cliInputTokens: 1_000_000_000,
+      cliOutputTokens: 0,
+      cliRequestCount: 10_000
+    } as unknown as ProviderReportSummary;
+
+    const report = buildLocalModelReport([heavyCopilotCli], null, null, null, {
+      workloadScopeId: "copilot_cli"
+    });
+
+    expect(report.avgTokensPerObservedRequest).toBe(100_000);
+    expect(report.estimatedContextWindowNeeded).toBe(500_000);
+  });
+
+  it("downgrades scoped context confidence when only global local-session evidence is available", () => {
+    const globalDistribution = {
+      generatedAt: "2025-01-01T00:00:00.000Z",
+      sources: [],
+      combined: { sampleCount: 100, mean: 200_000, p50: 150_000, p95: 280_000, p99: 300_000, max: 400_000 }
+    };
+
+    const report = buildLocalModelReport(
+      [copilotCliSummary, claudeSummary, codexSummary],
+      globalDistribution as never,
+      null,
+      null,
+      { workloadScopeId: "copilot_cli" }
+    );
+
+    expect(report.selectedWorkloadScope.id).toBe("copilot_cli");
+    expect(report.contextConfidence).toBe("low");
+    expect(report.contextEvidenceSource).toBe("global_local_session_distribution_scaled_to_scope");
+  });
+
+  it("exposes tenant pipeline scope options for future multi-tenant reports", () => {
+    const report = buildLocalModelReport([codexSummary], null, null, null, {
+      workloadScopeId: "agent_memory"
+    });
+
+    expect(report.selectedWorkloadScope).toMatchObject({
+      id: "agent_memory",
+      label: "Agent Memory",
+      tenantId: "kdtix"
+    });
+    expect(report.availableWorkloadScopes.map((scope) => scope.id)).toEqual([
+      "all_provider_traffic",
+      "repo_automation_project",
+      "agent_memory",
+      "copilot_cli",
+      "agentic_worker",
+      "reviewer"
+    ]);
+  });
+
   it("applies forensic synthesis as direct routing guidance for sizing and profiles", () => {
     const reportWithoutForensics = buildLocalModelReport([codexSummary]);
     const reportWithForensics = buildLocalModelReport(
@@ -417,6 +584,22 @@ describe("buildLocalModelReport", () => {
         profile.hfRepoId.includes("7B-Instruct-1M")
       )?.forensicInterpretation
     ).toContain("long-context candidate screen");
+  });
+
+  it("ignores forensic guidance inside scoped tenant pipeline reports", () => {
+    const report = buildLocalModelReport(
+      [copilotCliSummary, claudeSummary, codexSummary],
+      null,
+      null,
+      forensicTieredRoutingRun,
+      { workloadScopeId: "repo_automation_project" }
+    );
+
+    expect(report.selectedWorkloadScope.id).toBe("repo_automation_project");
+    expect(report.appliedForensicGuidance).toBeNull();
+    expect(
+      report.profiles.some((profile) => profile.forensicInterpretation !== undefined)
+    ).toBe(false);
   });
 });
 

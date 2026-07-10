@@ -63,7 +63,11 @@ describe("App", () => {
 
     expect(await screen.findByText("Local AI Infrastructure Sizing")).toBeInTheDocument();
     expect(screen.getByText("Executive Hardware Decision Summary")).toBeInTheDocument();
-    expect(screen.getByText("Current workload baseline")).toBeInTheDocument();
+    expect(screen.getByText("Hardware Budget Required by Scope")).toBeInTheDocument();
+    expect(screen.getByText("Budget math scope")).toBeInTheDocument();
+    expect(screen.getByText("Selected scope baseline")).toBeInTheDocument();
+    expect(screen.getAllByText(/production-pod planning envelope/).length).toBeGreaterThan(0);
+    expect(screen.getByText(/GitHub Copilot CLI token telemetry is not present/)).toBeInTheDocument();
     expect(screen.getAllByText("Target first-server migration objective").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Estimated full-workload capacity").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Safe initial production routing").length).toBeGreaterThan(0);
@@ -73,6 +77,89 @@ describe("App", () => {
     expect(screen.getByText("Route class migration plan")).toBeInTheDocument();
     expect(screen.getByText("Financial payback model")).toBeInTheDocument();
     expect(screen.getByText("Benchmark gates")).toBeInTheDocument();
+
+    const budgetScopeSelect = screen.getByRole("combobox", { name: "Budget math scope" });
+    fireEvent.change(budgetScopeSelect, { target: { value: "all_provider_traffic" } });
+    const selectedScopeCard = screen.getByText("Selected scope baseline").closest(".infra-card");
+    expect(selectedScopeCard).toHaveTextContent("All-provider traffic sizing");
+  });
+
+  it("exports the selected infrastructure budget scope", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: false
+      })
+    );
+    let capturedBlob: Blob | null = null;
+    const originalCreateObjectUrl = URL.createObjectURL;
+    const originalRevokeObjectUrl = URL.revokeObjectURL;
+    const createObjectUrl = vi.fn((blob: Blob) => {
+      capturedBlob = blob;
+      return "blob:token-report";
+    });
+    const revokeObjectUrl = vi.fn();
+    const clickSpy = vi
+      .spyOn(HTMLAnchorElement.prototype, "click")
+      .mockImplementation(() => undefined);
+    Object.defineProperty(URL, "createObjectURL", {
+      configurable: true,
+      value: createObjectUrl
+    });
+    Object.defineProperty(URL, "revokeObjectURL", {
+      configurable: true,
+      value: revokeObjectUrl
+    });
+
+    try {
+      render(<App />);
+
+      const budgetScopeSelect = await screen.findByRole("combobox", {
+        name: "Budget math scope"
+      });
+      fireEvent.change(budgetScopeSelect, { target: { value: "all_provider_traffic" } });
+      fireEvent.change(screen.getByRole("combobox", { name: "Format" }), {
+        target: { value: "json" }
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Download data" }));
+
+      await waitFor(() => {
+        expect(capturedBlob).not.toBeNull();
+      });
+      const exportedBlob = capturedBlob;
+      if (!exportedBlob) throw new Error("Expected export blob to be captured");
+      const payload = JSON.parse(await readBlobText(exportedBlob)) as {
+        report: {
+          localInfrastructureSizing: {
+            hardwareBudgetSummary: {
+              selectedScope: string;
+            };
+            workloadSummary: {
+              allProviderComputeTps: number;
+              selectedScopeComputeTps: number;
+            };
+          };
+        };
+      };
+      const infrastructureSizing = payload.report.localInfrastructureSizing;
+      expect(infrastructureSizing.hardwareBudgetSummary.selectedScope).toBe(
+        "all_provider_traffic"
+      );
+      expect(infrastructureSizing.workloadSummary.selectedScopeComputeTps).toBeCloseTo(
+        infrastructureSizing.workloadSummary.allProviderComputeTps,
+        6
+      );
+    } finally {
+      Object.defineProperty(URL, "createObjectURL", {
+        configurable: true,
+        value: originalCreateObjectUrl
+      });
+      Object.defineProperty(URL, "revokeObjectURL", {
+        configurable: true,
+        value: originalRevokeObjectUrl
+      });
+      clickSpy.mockRestore();
+    }
   });
 
   it("prefers accumulated provider snapshots before falling back to latest snapshots", async () => {
@@ -194,6 +281,30 @@ describe("App", () => {
     expect(screen.getAllByText(/partial local migration/).length).toBeGreaterThan(0);
   });
 
+  it("lets operators scope on-prem model profiles by tenant pipeline", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: false
+      })
+    );
+
+    render(<App />);
+
+    const scopeSelect = await screen.findByRole("combobox", { name: "Tenant pipeline scope" });
+    expect(scopeSelect).toHaveValue("all_provider_traffic");
+    expect(screen.getByRole("option", { name: "All KDTIX provider traffic" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Repo Automation" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Agent Memory" })).toBeInTheDocument();
+
+    fireEvent.change(scopeSelect, { target: { value: "repo_automation_project" } });
+
+    expect(scopeSelect).toHaveValue("repo_automation_project");
+    expect(screen.getByText(/Current tenant: KDTIX/)).toBeInTheDocument();
+    expect(screen.getByText(/Pipeline allocation: estimated/)).toBeInTheDocument();
+    expect(screen.getAllByText(/Repo Automation/).length).toBeGreaterThan(0);
+  });
+
   it("refresh button requests dynamic refresh before reloading snapshots", async () => {
     const fetchStub = vi.fn().mockImplementation((input: RequestInfo | URL) => {
       const url = String(input);
@@ -288,7 +399,11 @@ describe("App", () => {
             forensicRun: {
               reviewerArtifacts: [
                 { reviewerModel: "gpt", status: "completed" },
-                { reviewerModel: "composer", status: "failed" }
+                {
+                  degradedReason: "sdlca_bridge_forensic_result_invalid",
+                  reviewerModel: "composer",
+                  status: "failed"
+                }
               ],
               status: "degraded"
             },
@@ -320,50 +435,171 @@ describe("App", () => {
 
     expect(await screen.findByText("Refresh job dynamic-refresh-002 degraded")).toBeInTheDocument();
     expect(screen.getByText("github-copilot completed; cursor degraded")).toBeInTheDocument();
-    expect(screen.getByText("gpt completed; composer failed")).toBeInTheDocument();
+    expect(screen.getByText("Candidate refresh has not reported a candidate set yet.")).toBeInTheDocument();
+    expect(
+      screen.getByText("gpt completed; composer failed (invalid reviewer result)")
+    ).toBeInTheDocument();
     expect(screen.getByText("Snapshots reloaded after refresh response.")).toBeInTheDocument();
   });
 
-  it("refresh button polls running jobs before reloading snapshots", async () => {
-    const statusUrl = `${sameOriginRefreshUrl}/dynamic-refresh-003`;
-    let statusCalls = 0;
+  it("refresh activity panel keeps mixed forensic reviewers running while one is active", async () => {
     const fetchStub = vi.fn().mockImplementation((input: RequestInfo | URL) => {
       const url = String(input);
       if (url === sameOriginRefreshUrl) {
         return Promise.resolve({
           json: async () => ({
-            jobId: "dynamic-refresh-003",
-            providerResults: [{ providerId: "codex", status: "running" }],
+            forensicRun: {
+              reviewerArtifacts: [
+                {
+                  degradedReason: "sdlca_bridge_forensic_result_invalid",
+                  reviewerModel: "gpt",
+                  status: "failed"
+                },
+                { reviewerModel: "composer", status: "running" }
+              ],
+              status: "running"
+            },
+            jobId: "dynamic-refresh-mixed-forensics",
+            providerResults: [{ providerId: "github-copilot", status: "completed" }],
+            status: "degraded"
+          }),
+          ok: true,
+          status: 202
+        });
+      }
+
+      return Promise.resolve({ ok: false });
+    });
+    vi.stubGlobal("fetch", fetchStub);
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(fetchStub).toHaveBeenCalledWith(
+        expect.stringContaining("/data/github-copilot/accumulated-metadata.json")
+      );
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /Refresh Report/i }));
+
+    expect(
+      await screen.findByText("Refresh job dynamic-refresh-mixed-forensics degraded")
+    ).toBeInTheDocument();
+    const forensicsStep = screen.getByText("Forensic reviewers").closest("li") as HTMLElement;
+    expect(forensicsStep).toHaveTextContent("Running");
+    expect(forensicsStep).toHaveTextContent(
+      "gpt failed (invalid reviewer result); composer running"
+    );
+  });
+
+  it("refresh activity panel uses top-level Hugging Face candidate status for completed jobs", async () => {
+    const fetchStub = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url === sameOriginRefreshUrl) {
+        return Promise.resolve({
+          json: async () => ({
+            huggingFaceCandidateSetId: "hf-candidates-top-level",
+            includeHuggingFaceRefresh: true,
+            jobId: "dynamic-refresh-hf",
+            providerResults: [{ providerId: "github-copilot", status: "completed" }],
+            status: "completed"
+          }),
+          ok: true,
+          status: 202
+        });
+      }
+
+      return Promise.resolve({ ok: false });
+    });
+    vi.stubGlobal("fetch", fetchStub);
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(fetchStub).toHaveBeenCalledWith(
+        expect.stringContaining("/data/github-copilot/accumulated-metadata.json")
+      );
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /Refresh Report/i }));
+
+    expect(await screen.findByText("Refresh job dynamic-refresh-hf completed")).toBeInTheDocument();
+    expect(screen.getByText("Candidate refresh request completed.")).toBeInTheDocument();
+    expect(
+      screen.queryByText("Candidate refresh has not reported a candidate set yet.")
+    ).not.toBeInTheDocument();
+  });
+
+  it("refresh activity panel marks missing Hugging Face candidates degraded after terminal refresh", async () => {
+    const fetchStub = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url === sameOriginRefreshUrl) {
+        return Promise.resolve({
+          json: async () => ({
+            includeHuggingFaceRefresh: true,
+            jobId: "dynamic-refresh-hf-missing",
+            providerResults: [{ providerId: "github-copilot", status: "completed" }],
+            status: "completed"
+          }),
+          ok: true,
+          status: 202
+        });
+      }
+
+      return Promise.resolve({ ok: false });
+    });
+    vi.stubGlobal("fetch", fetchStub);
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(fetchStub).toHaveBeenCalledWith(
+        expect.stringContaining("/data/github-copilot/accumulated-metadata.json")
+      );
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /Refresh Report/i }));
+
+    expect(
+      await screen.findByText("Refresh job dynamic-refresh-hf-missing completed")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText("Candidate refresh has not reported a candidate set yet.")
+    ).toBeInTheDocument();
+    expect(screen.getAllByText("Degraded").length).toBeGreaterThan(0);
+  });
+
+  it("refresh activity panel polls accepted background refresh jobs", async () => {
+    let pollCount = 0;
+    const fetchStub = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url === sameOriginRefreshUrl) {
+        return Promise.resolve({
+          json: async () => ({
+            jobId: "dynamic-refresh-async",
+            providerResults: [{ providerId: "github-copilot", status: "running" }],
             status: "running"
           }),
           ok: true,
           status: 202
         });
       }
-      if (url === statusUrl) {
-        statusCalls += 1;
-        if (statusCalls === 1) {
-          return Promise.resolve({
-            json: async () => ({
-              forensicRun: {
-                reviewerArtifacts: [{ reviewerModel: "sonnet", status: "queued" }],
-                status: "queued"
-              },
-              jobId: "dynamic-refresh-003",
-              providerResults: [{ providerId: "codex", status: "running" }],
-              status: "running"
-            }),
-            ok: true,
-            status: 200
-          });
-        }
 
+      if (url === `${sameOriginRefreshUrl}/dynamic-refresh-async`) {
+        pollCount += 1;
         return Promise.resolve({
-          json: async () => ({
-            jobId: "dynamic-refresh-003",
-            providerResults: [{ providerId: "codex", status: "completed" }],
-            status: "completed"
-          }),
+          json: async () =>
+            pollCount === 1
+              ? {
+                  jobId: "dynamic-refresh-async",
+                  providerResults: [{ providerId: "github-copilot", status: "running" }],
+                  status: "running"
+                }
+              : {
+                  jobId: "dynamic-refresh-async",
+                  providerResults: [{ providerId: "github-copilot", status: "completed" }],
+                  status: "completed"
+                },
           ok: true,
           status: 200
         });
@@ -383,22 +619,67 @@ describe("App", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Refresh Report/i }));
 
-    expect(await screen.findByText("Refresh job dynamic-refresh-003 running")).toBeInTheDocument();
-    expect(screen.getByText("codex running")).toBeInTheDocument();
-    expect(screen.getByText("sonnet queued")).toBeInTheDocument();
-    expect(screen.getAllByText("Running").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("Queued").length).toBeGreaterThan(0);
     expect(
-      await screen.findByText("Refresh job dynamic-refresh-003 completed", undefined, {
+      await screen.findByText("Refresh job dynamic-refresh-async completed", undefined, {
         timeout: 5_000
       })
     ).toBeInTheDocument();
-    const statusCallIndex = fetchStub.mock.calls.findIndex(([input]) => String(input) === statusUrl);
-    const reloadCallIndex = fetchStub.mock.calls.findIndex(([input]) =>
-      String(input).includes("/data/github-copilot/accumulated-metadata.json?t=")
-    );
-    expect(statusCallIndex).toBeGreaterThan(-1);
-    expect(reloadCallIndex).toBeGreaterThan(statusCallIndex);
+    expect(fetchStub).toHaveBeenCalledWith(`${sameOriginRefreshUrl}/dynamic-refresh-async`, {
+      method: "GET",
+      signal: expect.any(AbortSignal)
+    });
+  });
+
+  it("refresh activity panel explains when forensic reviewers were not dispatched", async () => {
+    const fetchStub = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url === sameOriginRefreshUrl) {
+        return Promise.resolve({
+          json: async () => ({
+            forensicRun: {
+              bridgeDispatch: {
+                executionKind: "forensic",
+                status: "not_configured"
+              },
+              degradedReason: "bridge_forensic_executor_not_configured",
+              reviewerArtifacts: [
+                { reviewerModel: "sonnet", status: "queued" },
+                { reviewerModel: "opus", status: "queued" },
+                { reviewerModel: "gpt", status: "queued" }
+              ],
+              status: "degraded"
+            },
+            jobId: "dynamic-refresh-not-configured",
+            providerResults: [{ providerId: "github-copilot", status: "completed" }],
+            status: "degraded"
+          }),
+          ok: true,
+          status: 202
+        });
+      }
+
+      return Promise.resolve({ ok: false });
+    });
+    vi.stubGlobal("fetch", fetchStub);
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(fetchStub).toHaveBeenCalledWith(
+        expect.stringContaining("/data/github-copilot/accumulated-metadata.json")
+      );
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /Refresh Report/i }));
+
+    expect(
+      await screen.findByText("Refresh job dynamic-refresh-not-configured degraded")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Bridge forensic executor was not configured; sonnet, opus, gpt were not dispatched."
+      )
+    ).toBeInTheDocument();
   });
 
   it("refresh button keeps the report freshness visible when dynamic refresh is blocked", async () => {
@@ -437,3 +718,12 @@ describe("App", () => {
     expect(await screen.findByText("Report data through 2026-03-28")).toBeInTheDocument();
   });
 });
+
+function readBlobText(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.addEventListener("load", () => resolve(String(reader.result)));
+    reader.addEventListener("error", () => reject(reader.error));
+    reader.readAsText(blob);
+  });
+}

@@ -26,7 +26,7 @@ without needing the private Orchestrator at all.
   - **Cursor** — `POST https://api.cursor.com/teams/daily-usage-data` (Basic Auth)
   - **Claude (Anthropic)** — `GET https://api.anthropic.com/v1/organizations/usage_report/messages` (Admin API key)
   - **OpenAI Codex** — `GET https://api.openai.com/v1/organization/usage/completions` (org admin key)
-- Persist the latest report snapshot into `public/data/{provider}/latest-metadata.json`
+- Persist the latest report snapshot into `public/data/{provider}/latest-metadata.json` and accumulated history into `public/data/{provider}/accumulated-metadata.json`
 - Dashboard card per registered provider, seeded with representative local fixtures
 
 ## Quick start
@@ -106,33 +106,45 @@ and UAT scenarios.
 ### GitHub Copilot
 
 ```bash
-export GITHUB_TOKEN=your-token
-export GITHUB_ORG=kdtix-open
+set -a
+source .env.admin.credentials
+set +a
 npm run report:copilot
 ```
 
-Requires `read:org` scope (classic token) or fine-grained `Organization Copilot metrics` read permission.
+Requires `GITHUB_ADMIN_TOKEN` in `.env.admin.credentials` with `read:org`
+scope (classic token) or fine-grained `Organization Copilot metrics` read
+permission. `GITHUB_ORG` defaults to `kdtix-open`.
 Endpoint: `GET https://api.github.com/orgs/{org}/copilot/metrics/reports/users-28-day/latest`
 Recommended header: `X-GitHub-Api-Version: 2026-03-10`
 
 ### Cursor
 
 ```bash
-export CURSOR_API_KEY=your-cursor-api-key
+set -a
+source .env.admin.credentials
+set +a
 npm run report:cursor
 ```
 
-Requires a Cursor team Admin API key. Create one in your Cursor team settings.
+Requires `CURSOR_ADMIN_API_KEY` in `.env.admin.credentials`. Create one in
+your Cursor team settings. Public Cursor identity aliases use a keyed HMAC;
+set `TOKEN_REPORTING_CURSOR_REDACTION_SALT` in `.env.admin.credentials` to
+rotate that salt independently from the Cursor admin key.
 Endpoint: `POST https://api.cursor.com/teams/daily-usage-data` (Basic Auth, 28-day window)
 
 ### Claude (Anthropic)
 
 ```bash
-export ANTHROPIC_API_KEY=sk-ant-admin-...
+set -a
+source .env.admin.credentials
+set +a
 npm run report:claude
 ```
 
-Requires an **Admin API key** (starts with `sk-ant-admin...`). Standard API keys will not work.
+Requires `ANTHROPIC_ADMIN_API_KEY` in `.env.admin.credentials`. It must be an
+**Admin API key** (starts with `sk-ant-admin...`). Standard API keys will not
+work.
 Only organization admins can provision Admin API keys via the Claude Console → Settings → Admin Keys.
 Endpoint: `GET https://api.anthropic.com/v1/organizations/usage_report/messages`
 
@@ -151,11 +163,14 @@ Endpoint: `GET https://api.anthropic.com/v1/organizations/usage_report/messages`
 ### OpenAI Codex
 
 ```bash
-export OPENAI_API_KEY=your-openai-org-admin-key
+set -a
+source .env.admin.credentials
+set +a
 npm run report:codex
 ```
 
-Requires an org admin API key with the `api.usage.read` scope enabled.
+Requires `OPENAI_ADMIN_API_KEY` in `.env.admin.credentials`, using an org
+admin API key with the `api.usage.read` scope enabled.
 Endpoint: `GET https://api.openai.com/v1/organization/usage/completions`
 
 ---

@@ -91,6 +91,26 @@ describe("reportExports", () => {
     expect(result.payload).toContain("ON CONFLICT (id) DO UPDATE SET");
   });
 
+  it("createReportExport_DatabaseFormat_IncludesScopedReportBreakdowns", () => {
+    const result = createReportExport(
+      {
+        ...richReportContext(),
+        localModelWorkloadScopeId: "repo_automation_project"
+      },
+      "database"
+    );
+    const sql = result.payload as string;
+
+    expect(sql).toContain("CREATE TABLE IF NOT EXISTS report_breakdowns");
+    expect(sql).toContain("'local_model_migration'");
+    expect(sql).toContain("'selected_scope'");
+    expect(sql).toContain("'scope_id'");
+    expect(sql).toContain("'repo_automation_project'");
+    expect(sql).toContain("'context_evidence_source'");
+    expect(sql).toContain("'global_local_session_distribution_scaled_to_scope'");
+    expect(sql).not.toContain("'applied_forensic_guidance'");
+  });
+
   it("createReportExport_PdfAndDocxFormats_IncludeRichWebsiteReportSections", () => {
     const context = richReportContext();
     const pdf = createReportExport(context, "pdf");
@@ -101,10 +121,18 @@ describe("reportExports", () => {
     for (const text of [pdfText, docxText]) {
       expect(text).toContain("Spend projections");
       expect(text).toContain("Local model migration sizing");
+      expect(text).toContain("Tenant: KDTIX");
+      expect(text).toContain("Pipeline scope: All KDTIX provider traffic");
+      expect(text).toContain("Context evidence source: global_local_session_distribution");
       expect(text).toContain("Server sizing heuristics");
       expect(text).toContain("On-prem model profiles");
       expect(text).toContain("Local AI Infrastructure Sizing");
       expect(text).toContain("Executive Hardware Decision Summary");
+      expect(text).toContain("Hardware Budget Required by Scope");
+      expect(text).toContain("first-server shadow/canary");
+      expect(text).toContain("For all-provider steady-state replacement");
+      expect(text).toContain("production-pod planning");
+      expect(text).toContain("Copilot Dominance Warning");
       expect(text).toContain("Target first-server migration objective");
       expect(text).toContain("Estimated safe initial routing");
       expect(text).toContain("Estimated full-workload capacity");
@@ -143,17 +171,42 @@ describe("reportExports", () => {
             routingStrategy: "tiered_hybrid"
           },
           contextConfidence: "high",
+          contextEvidenceSource: "global_local_session_distribution",
           huggingFaceCandidateSetId: "hf-candidates-test",
+          selectedWorkloadScope: {
+            id: "all_provider_traffic",
+            label: "All KDTIX provider traffic"
+          },
+          tenant: {
+            tenantId: "kdtix",
+            tenantName: "KDTIX"
+          },
           profiles: expect.arrayContaining([
             expect.objectContaining({
               hfRepoId: "Qwen/Qwen2.5-7B-Instruct-1M"
             })
           ])
         },
-        localInfrastructureSizing: {
-          executiveSummary: {
-            firstQuoteToRequest: expect.stringContaining("2U dual RTX PRO 6000"),
-            paybackFromCloudDisplacement: expect.stringContaining("Cloud spend alone")
+          localInfrastructureSizing: {
+            executiveSummary: {
+              firstQuoteToRequest: expect.stringContaining("2U dual RTX PRO 6000"),
+              paybackFromCloudDisplacement: expect.stringContaining("Cloud spend alone")
+            },
+          hardwareBudgetScenarios: expect.arrayContaining([
+            expect.objectContaining({
+              scope: "all_provider_traffic",
+              replacementGoal: "steady_state_replacement",
+              fullReplacementAllowed: false
+            })
+          ]),
+          hardwareBudgetSummary: {
+            cfoSummaryLines: expect.arrayContaining([
+              expect.stringContaining("production-pod planning envelope")
+            ]),
+            copilotDominanceWarning: expect.stringContaining(
+              "GitHub Copilot CLI token telemetry is not present"
+            ),
+            selectedScope: "repo_automation_project"
           },
           financials: {
             notes: expect.arrayContaining([
@@ -212,6 +265,93 @@ describe("reportExports", () => {
     ).not.toBe(localInfra.localCoverageSummary.targetFirstServerCoveragePct);
   });
 
+  it("createReportExport_JsonFormat_PreservesSelectedTenantPipelineScope", () => {
+    const result = createReportExport(
+      {
+        ...richReportContext(),
+        localModelWorkloadScopeId: "repo_automation_project"
+      },
+      "json"
+    );
+    const parsed = JSON.parse(result.payload as string) as {
+      report: {
+        localInfrastructureSizing: {
+          workloadSummary: {
+            currentProjectLaneP95Context: number | null;
+            currentProjectLaneP99Context: number | null;
+          };
+        };
+        localModelMigration: {
+          appliedForensicGuidance: null;
+          requiredTokensPerSec: number;
+          selectedWorkloadScope: {
+            allocationMode: string;
+            id: string;
+            label: string;
+            providerWeights: Record<string, number>;
+          };
+          tenant: {
+            tenantId: string;
+            tenantName: string;
+          };
+        };
+      };
+    };
+
+    expect(parsed.report.localModelMigration.tenant).toEqual({
+      tenantId: "kdtix",
+      tenantName: "KDTIX"
+    });
+    expect(parsed.report.localModelMigration.selectedWorkloadScope).toMatchObject({
+      allocationMode: "estimated",
+      id: "repo_automation_project",
+      label: "Repo Automation",
+      providerWeights: {
+        claude: 0.45,
+        codex: 0.25,
+        cursor: 0.05
+      }
+    });
+    expect(parsed.report.localModelMigration.requiredTokensPerSec).toBeLessThan(100);
+    expect(parsed.report.localModelMigration.appliedForensicGuidance).toBeNull();
+    expect(parsed.report.localInfrastructureSizing.workloadSummary).toMatchObject({
+      currentProjectLaneP95Context: 835_000,
+      currentProjectLaneP99Context: 1_000_000
+    });
+  });
+
+  it("createReportExport_JsonFormat_UsesSelectedInfrastructureBudgetScope", () => {
+    const result = createReportExport(
+      {
+        ...richReportContext(),
+        localInfrastructureWorkloadScope: "all_provider_traffic"
+      },
+      "json"
+    );
+    const parsed = JSON.parse(result.payload as string) as {
+      report: {
+        localInfrastructureSizing: {
+          hardwareBudgetSummary: {
+            selectedScope: string;
+          };
+          workloadSummary: {
+            allProviderComputeTps: number;
+            selectedScopeComputeTps: number;
+          };
+        };
+      };
+    };
+    const infrastructureSizing = parsed.report.localInfrastructureSizing;
+
+    expect(infrastructureSizing.hardwareBudgetSummary.selectedScope).toBe(
+      "all_provider_traffic"
+    );
+    expect(infrastructureSizing.workloadSummary.selectedScopeComputeTps).toBeCloseTo(
+      infrastructureSizing.workloadSummary.allProviderComputeTps,
+      6
+    );
+  });
+
   it("createReportExport_CsvAndYamlFormats_IncludeInfrastructureDecisionBreakdowns", () => {
     const csv = createReportExport(richReportContext(), "csv").payload as string;
     const yaml = createReportExport(richReportContext(), "yaml").payload as string;
@@ -220,19 +360,31 @@ describe("reportExports", () => {
     expect(csv).toContain("local_infrastructure_coverage_summary");
     expect(csv).toContain("estimated_full_workload_capacity_pct");
     expect(csv).toContain("local_infrastructure_workload_scopes");
+    expect(csv).toContain("local_infrastructure_hardware_budget_summary");
+    expect(csv).toContain("local_infrastructure_hardware_budget_scenarios");
+    expect(csv).toContain("all_provider_compute_tps");
+    expect(csv).toContain("repo_automation_compute_tps");
+    expect(csv).toContain("local_model_migration,tenant,tenant_id,kdtix");
     expect(csv).toContain("local_infrastructure_financials");
     expect(csv).toContain("local_infrastructure_benchmark_gates");
     expect(csv).toContain("context_stats_warning");
     expect(csv).toContain("quote_priority");
+    expect(csv).toContain("context_evidence_source");
+    expect(csv).toContain("global_local_session_distribution");
 
     expect(yaml).toContain("localCoverageSummary:");
     expect(yaml).toContain("estimatedFullWorkloadCapacityPct:");
     expect(yaml).toContain("workloadScopeSummaries:");
+    expect(yaml).toContain("hardwareBudgetSummary:");
+    expect(yaml).toContain("hardwareBudgetScenarios:");
+    expect(yaml).toContain("allProviderComputeTps:");
+    expect(yaml).toContain("repoAutomationComputeTps:");
     expect(yaml).toContain("financials:");
     expect(yaml).toContain("executiveSummary:");
     expect(yaml).toContain("benchmarkGates:");
     expect(yaml).toContain("contextStatsWarning:");
     expect(yaml).toContain("quotePriority:");
+    expect(yaml).toContain('contextEvidenceSource: "global_local_session_distribution"');
   });
 
   it("createReportExport_XlsxFormat_IncludesReportBreakdownRows", () => {
@@ -243,9 +395,12 @@ describe("reportExports", () => {
     expect(workbookText).toContain("Spend projections");
     expect(workbookText).toContain("Local model migration sizing");
     expect(workbookText).toContain("Server sizing heuristics");
+    expect(workbookText).toContain("Context evidence source");
     expect(workbookText).toContain("On-prem model profiles");
     expect(workbookText).toContain("Local AI Infrastructure Sizing");
     expect(workbookText).toContain("Executive Hardware Decision Summary");
+    expect(workbookText).toContain("Hardware Budget Required by Scope");
+    expect(workbookText).toContain("production-pod planning envelope");
     expect(workbookText).toContain("Target first-server migration objective");
     expect(workbookText).toContain("Estimated safe initial routing");
     expect(workbookText).toContain("Estimated full-workload capacity");

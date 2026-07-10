@@ -1,8 +1,10 @@
-import type { ReactNode } from "react";
+import { type ReactNode } from "react";
 
 import type { HuggingFaceCandidateSet } from "../lib/huggingFaceCandidates";
 import {
   buildLocalInfrastructureSizing,
+  type HardwareReplacementGoal,
+  type WorkloadScope,
 } from "../lib/localInfrastructureSizing";
 import type { LocalSessionDistribution } from "../lib/localSessionDistribution";
 import type { ReportForensicRun } from "../lib/reportExports";
@@ -12,6 +14,8 @@ interface LocalInfrastructureSizingPanelProps {
   distribution: LocalSessionDistribution | null;
   forensicRun: ReportForensicRun | null;
   huggingFaceCandidateSet: HuggingFaceCandidateSet | null;
+  onBudgetScopeChange?: (scope: WorkloadScope) => void;
+  selectedBudgetScope?: WorkloadScope;
   summaries: ProviderReportSummary[];
 }
 
@@ -19,14 +23,18 @@ export function LocalInfrastructureSizingPanel({
   distribution,
   forensicRun,
   huggingFaceCandidateSet,
+  onBudgetScopeChange,
+  selectedBudgetScope = "repo_automation_project",
   summaries
 }: LocalInfrastructureSizingPanelProps) {
   const report = buildLocalInfrastructureSizing({
     distribution,
     forensicRun,
     huggingFaceCandidateSet,
+    selectedWorkloadScope: selectedBudgetScope,
     summaries
   });
+  const activeBudgetScope = report.hardwareBudgetSummary.selectedScope;
 
   if (report.providerCoverage.length === 0) return null;
 
@@ -38,6 +46,12 @@ export function LocalInfrastructureSizingPanel({
   );
   const coverage = report.localCoverageSummary;
   const financials = report.financials;
+  const selectedScopeSummary =
+    report.workloadScopeSummaries.find((scope) => scope.scope === activeBudgetScope) ??
+    report.workloadScopeSummaries[0];
+  const hardwareBudgetScopes = report.workloadScopeSummaries.filter((scope) =>
+    report.hardwareBudgetScenarios.some((scenario) => scenario.scope === scope.scope)
+  );
   const executiveCards = [
     {
       label: "First quote to request",
@@ -119,11 +133,112 @@ export function LocalInfrastructureSizingPanel({
         </div>
       </div>
 
+      <div className="infra-section infra-section--budget">
+        <div className="infra-section__heading-row">
+          <h3>Hardware Budget Required by Scope</h3>
+          <label className="infra-select-field">
+            <span>Budget math scope</span>
+            <select
+              disabled={!onBudgetScopeChange}
+              value={activeBudgetScope}
+              onChange={(event) => onBudgetScopeChange?.(event.target.value as WorkloadScope)}
+            >
+              {hardwareBudgetScopes.map((scope) => (
+                <option key={scope.scope} value={scope.scope}>
+                  {scope.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <div className="infra-callout">
+          {report.hardwareBudgetSummary.cfoSummaryLines.map((line) => (
+            <p key={line}>{line}</p>
+          ))}
+          <p>{report.hardwareBudgetSummary.copilotDominanceWarning}</p>
+        </div>
+        {selectedScopeSummary && (
+          <div className="infra-card-grid">
+            <MetricCard
+              label="Selected scope steady demand"
+              value={`${selectedScopeSummary.currentProjectLaneComputeTps.toFixed(1)} tok/s`}
+              note={`${selectedScopeSummary.label}; peak plan ${selectedScopeSummary.peakTokensPerSecond.toFixed(1)} tok/s`}
+            />
+            <MetricCard
+              label="All-provider steady demand"
+              value={`${report.workloadSummary.allProviderComputeTps.toFixed(1)} tok/s`}
+              note={`Peak-safe plan ${report.workloadSummary.allProviderPeakTps.toFixed(1)} tok/s`}
+            />
+            <MetricCard
+              label="Repo Automation lane demand"
+              value={`${report.workloadSummary.repoAutomationComputeTps.toFixed(1)} tok/s`}
+              note={`Peak-safe plan ${report.workloadSummary.repoAutomationPeakTps.toFixed(1)} tok/s`}
+            />
+          </div>
+        )}
+        <div className="infra-table-wrap infra-table-wrap--wide">
+          <table className="infra-table infra-table--budget">
+            <thead>
+              <tr>
+                <th>Scope</th>
+                <th>Goal</th>
+                <th>Target tok/s</th>
+                <th>Context</th>
+                <th>Hardware</th>
+                <th>Nodes</th>
+                <th>GPUs</th>
+                <th>Capex</th>
+                <th>Opex/yr</th>
+                <th>Power</th>
+                <th>RU</th>
+                <th>Full replacement</th>
+                <th>Fallback</th>
+                <th>Confidence</th>
+              </tr>
+            </thead>
+            <tbody>
+              {report.hardwareBudgetScenarios.map((scenario) => (
+                <tr
+                  key={`${scenario.scope}-${scenario.replacementGoal}-${scenario.hardwareProfileId}`}
+                  className={
+                    scenario.scope === activeBudgetScope ? "infra-table__selected-row" : undefined
+                  }
+                >
+                  <td>{scopeLabel(scenario.scope)}</td>
+                  <td>
+                    {goalLabel(scenario.replacementGoal)}
+                    <span>{scenario.explanation}</span>
+                  </td>
+                  <td>{scenario.targetTokensPerSecond.toFixed(1)}</td>
+                  <td>{fmt(scenario.requiredContextTokens)}</td>
+                  <td>{scenario.hardwareProfileName}</td>
+                  <td>{nullableNumber(scenario.requiredNodes)}</td>
+                  <td>{nullableNumber(scenario.requiredGpuCount)}</td>
+                  <td>{capex(scenario.estimatedCapexLowUsd, scenario.estimatedCapexHighUsd)}</td>
+                  <td>{money(scenario.estimatedAnnualOpexUsd)}</td>
+                  <td>
+                    {scenario.estimatedSystemPowerKw === null
+                      ? "quote"
+                      : `${scenario.estimatedSystemPowerKw.toFixed(1)} kW`}
+                  </td>
+                  <td>{nullableNumber(scenario.rackUnitsRequired)}</td>
+                  <td>{yesNo(scenario.fullReplacementAllowed)}</td>
+                  <td>{scenario.cloudFallbackRequired ? "required" : "optional"}</td>
+                  <td>{scenario.confidence.replaceAll("_", " ")}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <div className="infra-card-grid">
         <MetricCard
-          label="Current workload baseline"
-          value={`${report.workloadSummary.currentProjectLaneComputeTps.toFixed(1)} tok/s`}
-          note={`Peak plan ${report.workloadSummary.currentProjectLanePeakTps.toFixed(1)} tok/s`}
+          label="Selected scope baseline"
+          value={`${(selectedScopeSummary?.currentProjectLaneComputeTps ?? report.workloadSummary.selectedScopeComputeTps).toFixed(1)} tok/s`}
+          note={`${selectedScopeSummary?.label ?? "Selected scope"}; peak plan ${(
+            selectedScopeSummary?.peakTokensPerSecond ?? report.workloadSummary.selectedScopePeakTps
+          ).toFixed(1)} tok/s`}
         />
         <MetricCard
           label="Target first-server migration objective"
@@ -567,4 +682,20 @@ function capex(low: number | null, high: number | null): string {
   if (low !== null && high !== null) return `$${fmt(low)}-$${fmt(high)}`;
   if (low !== null) return `$${fmt(low)}+`;
   return `up to $${fmt(high ?? 0)}`;
+}
+
+function nullableNumber(value: number | null): string {
+  return value === null ? "quote" : fmt(value);
+}
+
+function yesNo(value: boolean): string {
+  return value ? "yes" : "no";
+}
+
+function scopeLabel(scope: WorkloadScope): string {
+  return scope.replaceAll("_", " ");
+}
+
+function goalLabel(goal: HardwareReplacementGoal): string {
+  return goal.replaceAll("_", " ");
 }

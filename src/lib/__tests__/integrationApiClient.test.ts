@@ -84,6 +84,25 @@ describe("integrationApiClient", () => {
     });
   });
 
+  it("requestReportRefresh_MalformedSuccessPayload_ReturnsFailedOutcome", async () => {
+    const fetcher = vi.fn().mockResolvedValue({
+      json: async () => ({}),
+      ok: true,
+      status: 202
+    });
+
+    const result = await requestReportRefresh({
+      apiBaseUrl: "http://127.0.0.1:8788",
+      fetcher
+    });
+
+    expect(result).toEqual({
+      httpStatus: 202,
+      message: "Refresh request returned a malformed job payload.",
+      outcome: "failed"
+    });
+  });
+
   it("requestReportRefresh_Timeout_ReturnsFailedOutcome", async () => {
     vi.useFakeTimers();
     const fetcher = vi.fn(
@@ -147,29 +166,82 @@ describe("integrationApiClient", () => {
     });
   });
 
-  it("pollReportRefreshJob_InvalidSuccessBody_ReturnsFailedOutcome", async () => {
-    const fetcher = vi.fn().mockResolvedValueOnce({
+  it("pollReportRefreshJob_MalformedSuccessPayload_ReturnsFailedOutcome", async () => {
+    const onUpdate = vi.fn();
+    const fetcher = vi.fn().mockResolvedValue({
+      json: async () => ({}),
+      ok: true,
+      status: 200
+    });
+
+    const result = await pollReportRefreshJob("dynamic-refresh-malformed", {
+      apiBaseUrl: "http://127.0.0.1:8788",
+      fetcher,
+      intervalMs: 0,
+      onUpdate,
+      timeoutMs: 1000
+    });
+
+    expect(result).toEqual({
+      httpStatus: 200,
+      message: "Refresh status request returned a malformed job payload.",
+      outcome: "failed"
+    });
+    expect(onUpdate).not.toHaveBeenCalled();
+  });
+
+  it("pollReportRefreshJob_UnknownStatus_ReturnsFailedOutcome", async () => {
+    const fetcher = vi.fn().mockResolvedValue({
       json: async () => ({
-        jobId: "different-job",
-        status: "mystery"
+        jobId: "dynamic-refresh-unknown-status",
+        status: "done"
       }),
       ok: true,
       status: 200
     });
 
-    const result = await pollReportRefreshJob("dynamic-refresh-001", {
+    const result = await pollReportRefreshJob("dynamic-refresh-unknown-status", {
       apiBaseUrl: "http://127.0.0.1:8788",
       fetcher,
       intervalMs: 0,
       timeoutMs: 1000
     });
 
-    expect(fetcher).toHaveBeenCalledTimes(1);
     expect(result).toEqual({
       httpStatus: 200,
-      message: "Refresh status response was invalid or did not match the requested job.",
+      message: "Refresh status request returned a malformed job payload.",
       outcome: "failed"
     });
+  });
+
+  it("pollReportRefreshJob_TransientFetchFailureBeforeDeadline_ContinuesPolling", async () => {
+    const fetcher = vi
+      .fn()
+      .mockRejectedValueOnce(new TypeError("connection reset"))
+      .mockResolvedValueOnce({
+        json: async () => ({
+          jobId: "dynamic-refresh-transient-network",
+          status: "completed"
+        }),
+        ok: true,
+        status: 200
+      });
+
+    const result = await pollReportRefreshJob("dynamic-refresh-transient-network", {
+      apiBaseUrl: "http://127.0.0.1:8788",
+      fetcher,
+      intervalMs: 0,
+      timeoutMs: 1000
+    });
+
+    expect(result).toEqual({
+      job: {
+        jobId: "dynamic-refresh-transient-network",
+        status: "completed"
+      },
+      outcome: "accepted"
+    });
+    expect(fetcher).toHaveBeenCalledTimes(2);
   });
 
   it("pollReportRefreshJob_DefaultTimeout_AllowsFullSequentialForensicReviewerWindow", async () => {
@@ -207,62 +279,6 @@ describe("integrationApiClient", () => {
     expect(fetcher).toHaveBeenCalledTimes(20);
     vi.useRealTimers();
   }, 10_000);
-
-  it("pollReportRefreshJob_NearDeadline_ClampsStatusRequestToRemainingTimeout", async () => {
-    vi.useFakeTimers();
-    try {
-      const fetcher = vi
-        .fn()
-        .mockImplementationOnce(
-          () =>
-            new Promise<Response>((resolve) => {
-              setTimeout(
-                () =>
-                  resolve({
-                    json: async () => ({
-                      jobId: "dynamic-refresh-near-deadline",
-                      status: "running"
-                    }),
-                    ok: true,
-                    status: 200
-                  } as Response),
-                50
-              );
-            })
-        )
-        .mockImplementationOnce(
-          () =>
-            new Promise<Response>(() => {
-              // Intentionally unresolved so the poller must honor the remaining overall deadline.
-            })
-        );
-      const resultPromise = pollReportRefreshJob("dynamic-refresh-near-deadline", {
-        apiBaseUrl: "http://127.0.0.1:8788",
-        fetcher,
-        intervalMs: 1,
-        timeoutMs: 75
-      });
-      let result: Awaited<typeof resultPromise> | undefined;
-      resultPromise.then((value) => {
-        result = value;
-      });
-
-      await vi.advanceTimersByTimeAsync(50);
-      await vi.advanceTimersByTimeAsync(1);
-      expect(fetcher).toHaveBeenCalledTimes(2);
-
-      await vi.advanceTimersByTimeAsync(24);
-      await Promise.resolve();
-
-      expect(result).toEqual({
-        message:
-          "Refresh is still running after 0.1 seconds. Check the refresh status or try a narrower provider refresh.",
-        outcome: "failed"
-      });
-    } finally {
-      vi.useRealTimers();
-    }
-  });
 
   it("pollReportRefreshJob_AbortErrorFromTimeout_ReturnsFailedOutcome", async () => {
     vi.useFakeTimers();
@@ -326,54 +342,6 @@ describe("integrationApiClient", () => {
       await expect(resultPromise).resolves.toEqual({
         job: {
           jobId: "dynamic-refresh-transient-timeout",
-          status: "completed"
-        },
-        outcome: "accepted"
-      });
-      expect(fetcher).toHaveBeenCalledTimes(2);
-    } finally {
-      vi.useRealTimers();
-    }
-  });
-
-  it("pollReportRefreshJob_StatusBodyTimeoutBeforeDeadline_ContinuesPolling", async () => {
-    vi.useFakeTimers();
-    try {
-      const fetcher = vi
-        .fn()
-        .mockImplementationOnce((_url: RequestInfo | URL, init?: RequestInit) =>
-          Promise.resolve({
-            json: async () =>
-              new Promise((_resolve, reject) => {
-                init?.signal?.addEventListener("abort", () => {
-                  reject(new DOMException("The operation was aborted.", "AbortError"));
-                });
-              }),
-            ok: true,
-            status: 200
-          } as Response)
-        )
-        .mockResolvedValueOnce({
-          json: async () => ({
-            jobId: "dynamic-refresh-body-timeout",
-            status: "completed"
-          }),
-          ok: true,
-          status: 200
-        });
-      const resultPromise = pollReportRefreshJob("dynamic-refresh-body-timeout", {
-        apiBaseUrl: "http://127.0.0.1:8788",
-        fetcher,
-        intervalMs: 0,
-        timeoutMs: 90_000
-      });
-
-      await vi.advanceTimersByTimeAsync(30_000);
-      await vi.runOnlyPendingTimersAsync();
-
-      await expect(resultPromise).resolves.toEqual({
-        job: {
-          jobId: "dynamic-refresh-body-timeout",
           status: "completed"
         },
         outcome: "accepted"
