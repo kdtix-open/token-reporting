@@ -231,8 +231,10 @@ export function LocalInfrastructureSizingPanel({
       <div className="infra-card-grid">
         <MetricCard
           label="Selected scope baseline"
-          value={`${report.workloadSummary.selectedScopeComputeTps.toFixed(1)} tok/s`}
-          note={`Peak plan ${report.workloadSummary.selectedScopePeakTps.toFixed(1)} tok/s`}
+          value={`${(selectedScopeSummary?.currentProjectLaneComputeTps ?? report.workloadSummary.selectedScopeComputeTps).toFixed(1)} tok/s`}
+          note={`${selectedScopeSummary?.label ?? "Selected scope"}; peak plan ${(
+            selectedScopeSummary?.peakTokensPerSecond ?? report.workloadSummary.selectedScopePeakTps
+          ).toFixed(1)} tok/s`}
         />
         <MetricCard
           label="Target first-server migration objective"

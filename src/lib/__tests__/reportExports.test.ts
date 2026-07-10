@@ -149,6 +149,7 @@ describe("reportExports", () => {
             routingStrategy: "tiered_hybrid"
           },
           contextConfidence: "high",
+          contextEvidenceSource: "global_local_session_distribution",
           huggingFaceCandidateSetId: "hf-candidates-test",
           selectedWorkloadScope: {
             id: "all_provider_traffic",

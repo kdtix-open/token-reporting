@@ -77,6 +77,11 @@ describe("App", () => {
     expect(screen.getByText("Route class migration plan")).toBeInTheDocument();
     expect(screen.getByText("Financial payback model")).toBeInTheDocument();
     expect(screen.getByText("Benchmark gates")).toBeInTheDocument();
+
+    const budgetScopeSelect = screen.getByRole("combobox", { name: "Budget math scope" });
+    fireEvent.change(budgetScopeSelect, { target: { value: "all_provider_traffic" } });
+    const selectedScopeCard = screen.getByText("Selected scope baseline").closest(".infra-card");
+    expect(selectedScopeCard).toHaveTextContent("All-provider traffic sizing");
   });
 
   it("prefers accumulated provider snapshots before falling back to latest snapshots", async () => {
@@ -352,6 +357,7 @@ describe("App", () => {
 
     expect(await screen.findByText("Refresh job dynamic-refresh-002 degraded")).toBeInTheDocument();
     expect(screen.getByText("github-copilot completed; cursor degraded")).toBeInTheDocument();
+    expect(screen.getByText("Candidate refresh has not reported a candidate set yet.")).toBeInTheDocument();
     expect(
       screen.getByText("gpt completed; composer failed (invalid reviewer result)")
     ).toBeInTheDocument();

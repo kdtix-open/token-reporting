@@ -466,6 +466,62 @@ describe("sdlcaBridgeForensics", () => {
     expect(JSON.stringify(result.reviewerArtifacts[0]?.diagnostics)).not.toContain("super-secret");
   });
 
+  it("createSdlcaBridgeForensicExecutor_NormalizedReviewerText_RedactsSecrets", async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse({
+          result: [
+            {
+              forensicCapabilities,
+              kind: "claude",
+              providerId: "claude-reviewer",
+              providerName: "Claude Reviewer",
+              resolvedExecutable: "/usr/bin/claude"
+            }
+          ]
+        })
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({
+          result: {
+            findings: [
+              {
+                details: "Observed TOKEN_REPORTING_SDLCA_BRIDGE_TOKEN=super-secret in output.",
+                severity: "high",
+                title: "secret leak"
+              }
+            ],
+            recommendations: ["Rotate sk-test_1234567890abcd before sharing."],
+            schemaVersion: "sdlca.bridge.forensic.v0",
+            summary: "credential: super-secret"
+          }
+        })
+      );
+
+    const executor = createSdlcaBridgeForensicExecutor({
+      bridgeToken: "bridge-token",
+      bridgeUrl: "http://127.0.0.1:4818",
+      fetcher,
+      workingDirectory: "/Users/ckreager/repos/kdtix/token_reporting"
+    });
+
+    const result = await executor({
+      createdAt: "2026-06-07T17:30:00.000Z",
+      evidencePacket,
+      huggingFaceCandidateSetId: "hf-candidates-test",
+      reviewerModels: ["sonnet"],
+      runId: "dynamic-forensic-20260607T173000000Z",
+      usageSnapshotId: "dynamic-usage-codex-2026-06-07"
+    });
+
+    expect(result.status).toBe("completed");
+    const artifactText = JSON.stringify(result.reviewerArtifacts[0]?.artifact);
+    expect(artifactText).toContain("[REDACTED]");
+    expect(artifactText).not.toContain("super-secret");
+    expect(artifactText).not.toContain("sk-test_1234567890abcd");
+  });
+
   it("createSdlcaBridgeForensicExecutor_BridgeJsonParseFailure_LabelsReviewerOutputParseFailure", async () => {
     const fetcher = vi
       .fn()

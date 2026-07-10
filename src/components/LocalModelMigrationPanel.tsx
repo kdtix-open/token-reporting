@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 import { buildLocalModelReport } from "../lib/localModelReport";
 import type {
   ContextConfidence,
@@ -263,10 +265,8 @@ export function LocalModelMigrationPanel({
     { workloadScopeId }
   );
 
-  if (report.tokenObservedProviders.length === 0 && report.requestOnlyProviders.length === 0) {
-    return null;
-  }
-
+  const hasProviderTraffic =
+    report.tokenObservedProviders.length > 0 || report.requestOnlyProviders.length > 0;
   const hasMissingTokenData =
     report.requestOnlyProviders.length > 0 ||
     report.tokenObservedProviders.some((p) => p.requestCount === null);
@@ -308,6 +308,15 @@ export function LocalModelMigrationPanel({
         </div>
       </div>
 
+      {!hasProviderTraffic ? (
+        <div className="lm-section">
+          <p className="lm-warn-banner">
+            No provider telemetry matched {report.selectedWorkloadScope.label}. Choose another tenant
+            pipeline scope or refresh provider data before sizing this lane.
+          </p>
+        </div>
+      ) : (
+        <>
       {/* ── Token load breakdown ─────────────────────────────────────── */}
       <div className="lm-section">
         <h3 className="lm-section__heading">
@@ -427,8 +436,7 @@ export function LocalModelMigrationPanel({
               ) : report.contextConfidence === "low" ? (
                 <>
                   <span className="lm-confidence lm-confidence--low">Low confidence</span>
-                  {" "}avg {fmtM(Math.round(report.avgTokensPerObservedRequest ?? 0))} tok/req × 2.5 safety factor → rounded to standard size. Does not reflect tail requests. Run{" "}
-                  <code>npm run report:local-sessions</code> to upgrade to empirical p99.
+                  {lowConfidenceContextNote(report)}
                 </>
               ) : (
                 <span className="lm-confidence lm-confidence--insufficient">
@@ -468,6 +476,8 @@ export function LocalModelMigrationPanel({
           Actual performance varies by hardware, batch size, prompt length, and KV-cache configuration.
         </p>
       </div>
+        </>
+      )}
 
       {forensicRun?.parentSynthesis && (
         <div className="lm-section lm-forensic">
@@ -528,4 +538,24 @@ export function LocalModelMigrationPanel({
 function readFindingText(value: Record<string, unknown>, field: string): string {
   const fieldValue = value[field];
   return typeof fieldValue === "string" && fieldValue ? fieldValue : "unknown";
+}
+
+function lowConfidenceContextNote(report: LocalModelMigrationReport): ReactNode {
+  if (report.contextEvidenceSource === "global_local_session_distribution_scaled_to_scope") {
+    return (
+      <>
+        {" "}global local-session p99 scaled to {report.selectedWorkloadScope.label}; pipeline-specific
+        distributions are still pending. Collect local sessions for this tenant lane before treating the
+        context target as measured.
+      </>
+    );
+  }
+
+  return (
+    <>
+      {" "}avg {fmtM(Math.round(report.avgTokensPerObservedRequest ?? 0))} tok/req × 2.5 safety factor
+      → rounded to standard size. Does not reflect tail requests. Run{" "}
+      <code>npm run report:local-sessions</code> to upgrade to empirical p99.
+    </>
+  );
 }

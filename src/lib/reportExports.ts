@@ -260,6 +260,7 @@ interface ReportExportBreakdowns {
     appliedForensicGuidance: LocalModelMigrationReport["appliedForensicGuidance"];
     availableWorkloadScopes: LocalModelWorkloadScope[];
     contextConfidence: LocalModelMigrationReport["contextConfidence"];
+    contextEvidenceSource: LocalModelMigrationReport["contextEvidenceSource"];
     dailyAvgComputeTokens: number;
     estimatedContextWindowNeeded: number | null;
     huggingFaceCandidateSetId: string | null;
@@ -329,6 +330,7 @@ function buildReportExportBreakdowns(
       appliedForensicGuidance: localModelReport.appliedForensicGuidance,
       availableWorkloadScopes: localModelReport.availableWorkloadScopes,
       contextConfidence: localModelReport.contextConfidence,
+      contextEvidenceSource: localModelReport.contextEvidenceSource,
       dailyAvgComputeTokens: localModelReport.dailyAvgComputeTokens,
       estimatedContextWindowNeeded: localModelReport.estimatedContextWindowNeeded,
       huggingFaceCandidateSetId: context.huggingFaceCandidateSet?.candidateSetId ?? null,

@@ -529,6 +529,9 @@ function refreshStepsFromJob(job: Record<string, unknown>): RefreshProgressStep[
     forensicRun && typeof forensicRun.huggingFaceCandidateSetId === "string"
       ? forensicRun.huggingFaceCandidateSetId
       : null;
+  const huggingFaceUnavailable = huggingFaceCandidateSetId?.includes("unavailable") ?? false;
+  const huggingFaceStatus: RefreshStepStatus =
+    huggingFaceCandidateSetId === null ? "queued" : huggingFaceUnavailable ? "degraded" : "completed";
 
   return [
     {
@@ -541,14 +544,13 @@ function refreshStepsFromJob(job: Record<string, unknown>): RefreshProgressStep[
     },
     {
       detail:
-        huggingFaceCandidateSetId && huggingFaceCandidateSetId.includes("unavailable")
+        huggingFaceCandidateSetId === null
+          ? "Candidate refresh has not reported a candidate set yet."
+          : huggingFaceUnavailable
           ? "Candidate set unavailable for this refresh."
           : "Candidate refresh request completed.",
       id: "huggingface",
-      status:
-        huggingFaceCandidateSetId && huggingFaceCandidateSetId.includes("unavailable")
-          ? "degraded"
-          : "completed",
+      status: huggingFaceStatus,
       title: "Hugging Face candidates"
     },
     {
