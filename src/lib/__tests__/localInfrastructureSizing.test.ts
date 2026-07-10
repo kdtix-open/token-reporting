@@ -293,6 +293,9 @@ describe("localInfrastructureSizing", () => {
     );
     expect(allProviderSteady?.estimatedCapexLowUsd).toBe(630_000);
     expect(allProviderSteady?.estimatedCapexHighUsd).toBe(900_000);
+    expect(report.hardwareBudgetSummary.cfoSummaryLines).toContain(
+      "For all-provider steady-state replacement, create a $630K-$900K production-pod planning envelope."
+    );
 
     expect(allProviderPeak).toMatchObject({
       requiredNodes: 17,
@@ -303,6 +306,9 @@ describe("localInfrastructureSizing", () => {
     expect(allProviderPeak?.targetTokensPerSecond).toBeCloseTo(12210.9, 1);
     expect(allProviderPeak?.estimatedCapexLowUsd).toBe(1_785_000);
     expect(allProviderPeak?.estimatedCapexHighUsd).toBe(2_550_000);
+    expect(report.hardwareBudgetSummary.cfoSummaryLines).toContain(
+      "For all-provider peak-safe replacement, create a $1.785M-$2.55M expansion envelope."
+    );
   });
 
   it("hardwareBudgetScenarios_BlockP99FullReplacementWithoutBenchmarkEvidence", () => {
@@ -354,6 +360,33 @@ describe("localInfrastructureSizing", () => {
       )
     ).toMatchObject({
       hardwareProfileId: "custom-worker-pool"
+    });
+  });
+
+  it("hardwareBudgetScenarios_DoNotEstimateOpexWhenPowerDrawIsUnknown", () => {
+    const customProfile = customHardwareProfile({
+      estimatedSystemPowerKw: null,
+      id: "custom-worker-pool-without-power",
+      profileName: "Custom worker-pool profile without power"
+    });
+    const report = buildLocalInfrastructureSizing({
+      distribution: localDistribution,
+      hardwareProfiles: [customProfile],
+      localModelReport: {
+        contextConfidence: "high",
+        estimatedContextWindowNeeded: 131_072,
+        requiredTokensPerSec: 250
+      } as LocalModelMigrationReport,
+      summaries: fixtureSummaries()
+    });
+
+    expect(
+      report.hardwareBudgetScenarios.find(
+        (scenario) => scenario.hardwareProfileId === "custom-worker-pool-without-power"
+      )
+    ).toMatchObject({
+      estimatedAnnualOpexUsd: null,
+      estimatedSystemPowerKw: null
     });
   });
 

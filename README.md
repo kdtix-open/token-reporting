@@ -26,7 +26,7 @@ without needing the private Orchestrator at all.
   - **Cursor** — `POST https://api.cursor.com/teams/daily-usage-data` (Basic Auth)
   - **Claude (Anthropic)** — `GET https://api.anthropic.com/v1/organizations/usage_report/messages` (Admin API key)
   - **OpenAI Codex** — `GET https://api.openai.com/v1/organization/usage/completions` (org admin key)
-- Persist the latest report snapshot into `public/data/{provider}/latest-metadata.json`
+- Persist the latest report snapshot into `public/data/{provider}/latest-metadata.json` and accumulated history into `public/data/{provider}/accumulated-metadata.json`
 - Dashboard card per registered provider, seeded with representative local fixtures
 
 ## Quick start
@@ -128,7 +128,9 @@ npm run report:cursor
 ```
 
 Requires `CURSOR_ADMIN_API_KEY` in `.env.admin.credentials`. Create one in
-your Cursor team settings.
+your Cursor team settings. Public Cursor identity aliases use a keyed HMAC;
+set `TOKEN_REPORTING_CURSOR_REDACTION_SALT` in `.env.admin.credentials` to
+rotate that salt independently from the Cursor admin key.
 Endpoint: `POST https://api.cursor.com/teams/daily-usage-data` (Basic Auth, 28-day window)
 
 ### Claude (Anthropic)

@@ -35,7 +35,7 @@ Each provider follows a standardized structure in `src/providers/{provider}/`:
 - **`types.ts`** — Zod schemas + TypeScript interfaces for API responses and report summaries
 - **`client.ts`** — HTTP client for provider API calls
 - **`service.ts`** — Business logic: aggregates raw data into `ProviderReportSummary`
-- **`persistence.ts`** — Writes fetched data to `public/data/{provider}/latest-metadata.json`
+- **`persistence.ts`** — Writes fetched data to `public/data/{provider}/latest-metadata.json` and accumulated history to `public/data/{provider}/accumulated-metadata.json`
 - **`seed.ts`** — Static seeded data for offline/first-load fallback
 - **`__tests__/`** — Unit tests for client and service
 
@@ -44,7 +44,7 @@ Providers are registered in `src/providers/registry.ts` via the `ProviderAdapter
 ### Data Flow
 
 1. CLI scripts (`scripts/fetch-*.ts`) call provider APIs and persist snapshots via the persistence layer
-2. `App.tsx` loads snapshots from `/data/{provider}/latest-metadata.json` on mount, falling back to seeded data
+2. `App.tsx` loads snapshots from `/data/{provider}/accumulated-metadata.json` on mount, then falls back to `/data/{provider}/latest-metadata.json` and finally seeded data
 3. Each provider's `transformSnapshot()` parses raw JSON → typed `ProviderReportSummary` using Zod `safeParse()` for backward compatibility
 4. Summaries flow as props into section components (comparison charts, spend projections, migration panel, report cards)
 

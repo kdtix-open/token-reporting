@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { createHmac } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -47,12 +47,13 @@ export async function persistCursorDailyUsageReport({
   };
   if (spend) snapshot.spend = spend;
   if (events) snapshot.events = events;
-  const redactedSnapshot = redactCursorSnapshot(snapshot);
+  const redactionSalt = cursorRedactionSalt(env);
+  const redactedSnapshot = redactCursorSnapshot(snapshot, redactionSalt);
 
   const accumulatedPath = accumulatedPathForLatest(outputPath);
   const existing = await readJsonIfExists<typeof snapshot>(accumulatedPath);
   const accumulated = existing
-    ? mergeCursorSnapshots(redactCursorSnapshot(existing), redactedSnapshot)
+    ? mergeCursorSnapshots(redactCursorSnapshot(existing, redactionSalt), redactedSnapshot)
     : redactedSnapshot;
 
   await mkdir(path.dirname(outputPath), { recursive: true });
@@ -61,15 +62,15 @@ export async function persistCursorDailyUsageReport({
   return outputPath;
 }
 
-function redactCursorSnapshot(snapshot: CursorSnapshot): CursorSnapshot {
+function redactCursorSnapshot(snapshot: CursorSnapshot, redactionSalt: string): CursorSnapshot {
   return {
     ...snapshot,
     daily: {
       ...snapshot.daily,
       data: snapshot.daily.data.map((item) => ({
         ...item,
-        email: redactCursorEmail(item.email),
-        userId: redactCursorUserId(item.userId)
+        email: redactCursorEmail(item.email, redactionSalt),
+        userId: redactCursorUserId(item.userId, redactionSalt)
       }))
     },
     ...(snapshot.spend
@@ -78,9 +79,9 @@ function redactCursorSnapshot(snapshot: CursorSnapshot): CursorSnapshot {
             ...snapshot.spend,
             teamMemberSpend: snapshot.spend.teamMemberSpend.map((item) => ({
               ...item,
-              email: redactCursorEmail(item.email),
-              name: redactCursorName(item.name),
-              userId: redactCursorUserId(item.userId)
+              email: redactCursorEmail(item.email, redactionSalt),
+              name: redactCursorName(item.name, redactionSalt),
+              userId: redactCursorUserId(item.userId, redactionSalt)
             }))
           }
         }
@@ -91,7 +92,7 @@ function redactCursorSnapshot(snapshot: CursorSnapshot): CursorSnapshot {
             ...snapshot.events,
             usageEvents: snapshot.events.usageEvents.map((event) => ({
               ...event,
-              userEmail: redactCursorEmail(event.userEmail)
+              userEmail: redactCursorEmail(event.userEmail, redactionSalt)
             }))
           }
         }
@@ -99,30 +100,50 @@ function redactCursorSnapshot(snapshot: CursorSnapshot): CursorSnapshot {
   };
 }
 
-function redactCursorUserId(value: string): string {
-  if (/^user_redacted_[a-f0-9]{12}$/u.test(value)) return value;
-  return `user_redacted_${stableCursorHash(value)}`;
+function cursorRedactionSalt(env: NodeJS.ProcessEnv): string {
+  const salt =
+    env.TOKEN_REPORTING_CURSOR_REDACTION_SALT ??
+    env.TOKEN_REPORTING_REDACTION_SALT ??
+    env.CURSOR_ADMIN_API_KEY;
+  if (!salt) {
+    throw new Error(
+      "TOKEN_REPORTING_CURSOR_REDACTION_SALT or CURSOR_ADMIN_API_KEY is required to persist redacted Cursor identity fields."
+    );
+  }
+  return salt;
 }
 
-function redactCursorEmail(value: string): string;
-function redactCursorEmail(value: null): null;
-function redactCursorEmail(value: undefined): undefined;
-function redactCursorEmail(value: string | undefined): string | undefined;
-function redactCursorEmail(value: string | null | undefined): string | null | undefined;
-function redactCursorEmail(value: string | null | undefined): string | null | undefined {
+function redactCursorUserId(value: string, redactionSalt: string): string {
+  if (/^user_redacted_(?:hmac_[a-f0-9]{16}|[a-f0-9]{12})$/u.test(value)) return value;
+  return `user_redacted_hmac_${stableCursorHash(value, redactionSalt)}`;
+}
+
+function redactCursorEmail(value: string, redactionSalt: string): string;
+function redactCursorEmail(value: null, redactionSalt: string): null;
+function redactCursorEmail(value: undefined, redactionSalt: string): undefined;
+function redactCursorEmail(value: string | undefined, redactionSalt: string): string | undefined;
+function redactCursorEmail(value: string | null | undefined, redactionSalt: string): string | null | undefined;
+function redactCursorEmail(value: string | null | undefined, redactionSalt: string): string | null | undefined {
   if (value === null || value === undefined) return value;
-  if (/^redacted-[a-f0-9]{12}@redacted\.local$/u.test(value)) return value;
-  return `redacted-${stableCursorHash(value)}@redacted.local`;
+  if (/^redacted-(?:hmac_[a-f0-9]{16}|[a-f0-9]{12})@redacted\.local$/u.test(value)) {
+    return value;
+  }
+  return `redacted-hmac_${stableCursorHash(value, redactionSalt)}@redacted.local`;
 }
 
-function redactCursorName(value: string | undefined): string | undefined {
+function redactCursorName(value: string | undefined, redactionSalt: string): string | undefined {
   if (value === undefined) return value;
-  if (/^Redacted user [a-f0-9]{12}$/u.test(value)) return value;
-  return `Redacted user ${stableCursorHash(value)}`;
+  if (/^Redacted user (?:hmac_[a-f0-9]{16}|[a-f0-9]{12})$/u.test(value)) return value;
+  return `Redacted user hmac_${stableCursorHash(value, redactionSalt)}`;
 }
 
-function stableCursorHash(value: string): string {
-  return createHash("sha256").update(value).digest("hex").slice(0, 12);
+function stableCursorHash(value: string, redactionSalt: string): string {
+  return createHmac("sha256", redactionSalt)
+    .update("cursor-identity-redaction-v1")
+    .update("\0")
+    .update(value)
+    .digest("hex")
+    .slice(0, 16);
 }
 
 function mergeCursorSnapshots<T extends {

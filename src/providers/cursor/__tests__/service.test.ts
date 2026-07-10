@@ -142,6 +142,10 @@ const sampleEvents = {
   period: { startDate: 1740787200000, endDate: 1743206400000 }
 };
 
+const testRedactionEnv = {
+  TOKEN_REPORTING_CURSOR_REDACTION_SALT: "test-cursor-redaction-salt"
+};
+
 describe("createCursorReportSummary", () => {
   it("aggregates usage across all user-day rows (legacy daily-only input)", () => {
     const summary = createCursorReportSummary(sampleReport);
@@ -226,7 +230,7 @@ describe("persistCursorDailyUsageReport", () => {
       persistCursorDailyUsageReport({
         report: sampleReport,
         outputPath,
-        env: {}
+        env: testRedactionEnv
       })
     ).resolves.toBe(outputPath);
 
@@ -248,7 +252,7 @@ describe("persistCursorDailyUsageReport", () => {
       spend,
       events,
       outputPath,
-      env: {}
+      env: testRedactionEnv
     });
 
     const written = await readFile(outputPath, "utf8");
@@ -278,7 +282,7 @@ describe("persistCursorDailyUsageReport", () => {
         spend,
         events,
         outputPath,
-        env: {}
+        env: testRedactionEnv
       });
     }
 
@@ -294,13 +298,13 @@ describe("persistCursorDailyUsageReport", () => {
     expect(accumulated.events.usageEvents).toHaveLength(3);
     expect(accumulated.spend.teamMemberSpend).toHaveLength(2);
     expect(accumulated.daily.data.map((item) => item.userId)).toEqual(
-      expect.arrayContaining([expect.stringMatching(/^user_redacted_[a-f0-9]{12}$/)])
+      expect.arrayContaining([expect.stringMatching(/^user_redacted_hmac_[a-f0-9]{16}$/)])
     );
     expect(accumulated.events.usageEvents.map((event) => event.userEmail)).toEqual(
-      expect.arrayContaining([expect.stringMatching(/^redacted-[a-f0-9]{12}@redacted\.local$/)])
+      expect.arrayContaining([expect.stringMatching(/^redacted-hmac_[a-f0-9]{16}@redacted\.local$/)])
     );
     expect(accumulated.spend.teamMemberSpend.map((item) => item.name)).toEqual(
-      expect.arrayContaining([expect.stringMatching(/^Redacted user [a-f0-9]{12}$/)])
+      expect.arrayContaining([expect.stringMatching(/^Redacted user hmac_[a-f0-9]{16}$/)])
     );
   });
 

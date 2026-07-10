@@ -101,6 +101,7 @@ export interface DynamicIntegrationContractOptions {
 
 const dynamicContractVersion = "sdlca-token-reporting-dynamic-v0.1";
 const activeDynamicRefreshJobIds = new Set<string>();
+const terminalDynamicRefreshJobs = new Map<string, Record<string, unknown>>();
 
 export function createDynamicIntegrationContractHandler(
   options: DynamicIntegrationContractOptions = {}
@@ -331,12 +332,12 @@ async function dynamicRefreshResponse(
       ...requestContext,
       onProgress: async (job) => {
         latestJob = job;
-        await refreshJobStore.set(jobId, job).catch(() => undefined);
+        await persistProgressRefreshJob(refreshJobStore, jobId, job);
       }
     })
       .then(async (job) => {
         latestJob = job;
-        await refreshJobStore.set(jobId, job).catch(() => undefined);
+        await persistTerminalRefreshJob(refreshJobStore, jobId, job);
       })
       .catch(async (error) => {
         latestJob = buildFailedRefreshJob({
@@ -347,7 +348,7 @@ async function dynamicRefreshResponse(
           refreshRequest,
           startedAt
         });
-        await refreshJobStore.set(jobId, latestJob).catch(() => undefined);
+        await persistTerminalRefreshJob(refreshJobStore, jobId, latestJob);
       })
       .finally(() => activeDynamicRefreshJobIds.delete(jobId));
 
@@ -393,6 +394,31 @@ async function reserveRefreshJobIdIfAvailable(
   }
 
   return true;
+}
+
+async function persistProgressRefreshJob(
+  refreshJobStore: RefreshJobStore,
+  jobId: string,
+  job: Record<string, unknown>
+): Promise<void> {
+  await refreshJobStore.set(jobId, job).catch(() => undefined);
+}
+
+async function persistTerminalRefreshJob(
+  refreshJobStore: RefreshJobStore,
+  jobId: string,
+  job: Record<string, unknown>
+): Promise<void> {
+  terminalDynamicRefreshJobs.set(jobId, job);
+  await refreshJobStore
+    .set(jobId, job)
+    .then(() => terminalDynamicRefreshJobs.delete(jobId))
+    .catch(() =>
+      terminalDynamicRefreshJobs.set(jobId, {
+        ...job,
+        persistenceWarning: "refresh_job_terminal_not_persisted"
+      })
+    );
 }
 
 function forensicRunIdForRefreshJob(jobId: string, generatedAt: Date): string {
@@ -684,6 +710,11 @@ async function dynamicRefreshStatusResponse(
   env: NodeJS.ProcessEnv
 ): Promise<IntegrationContractResponse> {
   const jobId = requestPath.split("/").at(-1) ?? "";
+  const terminalJob = terminalDynamicRefreshJobs.get(jobId);
+  if (terminalJob && !activeDynamicRefreshJobIds.has(jobId)) {
+    return jsonResponse(200, terminalJob);
+  }
+
   const job = await refreshJobStore.get(jobId);
   if (!job) {
     return jsonResponse(404, {

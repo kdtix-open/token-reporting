@@ -32,6 +32,7 @@ Use the devcontainer in `.devcontainer/devcontainer.json` for a reproducible Nod
 - `GITHUB_ADMIN_TOKEN`: required for live GitHub Copilot report fetches
 - `GITHUB_ORG`: defaults to `kdtix-open`
 - `CURSOR_ADMIN_API_KEY`: required for live Cursor usage fetches (team Admin API key)
+- `TOKEN_REPORTING_CURSOR_REDACTION_SALT`: optional dedicated salt for public Cursor identity aliases; falls back to `CURSOR_ADMIN_API_KEY` when omitted
 - `ANTHROPIC_ADMIN_API_KEY`: required for live Claude usage fetches (Admin API key, `sk-ant-admin...`)
 - `OPENAI_ADMIN_API_KEY`: required for live OpenAI Codex usage fetches (org admin key with `api.usage.read` scope)
 - `TOKEN_REPORTING_READ_ONLY`: set to `true` or `1` to block file-writing operations

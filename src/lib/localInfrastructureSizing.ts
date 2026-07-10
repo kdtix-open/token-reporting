@@ -1552,8 +1552,16 @@ function buildHardwareBudgetSummary(input: {
       firstServerBudgetLine(input.scenarios, input.budgetHighUsd),
       allProviderSteadyBudgetLine(input.scenarios, input.budgetHighUsd),
       `For Repo Automation project-lane only, the ${budgetLabel} server may be sufficient for initial local worker testing, but full p99 replacement remains blocked by context, quality, and benchmark gates.`,
-      "For all-provider steady-state replacement, create a $1.2M-$2.0M production-pod planning envelope.",
-      "For all-provider peak-safe replacement, create a $3.5M-$6.0M expansion envelope.",
+      planningEnvelopeLine(
+        input.scenarios,
+        "steady_state_replacement",
+        "production-pod planning"
+      ),
+      planningEnvelopeLine(
+        input.scenarios,
+        "peak_safe_replacement",
+        "expansion"
+      ),
       "NVL72-class rack scale should be tied to sold reserved-capacity product demand, not internal provider displacement alone."
     ],
     copilotDominanceWarning: copilotBudgetWarning(input.providerCoverage),
@@ -1609,7 +1617,7 @@ function buildHardwareBudgetScenarios(
     }),
     hardwareBudgetScenario({
       cloudFallbackRequired: true,
-      explanation: `Treat ${budgetLabel} as first-server budget only, not all-provider replacement authority. For all-provider steady-state replacement, create a $1.2M-$2.0M production-pod planning envelope.`,
+      explanation: `Treat ${budgetLabel} as first-server budget only, not all-provider replacement authority. Use the computed all-provider steady-state scenario for the production-pod planning envelope.`,
       fullReplacementAllowed: false,
       goal: "steady_state_replacement",
       profile: preferredProfile,
@@ -1620,7 +1628,7 @@ function buildHardwareBudgetScenarios(
     hardwareBudgetScenario({
       cloudFallbackRequired: true,
       explanation:
-        "For all-provider peak-safe replacement, create a $3.5M-$6.0M expansion envelope.",
+        "Use the computed all-provider peak-safe scenario for the expansion envelope.",
       fullReplacementAllowed: false,
       goal: "peak_safe_replacement",
       profile: preferredProfile,
@@ -1694,6 +1702,27 @@ function allProviderSteadyBudgetLine(
     return `${budgetLabel} appears enough for all-provider steady-state replacement under the selected workload.`;
   }
   return `${budgetLabel} is not enough for all-provider replacement.`;
+}
+
+function planningEnvelopeLine(
+  scenarios: HardwareBudgetScenario[],
+  goal: HardwareReplacementGoal,
+  envelopeKind: string
+): string {
+  const scenario = scenarios.find(
+    (candidate) =>
+      candidate.scope === "all_provider_traffic" &&
+      candidate.replacementGoal === goal
+  );
+  const goalLabel =
+    goal === "steady_state_replacement" ? "steady-state replacement" : "peak-safe replacement";
+  if (!scenario || scenario.estimatedCapexLowUsd === null || scenario.estimatedCapexHighUsd === null) {
+    return `For all-provider ${goalLabel}, request a vendor quote before setting the ${envelopeKind} envelope.`;
+  }
+  return `For all-provider ${goalLabel}, create a ${formatBudgetRange(
+    scenario.estimatedCapexLowUsd,
+    scenario.estimatedCapexHighUsd
+  )} ${envelopeKind} envelope.`;
 }
 
 function copilotBudgetWarning(providerCoverage: NormalizedProviderUsage[]): string {
@@ -1824,12 +1853,11 @@ function estimateAnnualOpex(
   requiredNodes: number | null,
   capexHigh: number | null
 ): number | null {
-  if (requiredNodes === null || capexHigh === null) return null;
+  if (requiredNodes === null || capexHigh === null || profile.estimatedSystemPowerKw === null) {
+    return null;
+  }
   const support = capexHigh * 0.12;
-  const powerCooling =
-    profile.estimatedSystemPowerKw === null
-      ? 0
-      : profile.estimatedSystemPowerKw * requiredNodes * 24 * 365 * 0.18;
+  const powerCooling = profile.estimatedSystemPowerKw * requiredNodes * 24 * 365 * 0.18;
   const software = 10_000 * requiredNodes;
   return roundMoney(support + powerCooling + software);
 }
@@ -2391,6 +2419,10 @@ function formatBudgetUsd(value: number): string {
   if (value >= 1_000_000) return `$${(value / 1_000_000).toLocaleString()}M`;
   if (value >= 1_000 && value % 1_000 === 0) return `$${(value / 1_000).toLocaleString()}K`;
   return `$${value.toLocaleString()}`;
+}
+
+function formatBudgetRange(lowUsd: number, highUsd: number): string {
+  return `${formatBudgetUsd(lowUsd)}-${formatBudgetUsd(highUsd)}`;
 }
 
 function capexRange(profile: HardwareProfile | null): string {

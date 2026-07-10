@@ -2335,45 +2335,187 @@ END;
 }
 
 function reportBreakdownRows(report: ReportExportBreakdowns): ReportBreakdownSqlRow[] {
-  const lines = createCsv([], report).split("\n");
-  const headerIndex = lines.findIndex((line) => line === "section,record_type,field,value");
-  if (headerIndex === -1) return [];
-
-  return lines
-    .slice(headerIndex + 1)
-    .filter((line) => line.trim().length > 0)
-    .map(parseCsvLine)
-    .filter((cells): cells is [string, string, string, string] => cells.length === 4)
-    .map(([section, recordType, field, value]) => ({
-      field,
-      recordType,
-      section,
-      value
-    }));
-}
-
-function parseCsvLine(line: string): string[] {
-  const cells: string[] = [];
-  let cell = "";
-  let inQuotes = false;
-
-  for (let index = 0; index < line.length; index += 1) {
-    const char = line[index];
-    if (char === "\"" && inQuotes && line[index + 1] === "\"") {
-      cell += "\"";
-      index += 1;
-    } else if (char === "\"") {
-      inQuotes = !inQuotes;
-    } else if (char === "," && !inQuotes) {
-      cells.push(cell);
-      cell = "";
-    } else {
-      cell += char;
-    }
+  const rows: ReportBreakdownSqlRow[] = [];
+  for (const projection of report.spendProjections) {
+    pushBreakdownRows(rows, "spend_projections", projection.providerId, {
+      annual_flat_usd: projection.annualFlatUsd,
+      monthly_flat_usd: projection.monthlyFlatUsd,
+      total_usd: projection.totalUsd,
+      trend: projection.trend
+    });
   }
 
-  cells.push(cell);
-  return cells;
+  pushBreakdownRows(rows, "local_model_migration", "tenant", {
+    tenant_id: report.localModelMigration.tenant.tenantId,
+    tenant_name: report.localModelMigration.tenant.tenantName
+  });
+  pushBreakdownRows(rows, "local_model_migration", "selected_scope", {
+    allocation_mode: report.localModelMigration.selectedWorkloadScope.allocationMode,
+    provider_weights: report.localModelMigration.selectedWorkloadScope.providerWeights,
+    scope_id: report.localModelMigration.selectedWorkloadScope.id,
+    scope_label: report.localModelMigration.selectedWorkloadScope.label
+  });
+  pushBreakdownRows(rows, "local_model_migration", "sizing", {
+    context_evidence_source: report.localModelMigration.contextEvidenceSource,
+    estimated_context_window_needed: report.localModelMigration.estimatedContextWindowNeeded,
+    required_tokens_per_sec: report.localModelMigration.requiredTokensPerSec
+  });
+  if (report.localModelMigration.appliedForensicGuidance) {
+    pushBreakdownRows(rows, "local_model_migration", "applied_forensic_guidance", {
+      impact_summary: report.localModelMigration.appliedForensicGuidance.impactSummary,
+      routing_strategy: report.localModelMigration.appliedForensicGuidance.routingStrategy
+    });
+  }
+  for (const profile of report.localModelMigration.profiles) {
+    pushBreakdownRows(rows, "on_prem_model_profiles", profile.hfRepoId, {
+      context_fits: profile.contextFits,
+      forensic_interpretation: profile.forensicInterpretation,
+      throughput_fits: profile.throughputFits
+    });
+  }
+
+  pushBreakdownRows(rows, "local_infrastructure_sizing", "workload_summary", {
+    all_provider_compute_tps: report.localInfrastructureSizing.workloadSummary.allProviderComputeTps,
+    all_provider_peak_tps: report.localInfrastructureSizing.workloadSummary.allProviderPeakTps,
+    current_project_lane_p99_context:
+      report.localInfrastructureSizing.workloadSummary.currentProjectLaneP99Context,
+    repo_automation_compute_tps:
+      report.localInfrastructureSizing.workloadSummary.repoAutomationComputeTps,
+    repo_automation_peak_tps: report.localInfrastructureSizing.workloadSummary.repoAutomationPeakTps,
+    selected_scope_compute_tps:
+      report.localInfrastructureSizing.workloadSummary.selectedScopeComputeTps,
+    selected_scope_peak_tps:
+      report.localInfrastructureSizing.workloadSummary.selectedScopePeakTps
+  });
+  pushBreakdownRows(
+    rows,
+    "local_infrastructure_executive_summary",
+    "decision",
+    report.localInfrastructureSizing.executiveSummary
+  );
+  report.localInfrastructureSizing.hardwareBudgetSummary.cfoSummaryLines.forEach((line, index) =>
+    pushBreakdownRows(rows, "local_infrastructure_hardware_budget_summary", "cfo_answer", {
+      [`summary_line_${index + 1}`]: line
+    })
+  );
+  pushBreakdownRows(rows, "local_infrastructure_hardware_budget_summary", "warning", {
+    copilot_dominance_warning:
+      report.localInfrastructureSizing.hardwareBudgetSummary.copilotDominanceWarning
+  });
+  for (const scenario of report.localInfrastructureSizing.hardwareBudgetScenarios) {
+    pushBreakdownRows(rows, "local_infrastructure_hardware_budget_scenarios", scenario.scope, {
+      cloud_fallback_required: scenario.cloudFallbackRequired,
+      confidence: scenario.confidence,
+      estimated_annual_opex_usd: scenario.estimatedAnnualOpexUsd,
+      estimated_capex_high_usd: scenario.estimatedCapexHighUsd,
+      estimated_capex_low_usd: scenario.estimatedCapexLowUsd,
+      estimated_node_throughput_tps: scenario.estimatedNodeThroughputTps,
+      estimated_system_power_kw: scenario.estimatedSystemPowerKw,
+      explanation: scenario.explanation,
+      full_replacement_allowed: scenario.fullReplacementAllowed,
+      hardware_profile_id: scenario.hardwareProfileId,
+      hardware_profile_name: scenario.hardwareProfileName,
+      rack_units_required: scenario.rackUnitsRequired,
+      replacement_goal: scenario.replacementGoal,
+      required_context_tokens: scenario.requiredContextTokens,
+      required_gpu_count: scenario.requiredGpuCount,
+      required_nodes: scenario.requiredNodes,
+      target_tokens_per_second: scenario.targetTokensPerSecond
+    });
+  }
+  pushBreakdownRows(
+    rows,
+    "local_infrastructure_coverage_summary",
+    "guardrails",
+    report.localInfrastructureSizing.localCoverageSummary
+  );
+  pushBreakdownRows(rows, "local_infrastructure_workload_scope_config", "config", {
+    compare_against_all_provider_traffic:
+      report.localInfrastructureSizing.workloadScopeConfig.compareAgainstAllProviderTraffic,
+    default_sizing_scope: report.localInfrastructureSizing.workloadScopeConfig.defaultSizingScope
+  });
+  for (const scope of report.localInfrastructureSizing.workloadScopeSummaries) {
+    pushBreakdownRows(rows, "local_infrastructure_workload_scopes", scope.scope, {
+      compute_tokens_per_day: scope.computeTokensPerDay,
+      current_project_lane_compute_tps: scope.currentProjectLaneComputeTps,
+      label: scope.label,
+      notes: scope.notes,
+      peak_tokens_per_second: scope.peakTokensPerSecond,
+      provider_ids: scope.providerIds,
+      route_class_ids: scope.routeClassIds
+    });
+  }
+  for (const route of report.localInfrastructureSizing.routeClasses) {
+    pushBreakdownRows(rows, "local_infrastructure_route_classes", route.id, {
+      context_stats_source: route.contextStatsSource,
+      context_stats_warning: route.contextStatsWarning,
+      kind: route.kind,
+      overlaps_with_route_class_ids: route.overlapsWithRouteClassIds,
+      recommended_routing: route.recommendedRouting,
+      token_share_estimate: route.tokenShareEstimate
+    });
+  }
+  for (const profile of report.localInfrastructureSizing.hardwareProfiles) {
+    pushBreakdownRows(rows, "local_infrastructure_hardware_profiles", profile.id, {
+      analyst_narrative: profile.analystNarrative,
+      first_server_role: profile.firstServerRole,
+      full_project_lane_claim_allowed: profile.fullProjectLaneClaimAllowed,
+      max_safe_initial_routing_pct: profile.maxSafeInitialRoutingPct,
+      pricing_confidence: profile.pricingConfidence,
+      quote_priority: profile.quotePriority,
+      total_vram_gb: profile.totalVramGb
+    });
+  }
+  pushBreakdownRows(
+    rows,
+    "local_infrastructure_financials",
+    "payback",
+    report.localInfrastructureSizing.financials
+  );
+  for (const gate of report.localInfrastructureSizing.benchmarkGates) {
+    pushBreakdownRows(rows, "local_infrastructure_benchmark_gates", gate.gateId, {
+      fail_action: gate.failAction,
+      minimum_sample_count: gate.minimumSampleCount,
+      name: gate.name,
+      pass_criteria: gate.passCriteria,
+      required_for_phase: gate.requiredForPhase,
+      required_metrics: gate.requiredMetrics,
+      status: gate.status
+    });
+  }
+  report.localInfrastructureSizing.dataQualityWarnings.forEach((warning, index) =>
+    pushBreakdownRows(rows, "local_infrastructure_data_quality", `warning_${index + 1}`, {
+      message: warning
+    })
+  );
+  if (report.forensic.runId) {
+    pushBreakdownRows(rows, "forensic_reviewer_consensus", report.forensic.runId, {
+      recommendation: report.forensic.parentSynthesis?.recommendation,
+      status: report.forensic.status
+    });
+  }
+
+  return rows;
+}
+
+function pushBreakdownRows(
+  rows: ReportBreakdownSqlRow[],
+  section: string,
+  recordType: string,
+  values: object
+): void {
+  for (const [field, value] of Object.entries(values)) {
+    const normalizedValue = reportBreakdownValue(value);
+    if (normalizedValue === null) continue;
+    rows.push({ field, recordType, section, value: normalizedValue });
+  }
+}
+
+function reportBreakdownValue(value: unknown): string | null {
+  if (value === null || value === undefined) return null;
+  if (Array.isArray(value)) return value.join("; ");
+  if (typeof value === "object") return JSON.stringify(value);
+  return String(value);
 }
 
 function upsertReportBreakdownSql(

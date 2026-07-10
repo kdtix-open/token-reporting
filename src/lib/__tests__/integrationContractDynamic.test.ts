@@ -626,6 +626,67 @@ describe("integrationContractDynamic", () => {
     }
   });
 
+  it("createDynamicIntegrationContractHandler_RefreshEndpoint_AsyncModeKeepsTerminalStatusWhenFinalPersistenceFails", async () => {
+    let getJob: Record<string, unknown> | undefined;
+    let setCalls = 0;
+    const refreshJobStore = {
+      async get() {
+        return getJob;
+      },
+      async set(_jobId: string, job: Record<string, unknown>) {
+        setCalls += 1;
+        if (setCalls === 1) {
+          getJob = job;
+          return;
+        }
+        throw new Error("disk full");
+      }
+    };
+    const refreshExecutor = vi.fn().mockResolvedValue({
+      providerResults: [
+        {
+          accumulatedThrough: "2026-06-07",
+          completedAt: "2026-06-07T16:45:08.000Z",
+          providerId: "codex",
+          status: "completed"
+        }
+      ]
+    });
+    const handler = createDynamicIntegrationContractHandler({
+      asyncRefresh: true,
+      loadSummaries: async () => summaries,
+      now: () => new Date("2026-06-07T16:45:00.000Z"),
+      refreshExecutor,
+      refreshJobStore
+    });
+
+    const acceptedResponse = await handler({
+      body: {
+        providers: ["codex"]
+      },
+      method: "POST",
+      path: "/api/refresh"
+    });
+
+    expect(acceptedResponse.status).toBe(202);
+    await vi.waitFor(() => expect(setCalls).toBeGreaterThanOrEqual(2));
+
+    await vi.waitFor(async () => {
+      const statusResponse = await handler({
+        method: "GET",
+        path: "/api/refresh/dynamic-refresh-20260607T164500000Z"
+      });
+
+      expect(statusResponse.status).toBe(200);
+      expect(statusResponse.body).toMatchObject({
+        jobId: "dynamic-refresh-20260607T164500000Z",
+        persistenceWarning: "refresh_job_terminal_not_persisted",
+        providerResults: [expect.objectContaining({ providerId: "codex", status: "completed" })],
+        status: "completed"
+      });
+    });
+  });
+
   it("createDynamicIntegrationContractHandler_RefreshStatus_ReconcilesPersistedRunningJobAfterRestart", async () => {
     const refreshJobStore = {
       get: vi.fn(async () => ({
