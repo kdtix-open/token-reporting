@@ -126,13 +126,21 @@ export async function pollReportRefreshJob(
         timeout.promise
       ]);
     } catch (error) {
-      if (timeout.didTimeout()) return timeoutResult(timeoutMs);
-      throw error;
+      if (timeout.didTimeout()) {
+        response = "timeout";
+      } else {
+        throw error;
+      }
     } finally {
       timeout.clear();
     }
 
-    if (response === "timeout") return timeoutResult(timeoutMs);
+    if (response === "timeout") {
+      const remainingMs = remainingTimeoutMs(startedAt, timeoutMs);
+      if (remainingMs <= 0) break;
+      await delay(Math.min(intervalMs, remainingMs));
+      continue;
+    }
 
     const body = await readJsonBody(response);
     if (!response.ok) {

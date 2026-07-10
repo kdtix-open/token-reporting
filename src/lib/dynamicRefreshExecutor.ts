@@ -192,25 +192,33 @@ async function runNpmScript(
 
     return { ok: true, stderr, stdout };
   } catch (error) {
-    const failure = error as {
-      code?: string;
-      message?: string;
-      stderr?: string;
-      stdout?: string;
-      syscall?: string;
-    };
-    const npmMissing = failure.code === "ENOENT" || failure.syscall === `spawn ${npmCommand}`;
-    return {
-      failureReason: npmMissing ? "npm_not_found_or_path_missing" : undefined,
-      ok: false,
-      stderr:
-        failure.stderr ??
-        (npmMissing
-          ? `${npmCommand} command not found; PATH may be missing for LaunchAgent startup.`
-          : failure.message),
-      stdout: failure.stdout
-    };
+    return formatProviderScriptFailure(error, npmCommand);
   }
+}
+
+/** Formats npm script spawn failures for dynamic refresh diagnostics. */
+export function formatProviderScriptFailure(
+  error: unknown,
+  npmCommand: string
+): ProviderScriptRunResult {
+  const failure = error as {
+    code?: string;
+    message?: string;
+    stderr?: string;
+    stdout?: string;
+    syscall?: string;
+  };
+  const npmMissing = failure.code === "ENOENT";
+  return {
+    failureReason: npmMissing ? "npm_not_found_or_path_missing" : undefined,
+    ok: false,
+    stderr:
+      failure.stderr ??
+      (npmMissing
+        ? `${npmCommand} command not found; PATH may be missing for LaunchAgent startup.`
+        : failure.message),
+    stdout: failure.stdout
+  };
 }
 
 function readHuggingFaceCandidateSetId(stdout: string | undefined): string | undefined {

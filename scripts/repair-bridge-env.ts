@@ -45,8 +45,8 @@ async function main(): Promise<void> {
     const backupPath = `${adminEnvPath}.bak-${timestampForFile(new Date())}`;
     await fs.writeFile(backupPath, adminEnvText, { mode: 0o600 });
     await fs.writeFile(adminEnvPath, repair.updatedAdminEnvText, { mode: 0o600 });
-    await fs.chmod(adminEnvPath, 0o600);
   }
+  await fs.chmod(adminEnvPath, 0o600);
 
   process.stdout.write(`${JSON.stringify(repair.redactedSummary, null, 2)}\n`);
 }

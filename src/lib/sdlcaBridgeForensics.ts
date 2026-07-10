@@ -504,12 +504,16 @@ function isNormalizableBridgeResult(
   raw: Record<string, unknown>,
   providerKind: SdlcaBridgeProviderKind
 ): boolean {
-  if (raw.schemaVersion === "sdlca.bridge.forensic.v0") return true;
-
   const bridgeProviderKind = readString(raw, "bridgeProviderKind");
   const reviewerModel = readString(raw, "reviewerModel");
   const hasForensicContent =
-    Array.isArray(raw.findings) || Array.isArray(raw.recommendations) || isRecord(raw.verdict);
+    Array.isArray(raw.findings) ||
+    Array.isArray(raw.recommendations) ||
+    typeof raw.summary === "string" ||
+    isRecord(raw.provenance) ||
+    isRecord(raw.verdict);
+
+  if (raw.schemaVersion === "sdlca.bridge.forensic.v0") return hasForensicContent;
 
   return bridgeProviderKind === providerKind && reviewerModel !== undefined && hasForensicContent;
 }

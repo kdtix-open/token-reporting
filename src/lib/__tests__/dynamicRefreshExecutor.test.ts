@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { createProviderScriptRefreshExecutor } from "../dynamicRefreshExecutor";
+import {
+  createProviderScriptRefreshExecutor,
+  formatProviderScriptFailure
+} from "../dynamicRefreshExecutor";
 
 describe("dynamicRefreshExecutor", () => {
   it("createProviderScriptRefreshExecutor_HistoricalSelectedProviders_RunsProviderScriptsWithHistoricalEnv", async () => {
@@ -178,5 +181,22 @@ describe("dynamicRefreshExecutor", () => {
         GITHUB_ADMIN_TOKEN: "github-admin"
       })
     );
+  });
+
+  it("formatProviderScriptFailure_NonEnoentSpawnFailure_PreservesOriginalDiagnostic", () => {
+    const result = formatProviderScriptFailure(
+      Object.assign(new Error("permission denied"), {
+        code: "EACCES",
+        syscall: `spawn ${process.platform === "win32" ? "npm.cmd" : "npm"}`
+      }),
+      process.platform === "win32" ? "npm.cmd" : "npm"
+    );
+
+    expect(result).toEqual({
+      failureReason: undefined,
+      ok: false,
+      stderr: "permission denied",
+      stdout: undefined
+    });
   });
 });

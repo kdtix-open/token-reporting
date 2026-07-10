@@ -268,4 +268,46 @@ describe("integrationApiClient", () => {
       vi.useRealTimers();
     }
   });
+
+  it("pollReportRefreshJob_StatusRequestTimeoutBeforeDeadline_ContinuesPolling", async () => {
+    vi.useFakeTimers();
+    try {
+      const fetcher = vi
+        .fn()
+        .mockImplementationOnce(
+          () =>
+            new Promise<Response>(() => {
+              // The first status request hits its per-request timeout, not the overall deadline.
+            })
+        )
+        .mockResolvedValueOnce({
+          json: async () => ({
+            jobId: "dynamic-refresh-transient-timeout",
+            status: "completed"
+          }),
+          ok: true,
+          status: 200
+        });
+      const resultPromise = pollReportRefreshJob("dynamic-refresh-transient-timeout", {
+        apiBaseUrl: "http://127.0.0.1:8788",
+        fetcher,
+        intervalMs: 0,
+        timeoutMs: 90_000
+      });
+
+      await vi.advanceTimersByTimeAsync(30_000);
+      await vi.runOnlyPendingTimersAsync();
+
+      await expect(resultPromise).resolves.toEqual({
+        job: {
+          jobId: "dynamic-refresh-transient-timeout",
+          status: "completed"
+        },
+        outcome: "accepted"
+      });
+      expect(fetcher).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
