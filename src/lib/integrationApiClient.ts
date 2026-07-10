@@ -86,8 +86,16 @@ export async function requestReportRefresh(
   const body = await readJsonBody(response);
 
   if (response.ok) {
+    const job = parseRefreshJob(body);
+    if (!job) {
+      return {
+        httpStatus: response.status,
+        message: "Refresh request returned a malformed job payload.",
+        outcome: "failed"
+      };
+    }
     return {
-      job: body as ReportRefreshJob,
+      job,
       outcome: "accepted"
     };
   }
@@ -151,7 +159,14 @@ export async function pollReportRefreshJob(
       };
     }
 
-    const job = body as ReportRefreshJob;
+    const job = parseRefreshJob(body);
+    if (!job) {
+      return {
+        httpStatus: response.status,
+        message: "Refresh status request returned a malformed job payload.",
+        outcome: "failed"
+      };
+    }
     options.onUpdate?.(job);
     if (isTerminalRefreshStatus(job.status)) {
       return {
@@ -190,6 +205,14 @@ function readMessage(body: unknown): string | undefined {
   if (typeof body !== "object" || body === null || Array.isArray(body)) return undefined;
   const raw = (body as Record<string, unknown>).message;
   return typeof raw === "string" ? raw : undefined;
+}
+
+function parseRefreshJob(body: unknown): ReportRefreshJob | null {
+  if (typeof body !== "object" || body === null || Array.isArray(body)) return null;
+  const job = body as Record<string, unknown>;
+  return typeof job.jobId === "string" && typeof job.status === "string"
+    ? (job as ReportRefreshJob)
+    : null;
 }
 
 function trimTrailingSlash(value: string): string {

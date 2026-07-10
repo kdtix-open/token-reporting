@@ -187,6 +187,31 @@ describe("buildLocalModelReport", () => {
     expect(report.windowDays).toBe(28);
   });
 
+  it("normalizes mixed provider windows before reporting aggregate totals", () => {
+    const shortCopilotWindow = {
+      ...copilotCliSummary,
+      reportEndDay: "2026-03-14",
+      cliInputTokens: 14_000,
+      cliOutputTokens: 0,
+      cliRequestCount: 14
+    } as unknown as ProviderReportSummary;
+
+    const report = buildLocalModelReport([codexSummary, shortCopilotWindow]);
+    const copilot = report.tokenObservedProviders.find(
+      (provider) => provider.providerId === "github-copilot"
+    );
+
+    expect(report.windowDays).toBe(28);
+    expect(copilot).toMatchObject({
+      inputTokens: 28_000,
+      requestCount: 28,
+      windowDays: 28
+    });
+    expect(report.totalInputTokens).toBe(238_000);
+    expect(report.totalPureComputeTokens).toBe(288_000);
+    expect(report.dailyAvgComputeTokens).toBeCloseTo(288_000 / 28);
+  });
+
   it("all 5 model profiles are present with expected tiers", () => {
     const report = buildLocalModelReport([codexSummary]);
     const tiers = report.profiles.map((p) => p.tier);

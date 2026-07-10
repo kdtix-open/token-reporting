@@ -1,11 +1,4 @@
 {
   "version": 1,
-  "skills": {
-    "azure-front-door": {
-      "source": "microsoftdocs/agent-skills",
-      "sourceType": "github",
-      "skillPath": "skills/azure-front-door/SKILL.md",
-      "computedHash": "c53ff790f89733d99d7360efaf016b6363dce6c6d969512fb05f3db8322f5d44"
-    }
-  }
+  "skills": {}
 }

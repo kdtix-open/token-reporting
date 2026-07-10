@@ -140,7 +140,7 @@ export function createDynamicIntegrationContractHandler(
     }
 
     if (method === "GET" && requestPath.startsWith("/api/refresh/")) {
-      return dynamicRefreshStatusResponse(requestPath, refreshJobStore);
+      return dynamicRefreshStatusResponse(requestPath, refreshJobStore, env);
     }
 
     if (method === "POST" && requestPath === "/api/local-model-profiles/forensic-runs") {
@@ -640,7 +640,8 @@ function latestTimestamp(values: Array<string | undefined | null>): string | und
 
 async function dynamicRefreshStatusResponse(
   requestPath: string,
-  refreshJobStore: RefreshJobStore
+  refreshJobStore: RefreshJobStore,
+  env: NodeJS.ProcessEnv
 ): Promise<IntegrationContractResponse> {
   const jobId = requestPath.split("/").at(-1) ?? "";
   const job = await refreshJobStore.get(jobId);
@@ -651,7 +652,79 @@ async function dynamicRefreshStatusResponse(
     });
   }
 
+  if (refreshJobIsNonTerminal(job) && !activeDynamicRefreshJobIds.has(jobId)) {
+    const reconciledJob = reconcileAbandonedRefreshJob(job);
+    try {
+      assertWritableOperationAllowed("Token Reporting refresh job reconciliation", env);
+    } catch {
+      return jsonResponse(200, {
+        ...reconciledJob,
+        persistenceWarning: "refresh_job_reconciliation_not_persisted_read_only"
+      });
+    }
+    await refreshJobStore.set(jobId, reconciledJob).catch(() => undefined);
+    return jsonResponse(200, reconciledJob);
+  }
+
   return jsonResponse(200, job);
+}
+
+function refreshJobIsNonTerminal(job: Record<string, unknown>): boolean {
+  const status = readStringField(job, "status");
+  return status === "queued" || status === "running";
+}
+
+function reconcileAbandonedRefreshJob(job: Record<string, unknown>): Record<string, unknown> {
+  const completedAt = new Date().toISOString();
+  const message = "Refresh process restarted before completing this job.";
+  const providerResults = Array.isArray(job.providerResults)
+    ? job.providerResults.map((result) =>
+        isRecord(result) && refreshJobIsNonTerminal(result)
+          ? {
+              ...result,
+              completedAt,
+              degradedReason: readStringField(result, "degradedReason") ?? message,
+              status: "failed"
+            }
+          : result
+      )
+    : job.providerResults;
+  const forensicRun = reconcileAbandonedForensicRun(job.forensicRun, completedAt, message);
+
+  return {
+    ...job,
+    completedAt,
+    degradedReason: readStringField(job, "degradedReason") ?? message,
+    forensicRun,
+    providerResults,
+    status: "failed"
+  };
+}
+
+function reconcileAbandonedForensicRun(
+  forensicRun: unknown,
+  completedAt: string,
+  message: string
+): unknown {
+  if (!isRecord(forensicRun) || !refreshJobIsNonTerminal(forensicRun)) return forensicRun;
+  return {
+    ...forensicRun,
+    degradedReason: readStringField(forensicRun, "degradedReason") ?? message,
+    reviewerArtifacts: Array.isArray(forensicRun.reviewerArtifacts)
+      ? forensicRun.reviewerArtifacts.map((artifact) =>
+          isRecord(artifact) && refreshJobIsNonTerminal(artifact)
+            ? {
+                ...artifact,
+                completedAt,
+                degradedReason: readStringField(artifact, "degradedReason") ?? message,
+                status: "failed"
+              }
+            : artifact
+        )
+      : forensicRun.reviewerArtifacts,
+    status: "failed",
+    updatedAt: completedAt
+  };
 }
 
 async function dynamicForensicRunResponse(

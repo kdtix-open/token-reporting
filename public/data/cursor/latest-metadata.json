@@ -3,10 +3,10 @@
   "daily": {
     "data": [
       {
-        "userId": "user_6SPHHLfZB2hOegWEViUzY7KvGb",
+        "userId": "cursor-user-redacted",
         "day": "2026-07-07",
         "date": 1783382400000,
-        "email": "chris.kreager@kdtix.com",
+        "email": "redacted@example.invalid",
         "cmdkUsages": 0,
         "composerRequests": 0,
         "chatRequests": 0,
@@ -16,10 +16,10 @@
         "bugbotUsages": 0
       },
       {
-        "userId": "user_6SPHHLfZB2hOegWEViUzY7KvGb",
+        "userId": "cursor-user-redacted",
         "day": "2026-07-08",
         "date": 1783468800000,
-        "email": "chris.kreager@kdtix.com",
+        "email": "redacted@example.invalid",
         "cmdkUsages": 0,
         "composerRequests": 0,
         "chatRequests": 0,
@@ -29,10 +29,10 @@
         "bugbotUsages": 0
       },
       {
-        "userId": "user_6SPHHLfZB2hOegWEViUzY7KvGb",
+        "userId": "cursor-user-redacted",
         "day": "2026-07-09",
         "date": 1783555200000,
-        "email": "chris.kreager@kdtix.com",
+        "email": "redacted@example.invalid",
         "cmdkUsages": 0,
         "composerRequests": 0,
         "chatRequests": 0,
@@ -50,9 +50,9 @@
   "spend": {
     "teamMemberSpend": [
       {
-        "userId": "user_6SPHHLfZB2hOegWEViUzY7KvGb",
-        "name": "Chris Kreager",
-        "email": "chris.kreager@kdtix.com",
+        "userId": "cursor-user-redacted",
+        "name": "Cursor User",
+        "email": "redacted@example.invalid",
         "role": "owner",
         "spendCents": 0,
         "includedSpendCents": 62.5007,
@@ -90,7 +90,7 @@
           "cacheReadTokens": 338752,
           "totalCents": 42.74
         },
-        "userEmail": "chris.kreager@kdtix.com",
+        "userEmail": "redacted@example.invalid",
         "cursorTokenFee": 10.1708,
         "isChargeable": true,
         "isHeadless": false,
@@ -110,7 +110,7 @@
           "cacheReadTokens": 34210,
           "totalCents": 6.0953
         },
-        "userEmail": "chris.kreager@kdtix.com",
+        "userEmail": "redacted@example.invalid",
         "cursorTokenFee": 0,
         "isChargeable": true,
         "isHeadless": false,
@@ -130,7 +130,7 @@
           "cacheReadTokens": 17536,
           "totalCents": 3.0254
         },
-        "userEmail": "chris.kreager@kdtix.com",
+        "userEmail": "redacted@example.invalid",
         "cursorTokenFee": 0,
         "isChargeable": true,
         "isHeadless": false,
@@ -150,7 +150,7 @@
           "cacheReadTokens": 17696,
           "totalCents": 6.4717
         },
-        "userEmail": "chris.kreager@kdtix.com",
+        "userEmail": "redacted@example.invalid",
         "cursorTokenFee": 0,
         "isChargeable": true,
         "isHeadless": false,
@@ -170,7 +170,7 @@
           "cacheReadTokens": 11727,
           "totalCents": 4.01385
         },
-        "userEmail": "chris.kreager@kdtix.com",
+        "userEmail": "redacted@example.invalid",
         "cursorTokenFee": 0,
         "isChargeable": true,
         "isHeadless": false,
@@ -190,7 +190,7 @@
           "cacheReadTokens": 17760,
           "totalCents": 2.5446
         },
-        "userEmail": "chris.kreager@kdtix.com",
+        "userEmail": "redacted@example.invalid",
         "cursorTokenFee": 0,
         "isChargeable": true,
         "isHeadless": false,
@@ -210,7 +210,7 @@
           "cacheReadTokens": 17696,
           "totalCents": 2.6359
         },
-        "userEmail": "chris.kreager@kdtix.com",
+        "userEmail": "redacted@example.invalid",
         "cursorTokenFee": 0,
         "isChargeable": false,
         "isHeadless": false,
@@ -230,7 +230,7 @@
           "cacheReadTokens": 23808,
           "totalCents": 5.4036
         },
-        "userEmail": "chris.kreager@kdtix.com",
+        "userEmail": "redacted@example.invalid",
         "cursorTokenFee": 0,
         "isChargeable": false,
         "isHeadless": false,
@@ -250,7 +250,7 @@
           "cacheReadTokens": 75442,
           "totalCents": 4.12196
         },
-        "userEmail": "chris.kreager@kdtix.com",
+        "userEmail": "redacted@example.invalid",
         "cursorTokenFee": 0,
         "isChargeable": false,
         "isHeadless": false,
@@ -270,7 +270,7 @@
           "cacheReadTokens": 74938,
           "totalCents": 4.03453
         },
-        "userEmail": "chris.kreager@kdtix.com",
+        "userEmail": "redacted@example.invalid",
         "cursorTokenFee": 0,
         "isChargeable": false,
         "isHeadless": false,
@@ -290,7 +290,7 @@
           "cacheReadTokens": 74428,
           "totalCents": 4.01083
         },
-        "userEmail": "chris.kreager@kdtix.com",
+        "userEmail": "redacted@example.invalid",
         "cursorTokenFee": 0,
         "isChargeable": false,
         "isHeadless": false,
@@ -310,7 +310,7 @@
           "cacheReadTokens": 73920,
           "totalCents": 4.28497
         },
-        "userEmail": "chris.kreager@kdtix.com",
+        "userEmail": "redacted@example.invalid",
         "cursorTokenFee": 0,
         "isChargeable": false,
         "isHeadless": false,
@@ -330,7 +330,7 @@
           "cacheReadTokens": 73409,
           "totalCents": 4.48859
         },
-        "userEmail": "chris.kreager@kdtix.com",
+        "userEmail": "redacted@example.invalid",
         "cursorTokenFee": 0,
         "isChargeable": false,
         "isHeadless": false,
@@ -350,7 +350,7 @@
           "cacheReadTokens": 72900,
           "totalCents": 3.94257
         },
-        "userEmail": "chris.kreager@kdtix.com",
+        "userEmail": "redacted@example.invalid",
         "cursorTokenFee": 0,
         "isChargeable": false,
         "isHeadless": false,
@@ -370,7 +370,7 @@
           "cacheReadTokens": 8075,
           "totalCents": 5.90576
         },
-        "userEmail": "chris.kreager@kdtix.com",
+        "userEmail": "redacted@example.invalid",
         "cursorTokenFee": 0,
         "isChargeable": false,
         "isHeadless": false,

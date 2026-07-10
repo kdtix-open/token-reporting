@@ -84,6 +84,25 @@ describe("integrationApiClient", () => {
     });
   });
 
+  it("requestReportRefresh_MalformedSuccessPayload_ReturnsFailedOutcome", async () => {
+    const fetcher = vi.fn().mockResolvedValue({
+      json: async () => ({}),
+      ok: true,
+      status: 202
+    });
+
+    const result = await requestReportRefresh({
+      apiBaseUrl: "http://127.0.0.1:8788",
+      fetcher
+    });
+
+    expect(result).toEqual({
+      httpStatus: 202,
+      message: "Refresh request returned a malformed job payload.",
+      outcome: "failed"
+    });
+  });
+
   it("requestReportRefresh_Timeout_ReturnsFailedOutcome", async () => {
     vi.useFakeTimers();
     const fetcher = vi.fn(
@@ -145,6 +164,30 @@ describe("integrationApiClient", () => {
       },
       outcome: "accepted"
     });
+  });
+
+  it("pollReportRefreshJob_MalformedSuccessPayload_ReturnsFailedOutcome", async () => {
+    const onUpdate = vi.fn();
+    const fetcher = vi.fn().mockResolvedValue({
+      json: async () => ({}),
+      ok: true,
+      status: 200
+    });
+
+    const result = await pollReportRefreshJob("dynamic-refresh-malformed", {
+      apiBaseUrl: "http://127.0.0.1:8788",
+      fetcher,
+      intervalMs: 0,
+      onUpdate,
+      timeoutMs: 1000
+    });
+
+    expect(result).toEqual({
+      httpStatus: 200,
+      message: "Refresh status request returned a malformed job payload.",
+      outcome: "failed"
+    });
+    expect(onUpdate).not.toHaveBeenCalled();
   });
 
   it("pollReportRefreshJob_DefaultTimeout_AllowsFullSequentialForensicReviewerWindow", async () => {

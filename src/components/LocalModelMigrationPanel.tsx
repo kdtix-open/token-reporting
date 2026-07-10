@@ -479,7 +479,7 @@ export function LocalModelMigrationPanel({
         </>
       )}
 
-      {forensicRun?.parentSynthesis && (
+      {hasProviderTraffic && forensicRun?.parentSynthesis && (
         <div className="lm-section lm-forensic">
           <h3 className="lm-section__heading">Forensic reviewer consensus</h3>
           <div className="lm-forensic__summary">

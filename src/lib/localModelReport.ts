@@ -566,6 +566,34 @@ function scopedRequestOnlyProviders(
   });
 }
 
+function aggregateWindowDays(providers: TokenObservedProvider[]): number {
+  return Math.max(0, ...providers.map((provider) => provider.windowDays ?? 0)) || 28;
+}
+
+function normalizeTokenProviderWindows(
+  providers: TokenObservedProvider[],
+  windowDays: number
+): TokenObservedProvider[] {
+  return providers.map((provider) => {
+    const providerWindowDays = provider.windowDays && provider.windowDays > 0
+      ? provider.windowDays
+      : windowDays;
+    if (providerWindowDays === windowDays) return { ...provider, windowDays };
+
+    const factor = windowDays / providerWindowDays;
+    return {
+      ...provider,
+      cacheCreationTokens: scaleCount(provider.cacheCreationTokens, factor),
+      cacheReadTokens: scaleCount(provider.cacheReadTokens, factor),
+      inputTokens: scaleCount(provider.inputTokens, factor),
+      outputTokens: scaleCount(provider.outputTokens, factor),
+      requestCount:
+        provider.requestCount === null ? null : Math.max(1, scaleCount(provider.requestCount, factor)),
+      windowDays
+    };
+  });
+}
+
 // ── Builder ─────────────────────────────────────────────────────────────────
 
 export function buildLocalModelReport(
@@ -642,23 +670,28 @@ export function buildLocalModelReport(
     rawTokenObservedProviders,
     selectedWorkloadScope
   );
+  const windowDays = aggregateWindowDays(tokenObservedProviders);
+  const normalizedTokenObservedProviders = normalizeTokenProviderWindows(
+    tokenObservedProviders,
+    windowDays
+  );
   const requestOnlyProviders = scopedRequestOnlyProviders(
     rawRequestOnlyProviders,
     selectedWorkloadScope
   );
 
   // ── Token aggregates ──────────────────────────────────────────────────────
-  const totalInputTokens = tokenObservedProviders.reduce((a, p) => a + p.inputTokens, 0);
-  const totalOutputTokens = tokenObservedProviders.reduce((a, p) => a + p.outputTokens, 0);
-  const totalCacheReadTokens = tokenObservedProviders.reduce((a, p) => a + p.cacheReadTokens, 0);
-  const totalCacheCreationTokens = tokenObservedProviders.reduce((a, p) => a + p.cacheCreationTokens, 0);
+  const totalInputTokens = normalizedTokenObservedProviders.reduce((a, p) => a + p.inputTokens, 0);
+  const totalOutputTokens = normalizedTokenObservedProviders.reduce((a, p) => a + p.outputTokens, 0);
+  const totalCacheReadTokens = normalizedTokenObservedProviders.reduce((a, p) => a + p.cacheReadTokens, 0);
+  const totalCacheCreationTokens = normalizedTokenObservedProviders.reduce((a, p) => a + p.cacheCreationTokens, 0);
   // Cache reads hit KV cache on local stack — exclude from pure compute cost
   const totalPureComputeTokens =
     totalInputTokens + totalOutputTokens + totalCacheCreationTokens;
 
   // ── Per-request sizing ────────────────────────────────────────────────────
-  const tokenObservedRequests = tokenObservedProviders.some((p) => p.requestCount !== null)
-    ? tokenObservedProviders.reduce((a, p) => a + (p.requestCount ?? 0), 0)
+  const tokenObservedRequests = normalizedTokenObservedProviders.some((p) => p.requestCount !== null)
+    ? normalizedTokenObservedProviders.reduce((a, p) => a + (p.requestCount ?? 0), 0)
     : null;
 
   let avgTokensPerObservedRequest: number | null = null;
@@ -702,12 +735,8 @@ export function buildLocalModelReport(
   }
 
   // ── Throughput ────────────────────────────────────────────────────────────
-  const windowDays =
-    Math.max(0, ...tokenObservedProviders.map((provider) => provider.windowDays ?? 0)) || 28;
-  const dailyAvgComputeTokens = tokenObservedProviders.reduce((total, provider) => {
-    const providerWindowDays = provider.windowDays && provider.windowDays > 0 ? provider.windowDays : windowDays;
-    return total + (provider.inputTokens + provider.outputTokens + provider.cacheCreationTokens) / providerWindowDays;
-  }, 0);
+  const dailyAvgComputeTokens =
+    (totalInputTokens + totalOutputTokens + totalCacheCreationTokens) / windowDays;
   // Assume 8-hour active development window per day
   const requiredTokensPerSec = dailyAvgComputeTokens / (8 * 3600);
 
@@ -760,7 +789,7 @@ export function buildLocalModelReport(
     tenant,
     selectedWorkloadScope,
     availableWorkloadScopes,
-    tokenObservedProviders,
+    tokenObservedProviders: normalizedTokenObservedProviders,
     requestOnlyProviders,
     totalInputTokens,
     totalOutputTokens,

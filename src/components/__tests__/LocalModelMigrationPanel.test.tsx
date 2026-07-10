@@ -22,6 +22,31 @@ describe("LocalModelMigrationPanel", () => {
       "agent_memory"
     );
     expect(screen.getByText("Agent Memory")).toBeInTheDocument();
-    expect(screen.getByText(/No provider telemetry matched Agent Memory/)).toBeInTheDocument();
+    expect(screen.getAllByText(/No provider telemetry matched Agent Memory/).length).toBeGreaterThan(0);
+  });
+
+  it("hides global forensic consensus when selected scope has no provider telemetry", () => {
+    render(
+      <LocalModelMigrationPanel
+        distribution={null}
+        forensicRun={{
+          parentSynthesis: {
+            confidence: 0.82,
+            recommendation: "Use hosted guardrails for unmatched pipelines.",
+            reviewerCount: 2
+          },
+          runId: "dynamic-forensic-global",
+          status: "completed"
+        }}
+        huggingFaceCandidateSet={null}
+        onWorkloadScopeChange={vi.fn()}
+        summaries={[seededCursorReportSummary, seededGitHubCopilotReportSummary]}
+        workloadScopeId="agent_memory"
+      />
+    );
+
+    expect(screen.getAllByText(/No provider telemetry matched Agent Memory/).length).toBeGreaterThan(0);
+    expect(screen.queryByText("Forensic reviewer consensus")).not.toBeInTheDocument();
+    expect(screen.queryByText("Use hosted guardrails for unmatched pipelines.")).not.toBeInTheDocument();
   });
 });
