@@ -1,3 +1,8 @@
+---
+name: codegraph-token-usage-heartbeat
+description: Run the daily CodeGraph token/usage measurement heartbeat for the token-reporting repo.
+---
+
 # CodeGraph Token Usage Heartbeat
 
 Use this skill when running the daily CodeGraph token/usage measurement heartbeat for the token-reporting repo.

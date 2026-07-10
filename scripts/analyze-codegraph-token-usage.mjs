@@ -18,6 +18,7 @@ const args = parseArgs(process.argv.slice(2));
 const sessionsDir = path.resolve(args.sessionsDir ?? DEFAULT_SESSIONS_DIR);
 const agentsFile = path.resolve(args.agentsFile ?? DEFAULT_AGENTS_FILE);
 const outDir = path.resolve(args.outDir ?? DEFAULT_OUT_DIR);
+const repoRoot = path.resolve(args.repoRoot ?? process.cwd());
 const generatedAt = new Date();
 const instructionUpdatedAt = args.instructionUpdatedAt
   ? new Date(args.instructionUpdatedAt)
@@ -26,11 +27,18 @@ const instructionUpdatedAt = args.instructionUpdatedAt
     : null;
 
 const sessionFiles = walkJsonl(sessionsDir);
+const includedSessionFiles = [];
+const excludedSessionFiles = [];
 const allTurns = [];
 const allToolCalls = [];
 
 for (const file of sessionFiles) {
-  const { turns, toolCalls } = await parseSession(file);
+  const { included, sessionCwd, turns, toolCalls } = await parseSession(file, repoRoot);
+  if (included) {
+    includedSessionFiles.push(file);
+  } else {
+    excludedSessionFiles.push({ file, sessionCwd });
+  }
   allTurns.push(...turns);
   allToolCalls.push(...toolCalls);
 }
@@ -43,9 +51,18 @@ const report = buildReport({
   sessionsDir,
   agentsFile,
   sessionFiles,
+  includedSessionFiles,
+  excludedSessionFiles,
+  repoRoot,
   turns: allTurns,
   toolCalls: allToolCalls,
 });
+
+if (isReadOnlyMode()) {
+  throw new Error(
+    "CodeGraph token usage heartbeat is disabled while TOKEN_REPORTING_READ_ONLY is enabled."
+  );
+}
 
 fs.mkdirSync(outDir, { recursive: true });
 const stamp = generatedAt.toISOString().replace(/[:.]/g, "-");
@@ -88,6 +105,8 @@ function parseArgs(argv) {
     const arg = argv[index];
     if (arg === "--sessions-dir") {
       parsed.sessionsDir = argv[++index];
+    } else if (arg === "--repo-root") {
+      parsed.repoRoot = argv[++index];
     } else if (arg === "--agents-file") {
       parsed.agentsFile = argv[++index];
     } else if (arg === "--instruction-updated-at") {
@@ -111,6 +130,7 @@ function printHelp() {
 
 Options:
   --sessions-dir <path>              Codex sessions directory.
+  --repo-root <path>                 Repo root used to include/exclude sessions by session_meta cwd.
   --agents-file <path>               AGENTS.md used for instruction timestamp.
   --instruction-updated-at <iso>     Override the instruction update timestamp.
   --out-dir <path>                   Report output directory.
@@ -141,10 +161,11 @@ function walkJsonl(root) {
   return results.sort();
 }
 
-async function parseSession(file) {
+async function parseSession(file, repoRoot) {
   const turns = [];
   const toolCalls = [];
   let segment = emptySegment();
+  let sessionCwd = null;
 
   const reader = readline.createInterface({
     input: fs.createReadStream(file, { encoding: "utf8" }),
@@ -162,6 +183,11 @@ async function parseSession(file) {
 
     const payload = event.payload;
     if (!payload || typeof payload !== "object") continue;
+
+    if (event.type === "session_meta" && typeof payload.cwd === "string") {
+      sessionCwd = payload.cwd;
+      continue;
+    }
 
     if (event.type === "response_item" && payload.type === "function_call") {
       const call = classifyToolCall(payload, event.timestamp, file);
@@ -191,7 +217,19 @@ async function parseSession(file) {
     }
   }
 
-  return { turns, toolCalls };
+  const included = isPathInside(sessionCwd, repoRoot);
+  return {
+    included,
+    sessionCwd,
+    toolCalls: included ? toolCalls : [],
+    turns: included ? turns : [],
+  };
+}
+
+function isPathInside(candidate, root) {
+  if (!candidate) return false;
+  const relative = path.relative(path.resolve(root), path.resolve(candidate));
+  return relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative));
 }
 
 function emptySegment() {
@@ -246,18 +284,23 @@ function normalizeUsage(usage) {
   const output = numberOrZero(usage.output_tokens);
   const reasoning = numberOrZero(usage.reasoning_output_tokens);
   return {
-    billableProxyTokens: Math.max(0, input - cached) + output + reasoning,
+    billableProxyTokens: input + output,
     cachedInputTokens: cached,
     inputTokens: input,
     outputTokens: output,
     reasoningOutputTokens: reasoning,
     totalTokens: numberOrZero(usage.total_tokens),
-    uncachedInputTokens: Math.max(0, input - cached),
+    uncachedInputTokens: input,
   };
 }
 
 function numberOrZero(value) {
   return typeof value === "number" && Number.isFinite(value) ? value : 0;
+}
+
+function isReadOnlyMode() {
+  const raw = process.env.TOKEN_REPORTING_READ_ONLY?.trim().toLowerCase();
+  return raw === "1" || raw === "true";
 }
 
 function buildReport(input) {
@@ -279,19 +322,23 @@ function buildReport(input) {
     instructionUpdatedAt: input.instructionUpdatedAt?.toISOString() ?? null,
     firstCodegraphToolAt: firstCodegraphToolAt?.toISOString() ?? null,
     lastCodegraphToolAt: lastCodegraphToolAt?.toISOString() ?? null,
+    repoRoot: input.repoRoot,
     sessionsDir: input.sessionsDir,
     agentsFile: input.agentsFile,
     caveats: [
       "Session-log telemetry is factual but observational; use paired tasks for causal savings claims.",
-      "billableProxyTokens is uncached input + output + reasoning, not an official invoice field.",
+      "billableProxyTokens is input + output; reasoning_output_tokens is already included in output_tokens and is not added again.",
       "Early CodeGraph samples may include setup, verification, or instruction tuning overhead.",
     ],
     totals: {
       sessionFileCount: input.sessionFiles.length,
+      includedSessionFileCount: input.includedSessionFiles.length,
+      excludedSessionFileCount: input.excludedSessionFiles.length,
       measuredTurnCount: input.turns.length,
       codegraphAssistedTurnCount: classifications.codegraph_assisted.turnCount,
       shellSearchReadTurnCount: classifications.shell_search_read.turnCount,
     },
+    excludedSessionFiles: input.excludedSessionFiles,
     windows: buildWindows(input.turns, input.instructionUpdatedAt, firstCodegraphToolAt),
     classifications,
     comparison: compareClassifications(classifications.codegraph_assisted, classifications.shell_search_read),
@@ -348,6 +395,7 @@ function summarizeMetric(turns, metric) {
 
 function compareClassifications(codegraph, shell) {
   const metrics = {};
+  const hasComparableSamples = codegraph.turnCount > 0 && shell.turnCount > 0;
   for (const metric of [
     "totalTokens",
     "uncachedInputTokens",
@@ -355,6 +403,15 @@ function compareClassifications(codegraph, shell) {
     "outputTokens",
     "reasoningOutputTokens",
   ]) {
+    if (!hasComparableSamples) {
+      metrics[metric] = {
+        codegraphMedian: null,
+        shellSearchReadMedian: null,
+        delta: null,
+        deltaPercentVsShell: null,
+      };
+      continue;
+    }
     const codegraphMedian = codegraph[metric].median;
     const shellMedian = shell[metric].median;
     metrics[metric] = {
@@ -377,6 +434,9 @@ function renderMarkdown(report) {
   lines.push("## Evidence Window");
   lines.push("");
   lines.push(`- Session files scanned: ${report.totals.sessionFileCount}`);
+  lines.push(`- Session files included for repo: ${report.totals.includedSessionFileCount}`);
+  lines.push(`- Session files excluded by repo filter: ${report.totals.excludedSessionFileCount}`);
+  lines.push(`- Repo root filter: ${report.repoRoot}`);
   lines.push(`- Measured token_count turns: ${report.totals.measuredTurnCount}`);
   lines.push(`- Instruction update timestamp: ${report.instructionUpdatedAt ?? "not available"}`);
   lines.push(`- First CodeGraph tool call seen: ${report.firstCodegraphToolAt ?? "not observed"}`);
@@ -398,7 +458,11 @@ function renderMarkdown(report) {
   lines.push("|---|---:|---:|---:|---:|");
   for (const [metric, value] of Object.entries(report.comparison.metrics)) {
     const pct = value.deltaPercentVsShell === null ? "n/a" : `${value.deltaPercentVsShell}%`;
-    lines.push(`| ${metric} | ${value.codegraphMedian} | ${value.shellSearchReadMedian} | ${value.delta} | ${pct} |`);
+    lines.push(
+      `| ${metric} | ${formatNullable(value.codegraphMedian)} | ${formatNullable(
+        value.shellSearchReadMedian
+      )} | ${formatNullable(value.delta)} | ${pct} |`
+    );
   }
   lines.push("");
   lines.push("## Adoption Windows");
@@ -435,10 +499,22 @@ function renderMemory(report) {
     `CodeGraph-assisted turns: ${report.totals.codegraphAssistedTurnCount}`,
     `Shell-search/read turns: ${report.totals.shellSearchReadTurnCount}`,
     ``,
-    `Median total-token delta vs shell-search/read: ${report.comparison.metrics.totalTokens.delta} (${report.comparison.metrics.totalTokens.deltaPercentVsShell ?? "n/a"}%)`,
-    `Median billable-proxy delta vs shell-search/read: ${report.comparison.metrics.billableProxyTokens.delta} (${report.comparison.metrics.billableProxyTokens.deltaPercentVsShell ?? "n/a"}%)`,
+    `Median total-token delta vs shell-search/read: ${formatNullable(
+      report.comparison.metrics.totalTokens.delta
+    )} (${formatPercent(report.comparison.metrics.totalTokens.deltaPercentVsShell)})`,
+    `Median billable-proxy delta vs shell-search/read: ${formatNullable(
+      report.comparison.metrics.billableProxyTokens.delta
+    )} (${formatPercent(report.comparison.metrics.billableProxyTokens.deltaPercentVsShell)})`,
     ``,
   ].join("\n");
+}
+
+function formatNullable(value) {
+  return value === null || value === undefined ? "n/a" : String(value);
+}
+
+function formatPercent(value) {
+  return value === null || value === undefined ? "n/a" : `${value}%`;
 }
 
 function journalReport(issueRef, markdownPath) {

@@ -47,10 +47,10 @@ It measures:
 `billableProxyTokens` is:
 
 ```text
-uncached input + output + reasoning
+input + output
 ```
 
-This is an analysis proxy, not an official invoice field.
+This is an analysis proxy, not an official invoice field. Codex reports `input_tokens` as uncached input, and `reasoning_output_tokens` is already included in `output_tokens`.
 
 ## Recommendation Guardrail
 
