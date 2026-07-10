@@ -19,13 +19,19 @@ The goal is to build a factual, longitudinal evidence set before making a projec
 ## Run Command
 
 ```bash
-cd /Users/ckreager/repos/kdtix/token_reporting
+set -euo pipefail
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
 case "$(printf '%s' "${TOKEN_REPORTING_READ_ONLY:-}" | tr '[:upper:]' '[:lower:]')" in
   1|true)
     echo "CodeGraph token usage heartbeat is disabled while TOKEN_REPORTING_READ_ONLY is enabled." >&2
     exit 1
     ;;
 esac
+if command -v codegraph >/dev/null 2>&1; then
+  if [ -d .codegraph ]; then codegraph sync .; else codegraph init .; fi
+  codegraph status .
+fi
 node scripts/analyze-codegraph-token-usage.mjs --journal-issue kdtix-open/token-reporting#25
 ```
 

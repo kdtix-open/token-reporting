@@ -352,10 +352,16 @@ async function runAnalyzer(
     ...extraArgs
   ], {
     env: {
-      ...process.env,
+      ...analyzerBaseEnv(),
       ...env
     }
   });
+}
+
+function analyzerBaseEnv(): NodeJS.ProcessEnv {
+  const baseEnv = { ...process.env };
+  delete baseEnv.TOKEN_REPORTING_READ_ONLY;
+  return baseEnv;
 }
 
 async function writeSession(root: string, name: string, events: Array<Record<string, unknown> | string>) {
