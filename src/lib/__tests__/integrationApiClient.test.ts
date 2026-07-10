@@ -179,7 +179,63 @@ describe("integrationApiClient", () => {
         "Refresh is still running after 1200 seconds. Check the refresh status or try a narrower provider refresh.",
       outcome: "failed"
     });
-    expect(fetcher).toHaveBeenCalledTimes(21);
+    expect(fetcher).toHaveBeenCalledTimes(20);
     vi.useRealTimers();
   }, 10_000);
+
+  it("pollReportRefreshJob_NearDeadline_ClampsStatusRequestToRemainingTimeout", async () => {
+    vi.useFakeTimers();
+    try {
+      const fetcher = vi
+        .fn()
+        .mockImplementationOnce(
+          () =>
+            new Promise<Response>((resolve) => {
+              setTimeout(
+                () =>
+                  resolve({
+                    json: async () => ({
+                      jobId: "dynamic-refresh-near-deadline",
+                      status: "running"
+                    }),
+                    ok: true,
+                    status: 200
+                  } as Response),
+                50
+              );
+            })
+        )
+        .mockImplementationOnce(
+          () =>
+            new Promise<Response>(() => {
+              // Intentionally unresolved so the poller must honor the remaining overall deadline.
+            })
+        );
+      const resultPromise = pollReportRefreshJob("dynamic-refresh-near-deadline", {
+        apiBaseUrl: "http://127.0.0.1:8788",
+        fetcher,
+        intervalMs: 1,
+        timeoutMs: 75
+      });
+      let result: Awaited<typeof resultPromise> | undefined;
+      resultPromise.then((value) => {
+        result = value;
+      });
+
+      await vi.advanceTimersByTimeAsync(50);
+      await vi.advanceTimersByTimeAsync(1);
+      expect(fetcher).toHaveBeenCalledTimes(2);
+
+      await vi.advanceTimersByTimeAsync(24);
+      await Promise.resolve();
+
+      expect(result).toEqual({
+        message:
+          "Refresh is still running after 0.1 seconds. Check the refresh status or try a narrower provider refresh.",
+        outcome: "failed"
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

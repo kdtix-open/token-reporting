@@ -111,8 +111,11 @@ export async function pollReportRefreshJob(
   const intervalMs = Math.max(0, options.intervalMs ?? defaultPollIntervalMs);
   const startedAt = Date.now();
 
-  while (Date.now() - startedAt <= timeoutMs) {
-    const timeout = createTimeoutController(Math.min(30_000, timeoutMs));
+  while (true) {
+    const requestTimeoutMs = remainingTimeoutMs(startedAt, timeoutMs);
+    if (requestTimeoutMs <= 0) break;
+
+    const timeout = createTimeoutController(Math.min(30_000, requestTimeoutMs));
     let response: Response | "timeout";
     try {
       response = await Promise.race([
@@ -146,7 +149,10 @@ export async function pollReportRefreshJob(
       };
     }
 
-    await delay(intervalMs);
+    const remainingMs = remainingTimeoutMs(startedAt, timeoutMs);
+    if (remainingMs > 0) {
+      await delay(Math.min(intervalMs, remainingMs));
+    }
   }
 
   return timeoutResult(timeoutMs);
@@ -185,6 +191,10 @@ function isTerminalRefreshStatus(status: string): boolean {
 
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function remainingTimeoutMs(startedAt: number, timeoutMs: number): number {
+  return Math.max(0, timeoutMs - (Date.now() - startedAt));
 }
 
 function createTimeoutController(timeoutMs: number): {

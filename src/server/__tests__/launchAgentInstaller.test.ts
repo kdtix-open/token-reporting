@@ -30,4 +30,23 @@ describe("install-macos-launchagent", () => {
     );
     expect(plist).toContain("<key>TOKEN_REPORTING_ADMIN_ENV_FILE</key>");
   });
+
+  it("installMacosLaunchAgent_DryRun_UsesDeterministicDefaultLaunchdPath", async () => {
+    const plistDir = await fs.mkdtemp(path.join(os.tmpdir(), "token-reporting-launchagent-"));
+    const env: NodeJS.ProcessEnv = {
+      ...process.env,
+      TOKEN_REPORTING_LAUNCHD_ALLOW_NON_DARWIN_FOR_TESTS: "true",
+      TOKEN_REPORTING_LAUNCHD_DRY_RUN: "true",
+      TOKEN_REPORTING_LAUNCHD_PLIST_DIR: plistDir,
+      TOKEN_REPORTING_LAUNCHD_SKIP_PRECHECKS: "true"
+    };
+    delete env.TOKEN_REPORTING_LAUNCHD_PATH;
+
+    await execFileAsync("bash", ["scripts/install-macos-launchagent.sh"], { env });
+
+    const plist = await fs.readFile(path.join(plistDir, "com.kdtix.token-reporting.plist"), "utf8");
+    expect(plist).toContain(
+      `<string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:${process.env.HOME}/.local/bin</string>`
+    );
+  });
 });

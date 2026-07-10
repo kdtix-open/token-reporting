@@ -146,7 +146,9 @@ async function routeApiRequest(
   apiPath: string
 ): Promise<void> {
   if (apiPath === "/api/operational-status" && args.request.method === "GET") {
-    writeJson(args.response, 200, buildOperationalStatus(args.env));
+    writeJson(args.response, 200, buildOperationalStatus(args.env), {
+      "Cache-Control": "no-store"
+    });
     return;
   }
 
