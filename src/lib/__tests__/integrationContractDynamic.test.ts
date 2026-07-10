@@ -368,6 +368,106 @@ describe("integrationContractDynamic", () => {
     });
   });
 
+  it("createDynamicIntegrationContractHandler_RefreshEndpoint_AsyncModeUsesUniqueIdsWithinSameMillisecond", async () => {
+    const refreshExecutor = vi.fn().mockResolvedValue({
+      providerResults: [
+        {
+          accumulatedThrough: "2026-06-07",
+          completedAt: "2026-06-07T16:45:08.000Z",
+          providerId: "codex",
+          status: "completed"
+        }
+      ]
+    });
+    const handler = createDynamicIntegrationContractHandler({
+      asyncRefresh: true,
+      loadSummaries: async () => summaries,
+      now: () => new Date("2026-06-07T16:45:00.000Z"),
+      refreshExecutor
+    });
+
+    const first = await handler({
+      body: { providers: ["codex"] },
+      method: "POST",
+      path: "/api/refresh"
+    });
+    const second = await handler({
+      body: { providers: ["codex"] },
+      method: "POST",
+      path: "/api/refresh"
+    });
+    const firstBody = first.body as Record<string, unknown>;
+    const secondBody = second.body as Record<string, unknown>;
+
+    expect(firstBody).toMatchObject({
+      jobId: "dynamic-refresh-20260607T164500000Z"
+    });
+    expect(secondBody).toMatchObject({
+      jobId: expect.stringMatching(/^dynamic-refresh-20260607T164500000Z-[a-f0-9]{8}$/)
+    });
+    expect(secondBody.jobId).not.toBe(firstBody.jobId);
+  });
+
+  it("createDynamicIntegrationContractHandler_RefreshStatus_ReconcilesPersistedRunningJobAfterRestart", async () => {
+    const jobs = new Map<string, Record<string, unknown>>([
+      [
+        "dynamic-refresh-abandoned",
+        {
+          forensicRun: {
+            reviewerArtifacts: [{ reviewerModel: "sonnet", status: "queued" }],
+            status: "queued"
+          },
+          jobId: "dynamic-refresh-abandoned",
+          providerResults: [{ providerId: "codex", status: "running" }],
+          status: "running"
+        }
+      ]
+    ]);
+    const refreshJobStore = {
+      get: vi.fn(async (jobId: string) => jobs.get(jobId)),
+      set: vi.fn(async (jobId: string, job: Record<string, unknown>) => {
+        jobs.set(jobId, job);
+      })
+    };
+    const handler = createDynamicIntegrationContractHandler({
+      loadSummaries: async () => summaries,
+      refreshJobStore
+    });
+
+    const response = await handler({
+      method: "GET",
+      path: "/api/refresh/dynamic-refresh-abandoned"
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      degradedReason: "refresh_job_worker_not_active_after_restart",
+      forensicRun: {
+        degradedReason: "refresh_job_worker_not_active_after_restart",
+        reviewerArtifacts: [
+          expect.objectContaining({
+            degradedReason: "refresh_job_worker_not_active_after_restart",
+            reviewerModel: "sonnet",
+            status: "failed"
+          })
+        ],
+        status: "failed"
+      },
+      providerResults: [
+        expect.objectContaining({
+          degradedReason: "refresh_job_worker_not_active_after_restart",
+          providerId: "codex",
+          status: "failed"
+        })
+      ],
+      status: "failed"
+    });
+    expect(refreshJobStore.set).toHaveBeenCalledWith(
+      "dynamic-refresh-abandoned",
+      expect.objectContaining({ status: "failed" })
+    );
+  });
+
   it("createDynamicIntegrationContractHandler_RefreshEndpoint_AsyncModePublishesProviderAndReviewerProgress", async () => {
     let resolveRefresh:
       | ((result: {
@@ -590,8 +690,9 @@ describe("integrationContractDynamic", () => {
       path: "/api/refresh/dynamic-refresh-20260607T164500000Z"
     });
     expect(response.body).toMatchObject({
+      degradedReason: "refresh_job_worker_not_active_after_restart",
       jobId: "dynamic-refresh-20260607T164500000Z",
-      status: "running"
+      status: "failed"
     });
   });
 

@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { randomUUID } from "node:crypto";
 
 import { providerRegistry } from "../providers/registry";
 import { createMemoryForensicRunStore, type ForensicRunStore } from "./forensicRunStore";
@@ -99,6 +100,7 @@ export interface DynamicIntegrationContractOptions {
 }
 
 const dynamicContractVersion = "sdlca-token-reporting-dynamic-v0.1";
+const activeDynamicRefreshJobIds = new Set<string>();
 
 export function createDynamicIntegrationContractHandler(
   options: DynamicIntegrationContractOptions = {}
@@ -294,7 +296,7 @@ async function dynamicRefreshResponse(
   if (validationError) return validationError;
 
   const executor = refreshExecutor ?? defaultRefreshExecutor;
-  const jobId = `dynamic-refresh-${compactTimestamp(generatedAt)}`;
+  const jobId = await createRefreshJobId(generatedAt, refreshJobStore);
   const startedAt = generatedAt.toISOString();
   const requestContext = {
     body,
@@ -319,6 +321,7 @@ async function dynamicRefreshResponse(
     });
     await refreshJobStore.set(jobId, acceptedJob);
     let latestJob = acceptedJob;
+    activeDynamicRefreshJobIds.add(jobId);
     void executeDynamicRefreshJob({
       ...requestContext,
       onProgress: (job) => {
@@ -340,7 +343,8 @@ async function dynamicRefreshResponse(
           startedAt
         });
         await refreshJobStore.set(jobId, latestJob).catch(() => undefined);
-      });
+      })
+      .finally(() => activeDynamicRefreshJobIds.delete(jobId));
 
     return jsonResponse(202, acceptedJob);
   }
@@ -349,6 +353,21 @@ async function dynamicRefreshResponse(
   await refreshJobStore.set(jobId, job);
 
   return jsonResponse(job.status === "failed" ? 500 : 202, job);
+}
+
+async function createRefreshJobId(
+  generatedAt: Date,
+  refreshJobStore: RefreshJobStore
+): Promise<string> {
+  const baseJobId = `dynamic-refresh-${compactTimestamp(generatedAt)}`;
+  if (!(await refreshJobStore.get(baseJobId))) return baseJobId;
+
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    const candidate = `${baseJobId}-${randomUUID().slice(0, 8)}`;
+    if (!(await refreshJobStore.get(candidate))) return candidate;
+  }
+
+  return `${baseJobId}-${Date.now().toString(36)}`;
 }
 
 function buildAcceptedRefreshJob(args: {
@@ -633,7 +652,74 @@ async function dynamicRefreshStatusResponse(
     });
   }
 
+  if (refreshJobIsNonTerminal(job) && !activeDynamicRefreshJobIds.has(jobId)) {
+    const reconciledJob = reconcileAbandonedRefreshJob(job);
+    await refreshJobStore.set(jobId, reconciledJob).catch(() => undefined);
+    return jsonResponse(200, reconciledJob);
+  }
+
   return jsonResponse(200, job);
+}
+
+function refreshJobIsNonTerminal(job: Record<string, unknown>): boolean {
+  const status = readStringField(job, "status");
+  return status === "running" || status === "queued";
+}
+
+function reconcileAbandonedRefreshJob(job: Record<string, unknown>): Record<string, unknown> {
+  const completedAt = new Date().toISOString();
+  const degradedReason = "refresh_job_worker_not_active_after_restart";
+  const providerResults = Array.isArray(job.providerResults)
+    ? job.providerResults.filter(isRecord).map((result) =>
+        reconcileAbandonedResult(result, completedAt, degradedReason)
+      )
+    : [];
+
+  return {
+    ...job,
+    completedAt,
+    degradedReason,
+    forensicRun: reconcileAbandonedForensicRun(job.forensicRun, completedAt, degradedReason),
+    providerResults,
+    status: "failed"
+  };
+}
+
+function reconcileAbandonedResult(
+  result: Record<string, unknown>,
+  completedAt: string,
+  degradedReason: string
+): Record<string, unknown> {
+  const status = readStringField(result, "status");
+  if (status !== "running" && status !== "queued") return result;
+
+  return {
+    ...result,
+    completedAt,
+    degradedReason,
+    status: "failed"
+  };
+}
+
+function reconcileAbandonedForensicRun(
+  value: unknown,
+  completedAt: string,
+  degradedReason: string
+): Record<string, unknown> | undefined {
+  if (!isRecord(value)) return undefined;
+  const reviewerArtifacts = Array.isArray(value.reviewerArtifacts)
+    ? value.reviewerArtifacts.filter(isRecord).map((artifact) =>
+        reconcileAbandonedResult(artifact, completedAt, degradedReason)
+      )
+    : [];
+
+  return {
+    ...value,
+    degradedReason,
+    reviewerArtifacts,
+    status: "failed",
+    updatedAt: completedAt
+  };
 }
 
 async function dynamicForensicRunResponse(

@@ -149,7 +149,7 @@ async function fetchForensicProviders(
   const payload = (await response.json()) as unknown;
   logger?.trace("SDLCA bridge provider discovery response received", {
     durationMs,
-    payload
+    payload: redactBridgeValue(payload)
   });
   const providers = readBridgeProviderEntries(payload);
   const forensicProviders = new Set(
@@ -202,7 +202,7 @@ async function executeReviewer(args: {
     timeoutMs: args.timeoutMs
   });
   args.logger?.trace("SDLCA bridge reviewer dispatch payload", {
-    body,
+    body: redactBridgeValue(body),
     reviewerModel: args.reviewerModel,
     runId: args.request.runId
   });
@@ -247,7 +247,7 @@ async function executeReviewer(args: {
   args.logger?.trace("SDLCA bridge reviewer response received", {
     bridgeProviderKind: args.providerKind,
     durationMs,
-    payload,
+    payload: redactBridgeValue(payload),
     reviewerModel: args.reviewerModel,
     runId: args.request.runId,
     status: response.status
@@ -371,11 +371,11 @@ function redactFreeText(value: string): string {
       /(^|[{\s,])("?[A-Za-z0-9_.-]*(?:api[_-]?key|authorization|bearer|credential|password|secret|token)[A-Za-z0-9_.-]*"?\s*[:=]\s*)(["'])[^"'\r\n]*(\3)/giu,
       "$1$2$3[REDACTED]$4"
     )
-    .replace(/\b(authorization\s*:\s*(?:bearer\s+)?)[^\s"',;]+/giu, "$1[REDACTED]")
-    .replace(/\b(bearer\s+)[^\s"',;]+/giu, "$1[REDACTED]")
+    .replace(/\b(authorization\s*:)(?=\s*(?!\[REDACTED\])[^"'\s])\s*[^\r\n,;)}\]]+/giu, "$1 [REDACTED]")
+    .replace(/\b(bearer)(?=\s+(?!\[REDACTED\])[^"'\s])\s+[^\r\n,;)}\]]+/giu, "$1 [REDACTED]")
     .replace(
-      /\b([A-Za-z0-9_.-]*(?:api[_-]?key|credential|password|secret|token)[A-Za-z0-9_.-]*\s*[:=]\s*)(["']?)[^\s"',;]+(\2)/giu,
-      "$1[REDACTED]"
+      /\b([A-Za-z0-9_.-]*(?:api[_-]?key|credential|password|secret|token)[A-Za-z0-9_.-]*\s*[:=])(?=\s*(?!\[REDACTED\])[^"'\s])\s*[^\r\n,;)}\]]+/giu,
+      "$1 [REDACTED]"
     )
     .replace(/\bsk-[A-Za-z0-9_-]{12,}\b/gu, "[REDACTED]");
 }
@@ -431,16 +431,11 @@ function summarizeBridgeResult(raw: unknown): Record<string, unknown> {
 }
 
 function sanitizeDiagnostics(value: Record<string, unknown>): Record<string, unknown> {
-  return redactLogValue(value) as Record<string, unknown>;
+  return redactBridgeValue(value) as Record<string, unknown>;
 }
 
 function sanitizeDiagnosticString(value: string): string {
-  return value
-    .replace(
-      /\b[A-Za-z0-9_-]*(?:api[_-]?key|authorization|bearer|credential|password|secret|token)[A-Za-z0-9_-]*\b\s*[:=]\s*[^\s,;"')]+/gi,
-      "[REDACTED]"
-    )
-    .slice(0, 2_000);
+  return redactFreeText(value).slice(0, 2_000);
 }
 
 function isForensicProvider(value: unknown): value is SdlcaBridgeProvider {

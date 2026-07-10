@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { createSdlcaBridgeForensicExecutor } from "../sdlcaBridgeForensics";
+import type { ObservabilityLogger } from "../observabilityLogger";
 
 const forensicCapabilities = {
   artifactKinds: ["local_model_forensic_review"],
@@ -504,6 +505,8 @@ describe("sdlcaBridgeForensics", () => {
   });
 
   it("createSdlcaBridgeForensicExecutor_CurrentSchemaArtifact_RedactsQuotedSecrets", async () => {
+    const traceContexts: Record<string, unknown>[] = [];
+    const logger = createCapturingLogger(traceContexts);
     const fetcher = vi
       .fn()
       .mockResolvedValueOnce(
@@ -525,8 +528,8 @@ describe("sdlcaBridgeForensics", () => {
             ...forensicArtifact("claude", "Quoted secret perspective"),
             findings: [
               {
-                details: '"password": "correct horse battery staple"',
-                evidenceRefs: ['{"api_key": "alpha beta,gamma"}'],
+                details: "password: correct horse battery staple",
+                evidenceRefs: ['{"api_key": "alpha beta,gamma"}', "Authorization: Bearer delta echo"],
                 severity: "high",
                 title: "credential leaked"
               }
@@ -541,6 +544,7 @@ describe("sdlcaBridgeForensics", () => {
       bridgeToken: "bridge-token",
       bridgeUrl: "http://127.0.0.1:4818",
       fetcher,
+      logger,
       workingDirectory: "/Users/ckreager/repos/kdtix/token_reporting"
     });
 
@@ -558,20 +562,26 @@ describe("sdlcaBridgeForensics", () => {
       artifact: expect.objectContaining({
         findings: [
           expect.objectContaining({
-            details: '"password": "[REDACTED]"',
-            evidenceRefs: ['{"api_key": "[REDACTED]"}']
+            details: "password: [REDACTED]",
+            evidenceRefs: ['{"api_key": "[REDACTED]"}', "Authorization: [REDACTED]"]
           })
         ],
-        recommendations: ["Rotate TOKEN_REPORTING_SDLCA_BRIDGE_TOKEN=[REDACTED]."],
-        summary: "credential: [REDACTED]"
+        recommendations: ['Rotate TOKEN_REPORTING_SDLCA_BRIDGE_TOKEN="[REDACTED]".'],
+        summary: 'credential: "[REDACTED]"'
       }),
       bridgeProviderKind: "claude",
       reviewerModel: "sonnet",
       status: "completed"
     });
     const serializedResult = JSON.stringify(result);
+    const serializedTraceContexts = JSON.stringify(traceContexts);
     expect(serializedResult).not.toContain("correct horse battery staple");
     expect(serializedResult).not.toContain("alpha beta,gamma");
+    expect(serializedResult).not.toContain("delta echo");
+    expect(serializedTraceContexts).toContain("[REDACTED]");
+    expect(serializedTraceContexts).not.toContain("correct horse battery staple");
+    expect(serializedTraceContexts).not.toContain("alpha beta,gamma");
+    expect(serializedTraceContexts).not.toContain("delta echo");
   });
 
   it("createSdlcaBridgeForensicExecutor_LegacyBridgeResult_IsNotNormalized", async () => {
@@ -702,6 +712,19 @@ describe("sdlcaBridgeForensics", () => {
     });
   });
 });
+
+function createCapturingLogger(traceContexts: Record<string, unknown>[]): ObservabilityLogger {
+  const logger: ObservabilityLogger = {
+    debug: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    trace: vi.fn((_message: string, context?: Record<string, unknown>) => {
+      if (context) traceContexts.push(context);
+    }),
+    withContext: vi.fn(() => logger)
+  };
+  return logger;
+}
 
 function forensicArtifact(providerKind: "claude" | "codex" | "copilot", summary: string) {
   return {
