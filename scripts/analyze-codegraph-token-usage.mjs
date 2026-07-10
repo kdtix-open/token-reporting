@@ -33,11 +33,11 @@ const allTurns = [];
 const allToolCalls = [];
 
 for (const file of sessionFiles) {
-  const { included, sessionCwd, turns, toolCalls } = await parseSession(file, repoRoot);
+  const { exclusionReason, included, sessionCwd, turns, toolCalls } = await parseSession(file, repoRoot);
   if (included) {
     includedSessionFiles.push(file);
   } else {
-    excludedSessionFiles.push({ file, sessionCwd });
+    excludedSessionFiles.push({ file, reason: exclusionReason, sessionCwd });
   }
   allTurns.push(...turns);
   allToolCalls.push(...toolCalls);
@@ -164,8 +164,10 @@ function walkJsonl(root) {
 async function parseSession(file, repoRoot) {
   const turns = [];
   const toolCalls = [];
-  let segment = emptySegment();
+  let currentSegment = emptySegment();
+  let pendingSegment = emptySegment();
   let sessionCwd = null;
+  let isHeartbeatSession = false;
 
   const reader = readline.createInterface({
     input: fs.createReadStream(file, { encoding: "utf8" }),
@@ -183,6 +185,7 @@ async function parseSession(file, repoRoot) {
 
     const payload = event.payload;
     if (!payload || typeof payload !== "object") continue;
+    isHeartbeatSession = isHeartbeatSession || isHeartbeatAnalyzerInvocation(payload);
 
     if (event.type === "session_meta" && typeof payload.cwd === "string") {
       sessionCwd = payload.cwd;
@@ -192,10 +195,10 @@ async function parseSession(file, repoRoot) {
     if (event.type === "response_item" && payload.type === "function_call") {
       const call = classifyToolCall(payload, event.timestamp, file);
       toolCalls.push(call);
-      segment.toolCalls += 1;
-      segment.codegraphCalls += call.isCodeGraph ? 1 : 0;
-      segment.shellSearchReadCalls += call.isShellSearchRead ? 1 : 0;
-      segment.readExplorationCalls += call.isReadExploration ? 1 : 0;
+      pendingSegment.toolCalls += 1;
+      pendingSegment.codegraphCalls += call.isCodeGraph ? 1 : 0;
+      pendingSegment.shellSearchReadCalls += call.isShellSearchRead ? 1 : 0;
+      pendingSegment.readExplorationCalls += call.isReadExploration ? 1 : 0;
       continue;
     }
 
@@ -205,25 +208,40 @@ async function parseSession(file, repoRoot) {
         turns.push({
           timestamp: event.timestamp,
           file,
-          classification: classifyTurn(segment),
-          toolCalls: segment.toolCalls,
-          codegraphCalls: segment.codegraphCalls,
-          shellSearchReadCalls: segment.shellSearchReadCalls,
-          readExplorationCalls: segment.readExplorationCalls,
+          classification: classifyTurn(currentSegment),
+          toolCalls: currentSegment.toolCalls,
+          codegraphCalls: currentSegment.codegraphCalls,
+          shellSearchReadCalls: currentSegment.shellSearchReadCalls,
+          readExplorationCalls: currentSegment.readExplorationCalls,
           usage: normalizeUsage(usage),
         });
       }
-      segment = emptySegment();
+      currentSegment = pendingSegment;
+      pendingSegment = emptySegment();
     }
   }
 
-  const included = isPathInside(sessionCwd, repoRoot);
+  const insideRepoRoot = isPathInside(sessionCwd, repoRoot);
+  const included = insideRepoRoot && !isHeartbeatSession;
   return {
+    exclusionReason: included
+      ? null
+      : isHeartbeatSession
+        ? "codegraph_token_usage_heartbeat"
+        : "outside_repo_root",
     included,
     sessionCwd,
     toolCalls: included ? toolCalls : [],
     turns: included ? turns : [],
   };
+}
+
+function isHeartbeatAnalyzerInvocation(payload) {
+  if (payload.type !== "function_call") return false;
+  const name = String(payload.name ?? "").toLowerCase();
+  if (name !== "exec_command") return false;
+  const args = String(payload.arguments ?? "").toLowerCase();
+  return /(?:^|[\s"'/:])node\s+(?:\.\/)?scripts\/analyze-codegraph-token-usage\.mjs\b/u.test(args);
 }
 
 function isPathInside(candidate, root) {

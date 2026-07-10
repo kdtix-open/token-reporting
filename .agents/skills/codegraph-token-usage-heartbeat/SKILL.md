@@ -11,10 +11,17 @@ Use this skill when running the daily CodeGraph token/usage measurement heartbea
 
 - Reuse the dedicated CodeGraph token-usage heartbeat thread.
 - Run from `/Users/ckreager/repos/kdtix/token_reporting`.
-- Run the CodeGraph gate before discovery or script execution:
+- Stop before the CodeGraph gate or script execution when `TOKEN_REPORTING_READ_ONLY` is `1` or `true`; the gate can update `.codegraph`.
+- Run the read-only guard and then the CodeGraph gate before discovery or script execution:
 
 ```bash
 cd /Users/ckreager/repos/kdtix/token_reporting
+case "$(printf '%s' "${TOKEN_REPORTING_READ_ONLY:-}" | tr '[:upper:]' '[:lower:]')" in
+  1|true)
+    echo "CodeGraph token usage heartbeat is disabled while TOKEN_REPORTING_READ_ONLY is enabled." >&2
+    exit 1
+    ;;
+esac
 if command -v codegraph >/dev/null 2>&1; then
   if [ -d .codegraph ]; then codegraph sync . || codegraph status .; else codegraph init .; fi
   codegraph status .

@@ -20,10 +20,17 @@ The goal is to build a factual, longitudinal evidence set before making a projec
 
 ```bash
 cd /Users/ckreager/repos/kdtix/token_reporting
+case "$(printf '%s' "${TOKEN_REPORTING_READ_ONLY:-}" | tr '[:upper:]' '[:lower:]')" in
+  1|true)
+    echo "CodeGraph token usage heartbeat is disabled while TOKEN_REPORTING_READ_ONLY is enabled." >&2
+    exit 1
+    ;;
+esac
 node scripts/analyze-codegraph-token-usage.mjs --journal-issue kdtix-open/token-reporting#25
 ```
 
 The script writes timestamped JSON and Markdown reports, refreshes `latest-*` aliases, refreshes `memory.md`, and posts the Markdown report to the backlog issue using `gh issue comment --body-file`.
+The read-only guard must run before any CodeGraph gate because `codegraph init` and `codegraph sync` can mutate `.codegraph`.
 
 ## Measurement Basis
 
@@ -70,7 +77,7 @@ Do not make a client-facing savings claim until paired fresh-thread trials show 
 ```text
 Run the CodeGraph token usage heartbeat for token_reporting.
 
-Use /Users/ckreager/repos/kdtix/token_reporting and load .agents/skills/codegraph-token-usage-heartbeat/SKILL.md first. Run the CodeGraph gate for that repo, then run:
+Use /Users/ckreager/repos/kdtix/token_reporting and load .agents/skills/codegraph-token-usage-heartbeat/SKILL.md first. If TOKEN_REPORTING_READ_ONLY is 1 or true, stop before running the CodeGraph gate or analyzer. Otherwise run the CodeGraph gate for that repo, then run:
 
 node scripts/analyze-codegraph-token-usage.mjs --journal-issue kdtix-open/token-reporting#25
 

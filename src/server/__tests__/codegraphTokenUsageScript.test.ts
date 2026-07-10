@@ -16,6 +16,13 @@ describe("analyze-codegraph-token-usage", () => {
       sessionMeta(path.join(fixture.repoRoot, "subdir")),
       toolCall("mcp__codegraph.codegraph_explore", "{}"),
       tokenCount("2026-07-10T17:00:00.000Z", {
+        cached_input_tokens: 10,
+        input_tokens: 60,
+        output_tokens: 20,
+        reasoning_output_tokens: 5,
+        total_tokens: 80
+      }),
+      tokenCount("2026-07-10T17:02:00.000Z", {
         cached_input_tokens: 20,
         input_tokens: 100,
         output_tokens: 30,
@@ -25,6 +32,13 @@ describe("analyze-codegraph-token-usage", () => {
       "{bad json",
       toolCall("exec_command", "{\"cmd\":\"rg token scripts\"}"),
       tokenCount("2026-07-10T17:05:00.000Z", {
+        cached_input_tokens: 10,
+        input_tokens: 90,
+        output_tokens: 20,
+        reasoning_output_tokens: 5,
+        total_tokens: 110
+      }),
+      tokenCount("2026-07-10T17:07:00.000Z", {
         cached_input_tokens: 50,
         input_tokens: 200,
         output_tokens: 40,
@@ -48,13 +62,49 @@ describe("analyze-codegraph-token-usage", () => {
     expect(report.totals).toMatchObject({
       excludedSessionFileCount: 1,
       includedSessionFileCount: 1,
-      measuredTurnCount: 2,
+      measuredTurnCount: 4,
       sessionFileCount: 2
     });
+    expect(report.classifications.other.billableProxyTokens.median).toBe(80);
     expect(report.classifications.codegraph_assisted.billableProxyTokens.median).toBe(130);
     expect(report.classifications.codegraph_assisted.uncachedInputTokens.median).toBe(80);
     expect(report.classifications.shell_search_read.billableProxyTokens.median).toBe(240);
     expect(report.comparison.metrics.billableProxyTokens.delta).toBe(110);
+  });
+
+  it("analyzeCodeGraphTokenUsage_HeartbeatAnalyzerSession_IsExcludedFromSamples", async () => {
+    const fixture = await createFixture();
+    await writeSession(fixture.sessionsDir, "heartbeat.jsonl", [
+      sessionMeta(fixture.repoRoot),
+      toolCall(
+        "exec_command",
+        "{\"cmd\":\"codegraph status . && node scripts/analyze-codegraph-token-usage.mjs --journal-issue kdtix-open/token-reporting#25\"}"
+      ),
+      tokenCount("2026-07-10T17:00:00.000Z", {
+        input_tokens: 100,
+        output_tokens: 30,
+        total_tokens: 130
+      }),
+      tokenCount("2026-07-10T17:02:00.000Z", {
+        input_tokens: 200,
+        output_tokens: 40,
+        total_tokens: 240
+      })
+    ]);
+
+    await runAnalyzer(fixture, ["--repo-root", fixture.repoRoot]);
+
+    const report = await readLatestReport(fixture.outDir);
+    expect(report.totals).toMatchObject({
+      excludedSessionFileCount: 1,
+      includedSessionFileCount: 0,
+      measuredTurnCount: 0,
+      sessionFileCount: 1
+    });
+    expect(report.excludedSessionFiles).toEqual([
+      expect.objectContaining({ reason: "codegraph_token_usage_heartbeat" })
+    ]);
+    expect(report.classifications.codegraph_assisted.turnCount).toBe(0);
   });
 
   it("analyzeCodeGraphTokenUsage_EmptyComparisonCohort_RendersNotAvailableDelta", async () => {
@@ -228,6 +278,7 @@ interface AnalyzerReport {
     string,
     {
       billableProxyTokens: AnalyzerMetricSummary;
+      turnCount: number;
       uncachedInputTokens: AnalyzerMetricSummary;
     }
   >;
@@ -242,6 +293,7 @@ interface AnalyzerReport {
       }
     >;
   };
+  excludedSessionFiles: Array<{ reason: string }>;
   totals: Record<string, unknown>;
 }
 
