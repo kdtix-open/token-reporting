@@ -273,7 +273,7 @@ describe("localInfrastructureSizing", () => {
       scope: "repo_automation_project"
     });
     expect(firstServer?.explanation).toContain(
-      "$150K is enough for first-server shadow/canary and benchmark collection."
+      "$105,000-$150,000 is enough for first-server shadow/canary and benchmark collection."
     );
     expect(firstServer?.explanation).not.toContain("full all-provider replacement");
 

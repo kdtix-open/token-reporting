@@ -178,7 +178,7 @@ async function fetchForensicProviders(
   const payload = (await response.json()) as unknown;
   logger?.trace("SDLCA bridge provider discovery response received", {
     durationMs,
-    payload
+    payload: redactBridgeValue(payload)
   });
   const providers = readBridgeProviderEntries(payload);
   const forensicProviders = new Set(
@@ -233,7 +233,7 @@ async function executeReviewer(args: {
     timeoutMs: args.timeoutMs
   });
   args.logger?.trace("SDLCA bridge reviewer dispatch payload", {
-    body,
+    body: redactBridgeValue(body),
     reviewerModel: args.reviewerModel,
     runId: args.request.runId
   });
@@ -355,7 +355,7 @@ async function executeReviewer(args: {
   args.logger?.trace("SDLCA bridge reviewer response received", {
     bridgeProviderKind: args.providerKind,
     durationMs,
-    payload,
+    payload: redactBridgeValue(payload),
     reviewerModel: args.reviewerModel,
     runId: args.request.runId,
     status: response.status
@@ -559,7 +559,7 @@ function normalizeBridgeForensicArtifact(
 
   return {
     normalized: true,
-    result: removeUndefinedFields(artifact)
+    result: sanitizeForensicArtifact(removeUndefinedFields(artifact))
   };
 }
 
@@ -667,6 +667,10 @@ function normalizeArtifactSummary(raw: Record<string, unknown>): string {
 
 function stringifyRedacted(value: unknown): string {
   return redactFreeText(JSON.stringify(redactLogValue(value)));
+}
+
+function redactBridgeValue(value: unknown): unknown {
+  return redactBridgeArtifactValue(redactLogValue(value));
 }
 
 function sanitizeForensicArtifact(artifact: Record<string, unknown>): Record<string, unknown> {
@@ -801,16 +805,11 @@ function summarizeBridgeResult(raw: unknown): Record<string, unknown> {
 }
 
 function sanitizeDiagnostics(value: Record<string, unknown>): Record<string, unknown> {
-  return redactLogValue(value) as Record<string, unknown>;
+  return redactBridgeValue(value) as Record<string, unknown>;
 }
 
 function sanitizeDiagnosticString(value: string): string {
-  return value
-    .replace(
-      /\b[A-Za-z0-9_-]*(?:api[_-]?key|authorization|bearer|credential|password|secret|token)[A-Za-z0-9_-]*\b\s*[:=]\s*[^\s,;"')]+/gi,
-      "[REDACTED]"
-    )
-    .slice(0, 2_000);
+  return redactFreeText(value).slice(0, 2_000);
 }
 
 function isBridgeJsonParseFailure(summary: string | undefined): boolean {

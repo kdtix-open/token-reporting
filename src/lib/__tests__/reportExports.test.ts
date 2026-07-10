@@ -109,7 +109,7 @@ describe("reportExports", () => {
       expect(text).toContain("Local AI Infrastructure Sizing");
       expect(text).toContain("Executive Hardware Decision Summary");
       expect(text).toContain("Hardware Budget Required by Scope");
-      expect(text).toContain("$150K is enough for first-server shadow/canary");
+      expect(text).toContain("first-server shadow/canary");
       expect(text).toContain("$150K is not enough for all-provider replacement");
       expect(text).toContain("Copilot Dominance Warning");
       expect(text).toContain("Target first-server migration objective");
@@ -261,6 +261,7 @@ describe("reportExports", () => {
           };
         };
         localModelMigration: {
+          appliedForensicGuidance: null;
           requiredTokensPerSec: number;
           selectedWorkloadScope: {
             allocationMode: string;
@@ -291,6 +292,7 @@ describe("reportExports", () => {
       }
     });
     expect(parsed.report.localModelMigration.requiredTokensPerSec).toBeLessThan(100);
+    expect(parsed.report.localModelMigration.appliedForensicGuidance).toBeNull();
     expect(parsed.report.localInfrastructureSizing.workloadSummary).toMatchObject({
       currentProjectLaneP95Context: 835_000,
       currentProjectLaneP99Context: 1_000_000

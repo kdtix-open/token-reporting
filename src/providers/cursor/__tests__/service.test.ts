@@ -266,6 +266,44 @@ describe("persistCursorDailyUsageReport", () => {
     expect(accumulated).not.toContain("Dev Two");
   });
 
+  it("keeps accumulated redacted identities stable across repeated refreshes", async () => {
+    const tempRoot = await mkdtemp(path.join(os.tmpdir(), "token-reporting-"));
+    const outputPath = path.join(tempRoot, "latest-metadata.json");
+    const spend = cursorTeamSpendResponseSchema.parse(sampleSpend);
+    const events = cursorFilteredUsageEventsResponseSchema.parse(sampleEvents);
+
+    for (let index = 0; index < 2; index += 1) {
+      await persistCursorDailyUsageReport({
+        report: sampleReport,
+        spend,
+        events,
+        outputPath,
+        env: {}
+      });
+    }
+
+    const accumulated = JSON.parse(
+      await readFile(path.join(tempRoot, "accumulated-metadata.json"), "utf8")
+    ) as {
+      daily: { data: Array<{ userId: string }> };
+      events: { usageEvents: Array<{ userEmail: string }> };
+      spend: { teamMemberSpend: Array<{ email: string; name: string; userId: string }> };
+    };
+
+    expect(accumulated.daily.data).toHaveLength(2);
+    expect(accumulated.events.usageEvents).toHaveLength(3);
+    expect(accumulated.spend.teamMemberSpend).toHaveLength(2);
+    expect(accumulated.daily.data.map((item) => item.userId)).toEqual(
+      expect.arrayContaining([expect.stringMatching(/^user_redacted_[a-f0-9]{12}$/)])
+    );
+    expect(accumulated.events.usageEvents.map((event) => event.userEmail)).toEqual(
+      expect.arrayContaining([expect.stringMatching(/^redacted-[a-f0-9]{12}@redacted\.local$/)])
+    );
+    expect(accumulated.spend.teamMemberSpend.map((item) => item.name)).toEqual(
+      expect.arrayContaining([expect.stringMatching(/^Redacted user [a-f0-9]{12}$/)])
+    );
+  });
+
   it("blocks persistence in read-only mode", async () => {
     await expect(
       persistCursorDailyUsageReport({

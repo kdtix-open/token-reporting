@@ -1553,8 +1553,9 @@ function buildHardwareBudgetScenarios(
   return [
     hardwareBudgetScenario({
       cloudFallbackRequired: true,
-      explanation:
-        "$150K is enough for first-server shadow/canary and benchmark collection.",
+      explanation: `${capexRange(
+        preferredProfile
+      )} is enough for first-server shadow/canary and benchmark collection.`,
       fullReplacementAllowed: false,
       goal: "safe_canary",
       profile: preferredProfile,
@@ -2234,7 +2235,7 @@ function aggregateTpsEstimate(profile: HardwareProfile): number | null {
   if (profile.id === "production_8x_rtxpro6000_blackwell_server") return 1440;
   if (profile.id === "production_node_hgx_h200_b200_8gpu") return 2200;
   if (profile.id === "rack_scale_gb200_nvl72") return 18_000;
-  if (profile.gpuType.includes("RTX PRO 6000") || profile.gpuArchitecture === "Blackwell") {
+  if (profile.gpuType.includes("RTX PRO 6000")) {
     return profile.gpuCount * 180;
   }
   if (profile.gpuType.includes("H200") || profile.gpuType.includes("B200")) {

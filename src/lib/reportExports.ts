@@ -316,12 +316,15 @@ function buildReportExportBreakdowns(
   context: ReportExportContext,
   rows: ReportExportRow[]
 ): ReportExportBreakdowns {
+  const workloadScopeId = context.localModelWorkloadScopeId ?? "all_provider_traffic";
+  const scopedForensicRun =
+    workloadScopeId === "all_provider_traffic" ? context.forensicRun ?? null : null;
   const localModelReport = buildLocalModelReport(
     context.summaries,
     context.distribution ?? null,
     context.huggingFaceCandidateSet ?? null,
-    context.forensicRun ?? null,
-    { workloadScopeId: context.localModelWorkloadScopeId }
+    scopedForensicRun,
+    { workloadScopeId }
   );
   const infrastructureLocalModelReport = buildLocalModelReport(
     context.summaries,

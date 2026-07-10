@@ -100,6 +100,7 @@ function redactCursorSnapshot(snapshot: CursorSnapshot): CursorSnapshot {
 }
 
 function redactCursorUserId(value: string): string {
+  if (/^user_redacted_[a-f0-9]{12}$/u.test(value)) return value;
   return `user_redacted_${stableCursorHash(value)}`;
 }
 
@@ -110,11 +111,13 @@ function redactCursorEmail(value: string | undefined): string | undefined;
 function redactCursorEmail(value: string | null | undefined): string | null | undefined;
 function redactCursorEmail(value: string | null | undefined): string | null | undefined {
   if (value === null || value === undefined) return value;
+  if (/^redacted-[a-f0-9]{12}@redacted\.local$/u.test(value)) return value;
   return `redacted-${stableCursorHash(value)}@redacted.local`;
 }
 
 function redactCursorName(value: string | undefined): string | undefined {
   if (value === undefined) return value;
+  if (/^Redacted user [a-f0-9]{12}$/u.test(value)) return value;
   return `Redacted user ${stableCursorHash(value)}`;
 }
 

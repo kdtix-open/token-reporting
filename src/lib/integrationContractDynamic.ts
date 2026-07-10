@@ -329,14 +329,14 @@ async function dynamicRefreshResponse(
     let latestJob = acceptedJob;
     void executeDynamicRefreshJob({
       ...requestContext,
-      onProgress: (job) => {
+      onProgress: async (job) => {
         latestJob = job;
-        return refreshJobStore.set(jobId, job);
+        await refreshJobStore.set(jobId, job).catch(() => undefined);
       }
     })
-      .then((job) => {
+      .then(async (job) => {
         latestJob = job;
-        return refreshJobStore.set(jobId, job);
+        await refreshJobStore.set(jobId, job).catch(() => undefined);
       })
       .catch(async (error) => {
         latestJob = buildFailedRefreshJob({
