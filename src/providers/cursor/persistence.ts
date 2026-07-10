@@ -243,7 +243,6 @@ function shouldResetCursorAccumulatedHistoryForRedactionMigration(
 }
 
 function cursorRedactionKeyChanged(existing: CursorSnapshot, incoming: CursorSnapshot): boolean {
-  if (!hasHmacCursorAlias(existing) || !hasHmacCursorAlias(incoming)) return false;
   if (!incoming.redactionKeyFingerprint || !incoming.redactionSchemeVersion) return false;
   return (
     existing.redactionKeyFingerprint !== incoming.redactionKeyFingerprint ||

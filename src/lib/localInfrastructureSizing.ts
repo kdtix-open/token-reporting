@@ -402,6 +402,7 @@ export interface BuildLocalInfrastructureSizingInput {
   localModelReport?: LocalModelMigrationReport;
   migrationPolicy?: Partial<MigrationPolicy>;
   reservedCapacityAssumptions?: Partial<ReservedCapacityAssumptions>;
+  selectedWorkloadScope?: WorkloadScope;
   summaries: ProviderReportSummary[];
 }
 
@@ -492,10 +493,12 @@ export function buildLocalInfrastructureSizing(
     routeClasses,
     baseWorkloadSummary
   );
+  const selectedWorkloadScope =
+    input.selectedWorkloadScope ?? workloadScopeConfig.defaultSizingScope;
   const workloadSummary = applySelectedWorkloadScope(
     baseWorkloadSummary,
     workloadScopeSummaries,
-    workloadScopeConfig.defaultSizingScope
+    selectedWorkloadScope
   );
   const migrationPolicy = buildMigrationPolicy(input.migrationPolicy, budgetLowUsd, budgetHighUsd);
   const localMigrationPlan = buildLocalMigrationPlan(routeClasses, migrationPolicy);
@@ -515,7 +518,7 @@ export function buildLocalInfrastructureSizing(
     budgetHighUsd,
     providerCoverage,
     scenarios: hardwareBudgetScenarios,
-    selectedScope: workloadScopeConfig.defaultSizingScope
+    selectedScope: selectedWorkloadScope
   });
   const recommendedFirstServer = recommendFirstServer({
     budgetHighUsd,
@@ -1810,7 +1813,7 @@ function hardwareBudgetScenario(input: {
 
   return {
     cloudFallbackRequired: input.cloudFallbackRequired,
-    confidence: input.confidence ?? "derived_estimate",
+    confidence: input.confidence ?? hardwareBudgetConfidence(input.profile),
     estimatedAnnualOpexUsd: estimateAnnualOpex(input.profile, requiredNodes, capexHigh),
     estimatedCapexHighUsd: capexHigh,
     estimatedCapexLowUsd: capexLow,
@@ -1828,6 +1831,12 @@ function hardwareBudgetScenario(input: {
     scope: input.scope,
     targetTokensPerSecond: round2(input.targetTokensPerSecond)
   };
+}
+
+function hardwareBudgetConfidence(profile: HardwareProfile): HardwareBudgetConfidence {
+  if (profile.pricingConfidence === "quote_required") return "quote_required";
+  if (profile.pricingConfidence === "unknown") return "unknown";
+  return "derived_estimate";
 }
 
 function scopeTps(

@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { type ReactNode } from "react";
 
 import type { HuggingFaceCandidateSet } from "../lib/huggingFaceCandidates";
 import {
@@ -14,6 +14,8 @@ interface LocalInfrastructureSizingPanelProps {
   distribution: LocalSessionDistribution | null;
   forensicRun: ReportForensicRun | null;
   huggingFaceCandidateSet: HuggingFaceCandidateSet | null;
+  onBudgetScopeChange?: (scope: WorkloadScope) => void;
+  selectedBudgetScope?: WorkloadScope;
   summaries: ProviderReportSummary[];
 }
 
@@ -21,17 +23,18 @@ export function LocalInfrastructureSizingPanel({
   distribution,
   forensicRun,
   huggingFaceCandidateSet,
+  onBudgetScopeChange,
+  selectedBudgetScope = "repo_automation_project",
   summaries
 }: LocalInfrastructureSizingPanelProps) {
   const report = buildLocalInfrastructureSizing({
     distribution,
     forensicRun,
     huggingFaceCandidateSet,
+    selectedWorkloadScope: selectedBudgetScope,
     summaries
   });
-  const [selectedBudgetScope, setSelectedBudgetScope] = useState<WorkloadScope>(
-    report.hardwareBudgetSummary.selectedScope
-  );
+  const activeBudgetScope = report.hardwareBudgetSummary.selectedScope;
 
   if (report.providerCoverage.length === 0) return null;
 
@@ -44,7 +47,7 @@ export function LocalInfrastructureSizingPanel({
   const coverage = report.localCoverageSummary;
   const financials = report.financials;
   const selectedScopeSummary =
-    report.workloadScopeSummaries.find((scope) => scope.scope === selectedBudgetScope) ??
+    report.workloadScopeSummaries.find((scope) => scope.scope === activeBudgetScope) ??
     report.workloadScopeSummaries[0];
   const hardwareBudgetScopes = report.workloadScopeSummaries.filter((scope) =>
     report.hardwareBudgetScenarios.some((scenario) => scenario.scope === scope.scope)
@@ -136,8 +139,8 @@ export function LocalInfrastructureSizingPanel({
           <label className="infra-select-field">
             <span>Budget math scope</span>
             <select
-              value={selectedBudgetScope}
-              onChange={(event) => setSelectedBudgetScope(event.target.value as WorkloadScope)}
+              value={activeBudgetScope}
+              onChange={(event) => onBudgetScopeChange?.(event.target.value as WorkloadScope)}
             >
               {hardwareBudgetScopes.map((scope) => (
                 <option key={scope.scope} value={scope.scope}>
@@ -197,7 +200,7 @@ export function LocalInfrastructureSizingPanel({
                 <tr
                   key={`${scenario.scope}-${scenario.replacementGoal}-${scenario.hardwareProfileId}`}
                   className={
-                    scenario.scope === selectedBudgetScope ? "infra-table__selected-row" : undefined
+                    scenario.scope === activeBudgetScope ? "infra-table__selected-row" : undefined
                   }
                 >
                   <td>{scopeLabel(scenario.scope)}</td>

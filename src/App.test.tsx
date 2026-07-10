@@ -84,6 +84,84 @@ describe("App", () => {
     expect(selectedScopeCard).toHaveTextContent("All-provider traffic sizing");
   });
 
+  it("exports the selected infrastructure budget scope", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: false
+      })
+    );
+    let capturedBlob: Blob | null = null;
+    const originalCreateObjectUrl = URL.createObjectURL;
+    const originalRevokeObjectUrl = URL.revokeObjectURL;
+    const createObjectUrl = vi.fn((blob: Blob) => {
+      capturedBlob = blob;
+      return "blob:token-report";
+    });
+    const revokeObjectUrl = vi.fn();
+    const clickSpy = vi
+      .spyOn(HTMLAnchorElement.prototype, "click")
+      .mockImplementation(() => undefined);
+    Object.defineProperty(URL, "createObjectURL", {
+      configurable: true,
+      value: createObjectUrl
+    });
+    Object.defineProperty(URL, "revokeObjectURL", {
+      configurable: true,
+      value: revokeObjectUrl
+    });
+
+    try {
+      render(<App />);
+
+      const budgetScopeSelect = await screen.findByRole("combobox", {
+        name: "Budget math scope"
+      });
+      fireEvent.change(budgetScopeSelect, { target: { value: "all_provider_traffic" } });
+      fireEvent.change(screen.getByRole("combobox", { name: "Format" }), {
+        target: { value: "json" }
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Download data" }));
+
+      await waitFor(() => {
+        expect(capturedBlob).not.toBeNull();
+      });
+      const exportedBlob = capturedBlob;
+      if (!exportedBlob) throw new Error("Expected export blob to be captured");
+      const payload = JSON.parse(await readBlobText(exportedBlob)) as {
+        report: {
+          localInfrastructureSizing: {
+            hardwareBudgetSummary: {
+              selectedScope: string;
+            };
+            workloadSummary: {
+              allProviderComputeTps: number;
+              selectedScopeComputeTps: number;
+            };
+          };
+        };
+      };
+      const infrastructureSizing = payload.report.localInfrastructureSizing;
+      expect(infrastructureSizing.hardwareBudgetSummary.selectedScope).toBe(
+        "all_provider_traffic"
+      );
+      expect(infrastructureSizing.workloadSummary.selectedScopeComputeTps).toBeCloseTo(
+        infrastructureSizing.workloadSummary.allProviderComputeTps,
+        6
+      );
+    } finally {
+      Object.defineProperty(URL, "createObjectURL", {
+        configurable: true,
+        value: originalCreateObjectUrl
+      });
+      Object.defineProperty(URL, "revokeObjectURL", {
+        configurable: true,
+        value: originalRevokeObjectUrl
+      });
+      clickSpy.mockRestore();
+    }
+  });
+
   it("prefers accumulated provider snapshots before falling back to latest snapshots", async () => {
     const fetchStub = vi.fn().mockResolvedValue({ ok: false });
     vi.stubGlobal("fetch", fetchStub);
@@ -640,3 +718,12 @@ describe("App", () => {
     expect(await screen.findByText("Report data through 2026-03-28")).toBeInTheDocument();
   });
 });
+
+function readBlobText(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.addEventListener("load", () => resolve(String(reader.result)));
+    reader.addEventListener("error", () => reject(reader.error));
+    reader.readAsText(blob);
+  });
+}

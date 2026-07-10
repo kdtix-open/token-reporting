@@ -32,6 +32,7 @@ import {
   type ReportForensicRun,
   type SqlDialect,
 } from "./lib/reportExports";
+import type { WorkloadScope } from "./lib/localInfrastructureSizing";
 import type { LocalModelWorkloadScopeId } from "./lib/localModelReport";
 import { pollReportRefreshJob, requestReportRefresh } from "./lib/integrationApiClient";
 import { resolveRuntimeApiBaseUrl, resolveRuntimeAssetPath } from "./lib/runtimePaths";
@@ -146,6 +147,8 @@ export default function App() {
   const [sqlDialect, setSqlDialect] = useState<SqlDialect>("sqlite");
   const [localModelWorkloadScopeId, setLocalModelWorkloadScopeId] =
     useState<LocalModelWorkloadScopeId>("all_provider_traffic");
+  const [infrastructureBudgetScope, setInfrastructureBudgetScope] =
+    useState<WorkloadScope>("repo_automation_project");
   // Counter guards against stale responses from concurrent or Strict Mode loads
   const loadCounterRef = useRef(0);
 
@@ -292,6 +295,7 @@ export default function App() {
         distribution,
         forensicRun,
         huggingFaceCandidateSet,
+        localInfrastructureWorkloadScope: infrastructureBudgetScope,
         localModelWorkloadScopeId,
         summaries
       },
@@ -303,6 +307,7 @@ export default function App() {
     exportFormat,
     forensicRun,
     huggingFaceCandidateSet,
+    infrastructureBudgetScope,
     localModelWorkloadScopeId,
     sqlDialect,
     summaries
@@ -390,6 +395,8 @@ export default function App() {
         distribution={distribution}
         forensicRun={forensicRun}
         huggingFaceCandidateSet={huggingFaceCandidateSet}
+        selectedBudgetScope={infrastructureBudgetScope}
+        onBudgetScopeChange={setInfrastructureBudgetScope}
       />
       <AzureQuotaPanel summaries={summaries} />
       <div className="report-cards">

@@ -2,6 +2,7 @@ import type { HuggingFaceCandidateSet } from "./huggingFaceCandidates";
 import {
   buildLocalInfrastructureSizing,
   type LocalInfrastructureSizingReport,
+  type WorkloadScope,
 } from "./localInfrastructureSizing";
 import type { LocalSessionDistribution } from "./localSessionDistribution";
 import {
@@ -75,6 +76,7 @@ export interface ReportExportContext {
   distribution?: LocalSessionDistribution | null;
   forensicRun?: ReportForensicRun | null;
   huggingFaceCandidateSet?: HuggingFaceCandidateSet | null;
+  localInfrastructureWorkloadScope?: WorkloadScope;
   localModelWorkloadScopeId?: LocalModelWorkloadScopeId;
   summaries: ProviderReportSummary[];
 }
@@ -397,6 +399,8 @@ function buildReportExportBreakdowns(
       forensicRun: context.forensicRun ?? null,
       huggingFaceCandidateSet: context.huggingFaceCandidateSet ?? null,
       localModelReport: infrastructureLocalModelReport,
+      selectedWorkloadScope:
+        context.localInfrastructureWorkloadScope ?? "repo_automation_project",
       summaries: context.summaries
     }),
     providerSnapshots: rows,

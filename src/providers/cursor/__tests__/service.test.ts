@@ -357,6 +357,48 @@ describe("persistCursorDailyUsageReport", () => {
     );
   });
 
+  it("resets accumulated HMAC aliases on redaction key change even when the new refresh has no usage", async () => {
+    const tempRoot = await mkdtemp(path.join(os.tmpdir(), "token-reporting-"));
+    const outputPath = path.join(tempRoot, "latest-metadata.json");
+    const spend = cursorTeamSpendResponseSchema.parse(sampleSpend);
+    const events = cursorFilteredUsageEventsResponseSchema.parse(sampleEvents);
+    const emptyReport = {
+      data: [],
+      period: sampleReport.period
+    };
+
+    await persistCursorDailyUsageReport({
+      report: sampleReport,
+      spend,
+      events,
+      outputPath,
+      env: { TOKEN_REPORTING_CURSOR_REDACTION_SALT: "old-redaction-salt" }
+    });
+    const firstAccumulated = JSON.parse(
+      await readFile(path.join(tempRoot, "accumulated-metadata.json"), "utf8")
+    ) as {
+      redactionKeyFingerprint: string;
+    };
+
+    await persistCursorDailyUsageReport({
+      report: emptyReport,
+      outputPath,
+      env: { TOKEN_REPORTING_CURSOR_REDACTION_SALT: "new-redaction-salt" }
+    });
+
+    const accumulated = JSON.parse(
+      await readFile(path.join(tempRoot, "accumulated-metadata.json"), "utf8")
+    ) as {
+      daily: { data: Array<{ userId: string }> };
+      redactionKeyFingerprint: string;
+    };
+
+    expect(accumulated.daily.data).toHaveLength(0);
+    expect(accumulated.redactionKeyFingerprint).not.toBe(
+      firstAccumulated.redactionKeyFingerprint
+    );
+  });
+
   it("resets legacy accumulated redaction aliases during the HMAC migration window", async () => {
     const tempRoot = await mkdtemp(path.join(os.tmpdir(), "token-reporting-"));
     const outputPath = path.join(tempRoot, "latest-metadata.json");

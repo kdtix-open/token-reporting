@@ -320,6 +320,38 @@ describe("reportExports", () => {
     });
   });
 
+  it("createReportExport_JsonFormat_UsesSelectedInfrastructureBudgetScope", () => {
+    const result = createReportExport(
+      {
+        ...richReportContext(),
+        localInfrastructureWorkloadScope: "all_provider_traffic"
+      },
+      "json"
+    );
+    const parsed = JSON.parse(result.payload as string) as {
+      report: {
+        localInfrastructureSizing: {
+          hardwareBudgetSummary: {
+            selectedScope: string;
+          };
+          workloadSummary: {
+            allProviderComputeTps: number;
+            selectedScopeComputeTps: number;
+          };
+        };
+      };
+    };
+    const infrastructureSizing = parsed.report.localInfrastructureSizing;
+
+    expect(infrastructureSizing.hardwareBudgetSummary.selectedScope).toBe(
+      "all_provider_traffic"
+    );
+    expect(infrastructureSizing.workloadSummary.selectedScopeComputeTps).toBeCloseTo(
+      infrastructureSizing.workloadSummary.allProviderComputeTps,
+      6
+    );
+  });
+
   it("createReportExport_CsvAndYamlFormats_IncludeInfrastructureDecisionBreakdowns", () => {
     const csv = createReportExport(richReportContext(), "csv").payload as string;
     const yaml = createReportExport(richReportContext(), "yaml").payload as string;

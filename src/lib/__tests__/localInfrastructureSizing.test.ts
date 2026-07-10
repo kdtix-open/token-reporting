@@ -272,6 +272,7 @@ describe("localInfrastructureSizing", () => {
 
     expect(firstServer).toMatchObject({
       cloudFallbackRequired: true,
+      confidence: "quote_required",
       estimatedCapexHighUsd: 150_000,
       fullReplacementAllowed: false,
       scope: "repo_automation_project"
@@ -296,6 +297,9 @@ describe("localInfrastructureSizing", () => {
     expect(report.hardwareBudgetSummary.cfoSummaryLines).toContain(
       "For all-provider steady-state replacement, create a $630K-$900K production-pod planning envelope."
     );
+    expect(allProviderSteady).toMatchObject({
+      confidence: "quote_required"
+    });
 
     expect(allProviderPeak).toMatchObject({
       requiredNodes: 17,
@@ -308,6 +312,29 @@ describe("localInfrastructureSizing", () => {
     expect(allProviderPeak?.estimatedCapexHighUsd).toBe(2_550_000);
     expect(report.hardwareBudgetSummary.cfoSummaryLines).toContain(
       "For all-provider peak-safe replacement, create a $1.785M-$2.55M expansion envelope."
+    );
+  });
+
+  it("hardwareBudgetScenarios_ApplySelectedWorkloadScopeToBudgetSummaryAndWorkload", () => {
+    const report = buildLocalInfrastructureSizing({
+      distribution: localDistribution,
+      localModelReport: {
+        contextConfidence: "high",
+        estimatedContextWindowNeeded: 1_000_000,
+        requiredTokensPerSec: 4057.9145455344587
+      } as LocalModelMigrationReport,
+      selectedWorkloadScope: "all_provider_traffic",
+      summaries: fixtureSummaries()
+    });
+
+    expect(report.hardwareBudgetSummary.selectedScope).toBe("all_provider_traffic");
+    expect(report.workloadSummary.selectedScopeComputeTps).toBeCloseTo(
+      report.workloadSummary.allProviderComputeTps,
+      6
+    );
+    expect(report.workloadSummary.selectedScopePeakTps).toBeCloseTo(
+      report.workloadSummary.allProviderPeakTps,
+      6
     );
   });
 
