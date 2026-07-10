@@ -185,7 +185,6 @@ function walkJsonl(root) {
 async function parseSession(file, repoRoot) {
   const turns = [];
   const toolCalls = [];
-  let currentSegment = emptySegment();
   let pendingSegment = emptySegment();
   let sessionCwd = null;
   let isHeartbeatSession = false;
@@ -229,15 +228,14 @@ async function parseSession(file, repoRoot) {
         turns.push({
           timestamp: event.timestamp,
           file,
-          classification: classifyTurn(currentSegment),
-          toolCalls: currentSegment.toolCalls,
-          codegraphCalls: currentSegment.codegraphCalls,
-          shellSearchReadCalls: currentSegment.shellSearchReadCalls,
-          readExplorationCalls: currentSegment.readExplorationCalls,
+          classification: classifyTurn(pendingSegment),
+          toolCalls: pendingSegment.toolCalls,
+          codegraphCalls: pendingSegment.codegraphCalls,
+          shellSearchReadCalls: pendingSegment.shellSearchReadCalls,
+          readExplorationCalls: pendingSegment.readExplorationCalls,
           usage: normalizeUsage(usage),
         });
       }
-      currentSegment = pendingSegment;
       pendingSegment = emptySegment();
     }
   }
@@ -261,8 +259,89 @@ function isHeartbeatAnalyzerInvocation(payload) {
   if (payload.type !== "function_call") return false;
   const name = String(payload.name ?? "").toLowerCase();
   if (name !== "exec_command") return false;
-  const args = String(payload.arguments ?? "").toLowerCase();
-  return /(?:^|[\s"'/:])node\s+(?:\.\/)?scripts\/analyze-codegraph-token-usage\.mjs\b/u.test(args);
+  return shellCommandSegments(readExecCommand(payload)).some(commandSegmentInvokesAnalyzer);
+}
+
+function readExecCommand(payload) {
+  const raw = payload.arguments;
+  if (typeof raw === "string") {
+    try {
+      const parsed = JSON.parse(raw);
+      return isRecord(parsed) && typeof parsed.cmd === "string" ? parsed.cmd : "";
+    } catch {
+      return raw;
+    }
+  }
+  return isRecord(raw) && typeof raw.cmd === "string" ? raw.cmd : "";
+}
+
+function shellCommandSegments(command) {
+  const segments = [];
+  let current = "";
+  let quote = null;
+  for (let index = 0; index < command.length; index += 1) {
+    const char = command[index];
+    const next = command[index + 1];
+    if ((char === "\"" || char === "'") && command[index - 1] !== "\\") {
+      quote = quote === char ? null : quote ?? char;
+    }
+    if (!quote && (char === "\n" || char === ";" || char === "|" || (char === "&" && next === "&"))) {
+      if (current.trim()) segments.push(current.trim());
+      current = "";
+      if ((char === "&" && next === "&") || (char === "|" && next === "|")) index += 1;
+      continue;
+    }
+    current += char;
+  }
+  if (current.trim()) segments.push(current.trim());
+  return segments;
+}
+
+function commandSegmentInvokesAnalyzer(segment) {
+  const words = shellWords(segment);
+  let index = 0;
+  while (words[index] === "env" || /^[A-Za-z_][A-Za-z0-9_]*=/u.test(words[index] ?? "")) {
+    index += 1;
+  }
+  const command = words[index];
+  if (!command || !/^(?:.*\/)?node$/u.test(command)) return false;
+  return words.slice(index + 1).some(isAnalyzerScriptPath);
+}
+
+function shellWords(segment) {
+  const words = [];
+  let current = "";
+  let quote = null;
+  for (let index = 0; index < segment.length; index += 1) {
+    const char = segment[index];
+    if ((char === "\"" || char === "'") && segment[index - 1] !== "\\") {
+      quote = quote === char ? null : quote ?? char;
+      continue;
+    }
+    if (!quote && /\s/u.test(char)) {
+      if (current) {
+        words.push(current);
+        current = "";
+      }
+      continue;
+    }
+    current += char;
+  }
+  if (current) words.push(current);
+  return words;
+}
+
+function isAnalyzerScriptPath(value) {
+  const normalized = value.replace(/^file:\/\//u, "");
+  return (
+    normalized === "scripts/analyze-codegraph-token-usage.mjs" ||
+    normalized === "./scripts/analyze-codegraph-token-usage.mjs" ||
+    normalized.endsWith("/scripts/analyze-codegraph-token-usage.mjs")
+  );
+}
+
+function isRecord(value) {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function isPathInside(candidate, root) {
@@ -479,7 +558,7 @@ function renderMarkdown(report) {
   lines.push(`- Session files included for repo: ${report.totals.includedSessionFileCount}`);
   lines.push(`- Session files excluded: ${report.totals.excludedSessionFileCount}`);
   lines.push(`- Exclusion reasons: ${formatReasonCounts(report.totals.excludedSessionReasonCounts)}`);
-  lines.push(`- Repo root filter: ${report.repoRoot}`);
+  lines.push(`- Repo root filter: ${formatRepoRootFilter(report.repoRoot)}`);
   lines.push(`- Measured token_count turns: ${report.totals.measuredTurnCount}`);
   lines.push(`- Instruction update timestamp: ${report.instructionUpdatedAt ?? "not available"}`);
   lines.push(`- First CodeGraph tool call seen: ${report.firstCodegraphToolAt ?? "not observed"}`);
@@ -564,6 +643,10 @@ function formatReasonCounts(counts) {
   const entries = Object.entries(counts);
   if (entries.length === 0) return "none";
   return entries.map(([reason, count]) => `${reason}: ${count}`).join(", ");
+}
+
+function formatRepoRootFilter(repoRoot) {
+  return repoRoot ? "[local path redacted]" : "not configured";
 }
 
 function journalReport(issueRef, markdownPath) {

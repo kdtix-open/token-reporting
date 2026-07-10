@@ -59,17 +59,23 @@ describe("analyze-codegraph-token-usage", () => {
     await runAnalyzer(fixture, ["--repo-root", fixture.repoRoot]);
 
     const report = await readLatestReport(fixture.outDir);
+    const markdown = await fs.readFile(
+      path.join(fixture.outDir, "latest-codegraph-token-usage.md"),
+      "utf8"
+    );
     expect(report.totals).toMatchObject({
       excludedSessionFileCount: 1,
       includedSessionFileCount: 1,
       measuredTurnCount: 4,
       sessionFileCount: 2
     });
-    expect(report.classifications.other.billableProxyTokens.median).toBe(95);
-    expect(report.classifications.codegraph_assisted.billableProxyTokens.median).toBe(130);
-    expect(report.classifications.codegraph_assisted.uncachedInputTokens.median).toBe(80);
-    expect(report.classifications.shell_search_read.billableProxyTokens.median).toBe(240);
-    expect(report.comparison.metrics.billableProxyTokens.delta).toBe(110);
+    expect(report.classifications.other.billableProxyTokens.median).toBe(185);
+    expect(report.classifications.codegraph_assisted.billableProxyTokens.median).toBe(80);
+    expect(report.classifications.codegraph_assisted.uncachedInputTokens.median).toBe(50);
+    expect(report.classifications.shell_search_read.billableProxyTokens.median).toBe(110);
+    expect(report.comparison.metrics.billableProxyTokens.delta).toBe(30);
+    expect(markdown).toContain("- Repo root filter: [local path redacted]");
+    expect(markdown).not.toContain(fixture.repoRoot);
   });
 
   it("analyzeCodeGraphTokenUsage_HeartbeatAnalyzerSession_IsExcludedFromSamples", async () => {
@@ -110,6 +116,33 @@ describe("analyze-codegraph-token-usage", () => {
     expect(report.classifications.codegraph_assisted.turnCount).toBe(0);
   });
 
+  it("analyzeCodeGraphTokenUsage_DiscoveryCommandMentioningAnalyzer_IsIncluded", async () => {
+    const fixture = await createFixture();
+    await writeSession(fixture.sessionsDir, "discovery.jsonl", [
+      sessionMeta(fixture.repoRoot),
+      toolCall(
+        "exec_command",
+        "{\"cmd\":\"rg \\\"node scripts/analyze-codegraph-token-usage.mjs\\\" src/providers\"}"
+      ),
+      tokenCount("2026-07-10T17:00:00.000Z", {
+        input_tokens: 100,
+        output_tokens: 30,
+        total_tokens: 130
+      })
+    ]);
+
+    await runAnalyzer(fixture, ["--repo-root", fixture.repoRoot]);
+
+    const report = await readLatestReport(fixture.outDir);
+    expect(report.totals).toMatchObject({
+      excludedSessionFileCount: 0,
+      includedSessionFileCount: 1,
+      measuredTurnCount: 1,
+      sessionFileCount: 1
+    });
+    expect(report.classifications.shell_search_read.turnCount).toBe(1);
+  });
+
   it("analyzeCodeGraphTokenUsage_EmptyComparisonCohort_RendersNotAvailableDelta", async () => {
     const fixture = await createFixture();
     await writeSession(fixture.sessionsDir, "shell-only.jsonl", [
@@ -147,23 +180,23 @@ describe("analyze-codegraph-token-usage", () => {
     const fixture = await createFixture();
     await writeSession(fixture.sessionsDir, "included.jsonl", [
       sessionMeta(fixture.repoRoot),
-      toolCall("mcp__codegraph.codegraph_explore", "{}"),
       tokenCount("2026-07-10T17:00:00.000Z", {
         input_tokens: 10,
         output_tokens: 10,
         total_tokens: 20
       }),
+      toolCall("mcp__codegraph.codegraph_explore", "{}"),
       tokenCount("2026-07-10T17:01:00.000Z", {
         input_tokens: 80,
         output_tokens: 20,
         total_tokens: 100
       }),
-      toolCall("mcp__codegraph.codegraph_explore", "{}"),
       tokenCount("2026-07-10T17:02:00.000Z", {
         input_tokens: 10,
         output_tokens: 10,
         total_tokens: 20
       }),
+      toolCall("mcp__codegraph.codegraph_explore", "{}"),
       tokenCount("2026-07-10T17:03:00.000Z", {
         input_tokens: 180,
         output_tokens: 20,
@@ -199,7 +232,7 @@ describe("analyze-codegraph-token-usage", () => {
     const report = await readLatestReport(fixture.outDir);
     expect(report.classifications.shell_search_read).toMatchObject({
       billableProxyTokens: {
-        median: 120
+        median: 60
       },
       turnCount: 1
     });
