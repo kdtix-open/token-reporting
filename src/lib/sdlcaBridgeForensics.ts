@@ -65,18 +65,7 @@ export function createSdlcaBridgeForensicExecutor(
           "bridge_forensic_provider_unavailable"
         );
         reviewerArtifacts.push(artifact);
-        try {
-          await request.onReviewerArtifact?.(artifact, reviewerArtifacts);
-        } catch (error) {
-          logger?.error(
-            "SDLCA bridge reviewer progress callback failed",
-            {
-              reviewerModel,
-              runId: request.runId
-            },
-            error
-          );
-        }
+        await notifyReviewerArtifact({ artifact, logger, request, reviewerArtifacts, reviewerModel });
         continue;
       }
 
@@ -89,18 +78,13 @@ export function createSdlcaBridgeForensicExecutor(
         startedAtIso
       );
       reviewerArtifacts.push(runningArtifact);
-      try {
-        await request.onReviewerArtifact?.(runningArtifact, reviewerArtifacts);
-      } catch (error) {
-        logger?.error(
-          "SDLCA bridge reviewer progress callback failed",
-          {
-            reviewerModel,
-            runId: request.runId
-          },
-          error
-        );
-      }
+      await notifyReviewerArtifact({
+        artifact: runningArtifact,
+        logger,
+        request,
+        reviewerArtifacts,
+        reviewerModel
+      });
 
       const artifact = await executeReviewer({
         bridgeToken: options.bridgeToken,
@@ -115,19 +99,17 @@ export function createSdlcaBridgeForensicExecutor(
         timeoutMs: options.timeoutMs,
         workingDirectory: options.workingDirectory
       });
-      reviewerArtifacts[reviewerArtifacts.length - 1] = artifact;
-      try {
-        await request.onReviewerArtifact?.(artifact, reviewerArtifacts);
-      } catch (error) {
-        logger?.error(
-          "SDLCA bridge reviewer progress callback failed",
-          {
-            reviewerModel,
-            runId: request.runId
-          },
-          error
-        );
+      const artifactIndex = reviewerArtifacts.findIndex(
+        (candidate) =>
+          candidate.artifactUri === runningArtifact.artifactUri &&
+          candidate.reviewerModel === reviewerModel
+      );
+      if (artifactIndex >= 0) {
+        reviewerArtifacts[artifactIndex] = artifact;
+      } else {
+        reviewerArtifacts.push(artifact);
       }
+      await notifyReviewerArtifact({ artifact, logger, request, reviewerArtifacts, reviewerModel });
     }
 
     const status = reviewerArtifacts.every((artifact) => artifact.status === "completed")
@@ -147,6 +129,36 @@ export function createSdlcaBridgeForensicExecutor(
       status
     };
   };
+}
+
+async function notifyReviewerArtifact(args: {
+  artifact: DynamicForensicReviewerArtifact;
+  logger: ObservabilityLogger | undefined;
+  request: DynamicForensicRunRequest;
+  reviewerArtifacts: DynamicForensicReviewerArtifact[];
+  reviewerModel: string;
+}): Promise<void> {
+  try {
+    await args.request.onReviewerArtifact?.(
+      cloneReviewerArtifact(args.artifact),
+      args.reviewerArtifacts.map(cloneReviewerArtifact)
+    );
+  } catch (error) {
+    args.logger?.error(
+      "SDLCA bridge reviewer progress callback failed",
+      {
+        reviewerModel: args.reviewerModel,
+        runId: args.request.runId
+      },
+      error
+    );
+  }
+}
+
+function cloneReviewerArtifact(
+  artifact: DynamicForensicReviewerArtifact
+): DynamicForensicReviewerArtifact {
+  return JSON.parse(JSON.stringify(artifact)) as DynamicForensicReviewerArtifact;
 }
 
 async function fetchForensicProviders(

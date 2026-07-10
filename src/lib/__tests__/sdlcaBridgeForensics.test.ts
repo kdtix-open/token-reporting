@@ -281,6 +281,78 @@ describe("sdlcaBridgeForensics", () => {
     });
   });
 
+  it("createSdlcaBridgeForensicExecutor_CallbackMutation_DoesNotCorruptReviewerArtifacts", async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse({
+          providers: [
+            {
+              forensicCapabilities,
+              kind: "claude",
+              providerId: "claude-reviewer",
+              providerName: "Claude reviewer",
+              resolvedExecutable: "/usr/bin/claude"
+            },
+            {
+              forensicCapabilities,
+              kind: "codex",
+              providerId: "codex-reviewer",
+              providerName: "Codex reviewer",
+              resolvedExecutable: "/usr/bin/codex"
+            }
+          ]
+        })
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({
+          result: forensicArtifact("claude", "Sonnet perspective")
+        })
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({
+          result: forensicArtifact("codex", "GPT perspective")
+        })
+      );
+
+    const executor = createSdlcaBridgeForensicExecutor({
+      bridgeToken: "bridge-token",
+      bridgeUrl: "http://127.0.0.1:4818",
+      fetcher,
+      workingDirectory: "/Users/ckreager/repos/kdtix/token_reporting"
+    });
+
+    const result = await executor({
+      createdAt: "2026-06-07T17:30:00.000Z",
+      evidencePacket,
+      huggingFaceCandidateSetId: "hf-candidates-test",
+      onReviewerArtifact: (artifact, artifacts) => {
+        artifact.status = "failed";
+        artifact.reviewerModel = "callback-mutated";
+        artifacts.length = 0;
+      },
+      reviewerModels: ["sonnet", "gpt"],
+      runId: "dynamic-forensic-20260607T173000000Z",
+      usageSnapshotId: "dynamic-usage-codex-2026-06-07"
+    });
+
+    expect(result).toMatchObject({
+      reviewerArtifacts: [
+        expect.objectContaining({
+          artifact: expect.objectContaining({ providerKind: "claude", summary: "Sonnet perspective" }),
+          reviewerModel: "sonnet",
+          status: "completed"
+        }),
+        expect.objectContaining({
+          artifact: expect.objectContaining({ providerKind: "codex", summary: "GPT perspective" }),
+          reviewerModel: "gpt",
+          status: "completed"
+        })
+      ],
+      status: "completed"
+    });
+  });
+
   it("createSdlcaBridgeForensicExecutor_BridgeExecuteTimeout_ReturnsFailedTimeoutArtifact", async () => {
     vi.useFakeTimers();
     let executeInit: RequestInit | undefined;
