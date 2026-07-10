@@ -335,4 +335,52 @@ describe("integrationApiClient", () => {
       vi.useRealTimers();
     }
   });
+
+  it("pollReportRefreshJob_StatusBodyTimeoutBeforeDeadline_ContinuesPolling", async () => {
+    vi.useFakeTimers();
+    try {
+      const fetcher = vi
+        .fn()
+        .mockImplementationOnce((_url: RequestInfo | URL, init?: RequestInit) =>
+          Promise.resolve({
+            json: async () =>
+              new Promise((_resolve, reject) => {
+                init?.signal?.addEventListener("abort", () => {
+                  reject(new DOMException("The operation was aborted.", "AbortError"));
+                });
+              }),
+            ok: true,
+            status: 200
+          } as Response)
+        )
+        .mockResolvedValueOnce({
+          json: async () => ({
+            jobId: "dynamic-refresh-body-timeout",
+            status: "completed"
+          }),
+          ok: true,
+          status: 200
+        });
+      const resultPromise = pollReportRefreshJob("dynamic-refresh-body-timeout", {
+        apiBaseUrl: "http://127.0.0.1:8788",
+        fetcher,
+        intervalMs: 0,
+        timeoutMs: 90_000
+      });
+
+      await vi.advanceTimersByTimeAsync(30_000);
+      await vi.runOnlyPendingTimersAsync();
+
+      await expect(resultPromise).resolves.toEqual({
+        job: {
+          jobId: "dynamic-refresh-body-timeout",
+          status: "completed"
+        },
+        outcome: "accepted"
+      });
+      expect(fetcher).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

@@ -52,6 +52,7 @@ export async function requestReportRefresh(
   const timeout = createTimeoutController(timeoutMs);
 
   let response: Response | "timeout";
+  let body: unknown | "timeout";
   try {
     response = await Promise.race([
       fetcher(`${apiBaseUrl}/api/refresh`, {
@@ -64,15 +65,9 @@ export async function requestReportRefresh(
       }),
       timeout.promise
     ]);
+    body = response === "timeout" ? "timeout" : await readJsonBodyWithTimeout(response, timeout);
   } catch (error) {
-    if (timeout.didTimeout()) {
-      return {
-        message: `Refresh is still running after ${formatSeconds(
-          timeoutMs
-        )}. Check the refresh status or try a narrower provider refresh.`,
-        outcome: "failed"
-      };
-    }
+    if (timeout.didTimeout() || isAbortError(error)) return timeoutResult(timeoutMs);
 
     throw error;
   } finally {
@@ -83,7 +78,9 @@ export async function requestReportRefresh(
     return timeoutResult(timeoutMs);
   }
 
-  const body = await readJsonBody(response);
+  if (body === "timeout") {
+    return timeoutResult(timeoutMs);
+  }
 
   if (response.ok) {
     return {
@@ -117,6 +114,7 @@ export async function pollReportRefreshJob(
 
     const timeout = createTimeoutController(Math.min(30_000, requestTimeoutMs));
     let response: Response | "timeout";
+    let body: unknown | "timeout";
     try {
       response = await Promise.race([
         fetcher(`${apiBaseUrl}/api/refresh/${encodeURIComponent(jobId)}`, {
@@ -125,9 +123,11 @@ export async function pollReportRefreshJob(
         }),
         timeout.promise
       ]);
+      body = response === "timeout" ? "timeout" : await readJsonBodyWithTimeout(response, timeout);
     } catch (error) {
-      if (timeout.didTimeout()) {
+      if (timeout.didTimeout() || isAbortError(error)) {
         response = "timeout";
+        body = "timeout";
       } else {
         throw error;
       }
@@ -135,14 +135,13 @@ export async function pollReportRefreshJob(
       timeout.clear();
     }
 
-    if (response === "timeout") {
+    if (response === "timeout" || body === "timeout") {
       const remainingMs = remainingTimeoutMs(startedAt, timeoutMs);
       if (remainingMs <= 0) break;
       await delay(Math.min(intervalMs, remainingMs));
       continue;
     }
 
-    const body = await readJsonBody(response);
     if (!response.ok) {
       return {
         httpStatus: response.status,
@@ -188,9 +187,17 @@ function refreshRequestBody(options: RequestReportRefreshOptions): Record<string
 async function readJsonBody(response: Response): Promise<unknown> {
   try {
     return (await response.json()) as unknown;
-  } catch {
+  } catch (error) {
+    if (isAbortError(error)) throw error;
     return {};
   }
+}
+
+function readJsonBodyWithTimeout(
+  response: Response,
+  timeout: { promise: Promise<"timeout"> }
+): Promise<unknown | "timeout"> {
+  return Promise.race([readJsonBody(response), timeout.promise]);
 }
 
 function readMessage(body: unknown): string | undefined {
@@ -217,6 +224,12 @@ function parseReportRefreshJob(body: unknown, expectedJobId: string): ReportRefr
 
 function isKnownRefreshStatus(status: unknown): status is string {
   return typeof status === "string" && (status === "running" || isTerminalRefreshStatus(status));
+}
+
+function isAbortError(error: unknown): boolean {
+  return error instanceof DOMException
+    ? error.name === "AbortError"
+    : error instanceof Error && error.name === "AbortError";
 }
 
 function delay(ms: number): Promise<void> {
