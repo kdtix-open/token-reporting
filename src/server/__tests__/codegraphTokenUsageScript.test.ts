@@ -65,7 +65,7 @@ describe("analyze-codegraph-token-usage", () => {
       measuredTurnCount: 4,
       sessionFileCount: 2
     });
-    expect(report.classifications.other.billableProxyTokens.median).toBe(80);
+    expect(report.classifications.other.billableProxyTokens.median).toBe(95);
     expect(report.classifications.codegraph_assisted.billableProxyTokens.median).toBe(130);
     expect(report.classifications.codegraph_assisted.uncachedInputTokens.median).toBe(80);
     expect(report.classifications.shell_search_read.billableProxyTokens.median).toBe(240);
@@ -97,6 +97,9 @@ describe("analyze-codegraph-token-usage", () => {
     const report = await readLatestReport(fixture.outDir);
     expect(report.totals).toMatchObject({
       excludedSessionFileCount: 1,
+      excludedSessionReasonCounts: {
+        codegraph_token_usage_heartbeat: 1
+      },
       includedSessionFileCount: 0,
       measuredTurnCount: 0,
       sessionFileCount: 1
@@ -113,6 +116,11 @@ describe("analyze-codegraph-token-usage", () => {
       sessionMeta(fixture.repoRoot),
       toolCall("exec_command", "{\"cmd\":\"rg token scripts\"}"),
       tokenCount("2026-07-10T17:05:00.000Z", {
+        input_tokens: 50,
+        output_tokens: 10,
+        total_tokens: 60
+      }),
+      tokenCount("2026-07-10T17:06:00.000Z", {
         input_tokens: 200,
         output_tokens: 40,
         total_tokens: 240
@@ -133,6 +141,68 @@ describe("analyze-codegraph-token-usage", () => {
       shellSearchReadMedian: null
     });
     expect(markdown).toContain("| billableProxyTokens | n/a | n/a | n/a | n/a |");
+  });
+
+  it("analyzeCodeGraphTokenUsage_EvenCohort_UsesMidpointMedian", async () => {
+    const fixture = await createFixture();
+    await writeSession(fixture.sessionsDir, "included.jsonl", [
+      sessionMeta(fixture.repoRoot),
+      toolCall("mcp__codegraph.codegraph_explore", "{}"),
+      tokenCount("2026-07-10T17:00:00.000Z", {
+        input_tokens: 10,
+        output_tokens: 10,
+        total_tokens: 20
+      }),
+      tokenCount("2026-07-10T17:01:00.000Z", {
+        input_tokens: 80,
+        output_tokens: 20,
+        total_tokens: 100
+      }),
+      toolCall("mcp__codegraph.codegraph_explore", "{}"),
+      tokenCount("2026-07-10T17:02:00.000Z", {
+        input_tokens: 10,
+        output_tokens: 10,
+        total_tokens: 20
+      }),
+      tokenCount("2026-07-10T17:03:00.000Z", {
+        input_tokens: 180,
+        output_tokens: 20,
+        total_tokens: 200
+      })
+    ]);
+
+    await runAnalyzer(fixture, ["--repo-root", fixture.repoRoot]);
+
+    const report = await readLatestReport(fixture.outDir);
+    expect(report.classifications.codegraph_assisted.billableProxyTokens.median).toBe(150);
+  });
+
+  it("analyzeCodeGraphTokenUsage_GitAndJqDiscovery_ClassifiesAsShellSearchRead", async () => {
+    const fixture = await createFixture();
+    await writeSession(fixture.sessionsDir, "included.jsonl", [
+      sessionMeta(fixture.repoRoot),
+      toolCall("exec_command", "{\"cmd\":\"git show --stat HEAD && jq . package.json\"}"),
+      tokenCount("2026-07-10T17:00:00.000Z", {
+        input_tokens: 50,
+        output_tokens: 10,
+        total_tokens: 60
+      }),
+      tokenCount("2026-07-10T17:01:00.000Z", {
+        input_tokens: 100,
+        output_tokens: 20,
+        total_tokens: 120
+      })
+    ]);
+
+    await runAnalyzer(fixture, ["--repo-root", fixture.repoRoot]);
+
+    const report = await readLatestReport(fixture.outDir);
+    expect(report.classifications.shell_search_read).toMatchObject({
+      billableProxyTokens: {
+        median: 120
+      },
+      turnCount: 1
+    });
   });
 
   it("analyzeCodeGraphTokenUsage_ReadOnlyMode_BlocksLocalAndRemoteMutations", async () => {
@@ -184,6 +254,45 @@ describe("analyze-codegraph-token-usage", () => {
     await expect(pathExists(path.join(fixture.outDir, "latest-codegraph-token-usage.md"))).resolves.toBe(
       true
     );
+  });
+
+  it("analyzeCodeGraphTokenUsage_JournalSuccess_UsesBodyFileContract", async () => {
+    const fixture = await createFixture();
+    const mockBinDir = path.join(fixture.root, "bin");
+    const ghArgsPath = path.join(fixture.root, "gh-args.txt");
+    await fs.mkdir(mockBinDir);
+    await fs.writeFile(
+      path.join(mockBinDir, "gh"),
+      "#!/usr/bin/env bash\nprintf '%s\\n' \"$@\" > \"$GH_ARGS_FILE\"\n",
+      { mode: 0o755 }
+    );
+    await writeSession(fixture.sessionsDir, "included.jsonl", [
+      sessionMeta(fixture.repoRoot),
+      tokenCount("2026-07-10T17:00:00.000Z", {
+        input_tokens: 100,
+        output_tokens: 30,
+        total_tokens: 130
+      })
+    ]);
+
+    await runAnalyzer(fixture, ["--repo-root", fixture.repoRoot, "--journal-issue", "kdtix-open/token-reporting#25"], {
+      GH_ARGS_FILE: ghArgsPath,
+      PATH: `${mockBinDir}:${process.env.PATH ?? ""}`
+    });
+
+    const ghArgs = (await fs.readFile(ghArgsPath, "utf8")).trim().split("\n");
+    const bodyFileIndex = ghArgs.indexOf("--body-file");
+    expect(ghArgs).toEqual([
+      "issue",
+      "comment",
+      "25",
+      "--repo",
+      "kdtix-open/token-reporting",
+      "--body-file",
+      expect.stringContaining("codegraph-token-usage-")
+    ]);
+    expect(bodyFileIndex).toBeGreaterThan(0);
+    await expect(pathExists(ghArgs[bodyFileIndex + 1] ?? "")).resolves.toBe(true);
   });
 });
 
@@ -270,7 +379,7 @@ function tokenCount(timestamp: string, lastTokenUsage: Record<string, number>): 
 }
 
 interface AnalyzerMetricSummary {
-  median: number;
+  median: number | null;
 }
 
 interface AnalyzerReport {
