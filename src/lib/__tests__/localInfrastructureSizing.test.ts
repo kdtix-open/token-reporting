@@ -222,6 +222,7 @@ describe("localInfrastructureSizing", () => {
     });
     expect(report.workloadScopeSummaries.map((scope) => scope.scope)).toEqual([
       "all_provider_traffic",
+      "cloud_only_tail",
       "repo_automation_project",
       "copilot_cli",
       "agentic_worker",
@@ -235,6 +236,42 @@ describe("localInfrastructureSizing", () => {
       report.workloadScopeSummaries.find((scope) => scope.scope === "repo_automation_project")
         ?.notes.join(" ")
     ).toContain("global long-context tail fallback");
+  });
+
+  it("workloadSummary_UsesCloudOnlyTailScopeInsteadOfAllProviderFallback", () => {
+    const report = buildLocalInfrastructureSizing({
+      distribution: localDistribution,
+      localModelReport: {
+        contextConfidence: "high",
+        estimatedContextWindowNeeded: 1_000_000,
+        requiredTokensPerSec: 4057.9145455344587
+      } as LocalModelMigrationReport,
+      selectedWorkloadScope: "cloud_only_tail",
+      summaries: fixtureSummaries()
+    });
+    const cloudOnlyTail = report.workloadScopeSummaries.find(
+      (scope) => scope.scope === "cloud_only_tail"
+    );
+    const cloudOnlyTailScenario = report.hardwareBudgetScenarios.find(
+      (scenario) => scenario.scope === "cloud_only_tail"
+    );
+
+    expect(cloudOnlyTail).toMatchObject({
+      label: "Cloud-only tail sizing",
+      routeClassIds: ["long_context_tail"]
+    });
+    expect(report.hardwareBudgetSummary.selectedScope).toBe("cloud_only_tail");
+    expect(report.workloadSummary.selectedScopeComputeTps).toBeCloseTo(
+      cloudOnlyTail?.currentProjectLaneComputeTps ?? 0,
+      6
+    );
+    expect(report.workloadSummary.selectedScopeComputeTps).toBeLessThan(
+      report.workloadSummary.allProviderComputeTps
+    );
+    expect(cloudOnlyTailScenario?.targetTokensPerSecond).toBeCloseTo(
+      cloudOnlyTail?.currentProjectLaneComputeTps ?? 0,
+      2
+    );
   });
 
   it("workloadSummary_SplitsAllProviderFromSelectedRepoAutomationScope", () => {

@@ -1428,6 +1428,8 @@ function buildWorkloadScopeSummaries(
     p99: workload.currentProjectLaneP99Context
   };
   const repoRouteClassIds = ["repo_agent_worker", "repo_agent_reviewer", "long_context_tail"];
+  const cloudOnlyTailRoute = routeById.get("long_context_tail");
+  const cloudOnlyTailRouteClassIds = ["long_context_tail"];
   const repoContext = contextForRouteClasses(routeClasses, repoRouteClassIds);
   const repoCompute =
     (routeById.get("repo_agent_worker")?.computeTokensPerDay ?? 0) +
@@ -1442,6 +1444,17 @@ function buildWorkloadScopeSummaries(
       providerIds: usages.map((usage) => usage.providerId),
       routeClassIds: routeClasses.map((route) => route.id),
       scope: "all_provider_traffic"
+    }),
+    scopeSummary({
+      computeTokensPerDay: cloudOnlyTailRoute?.computeTokensPerDay ?? 0,
+      context: contextForRouteClasses(routeClasses, cloudOnlyTailRouteClassIds),
+      label: "Cloud-only tail sizing",
+      notes: [
+        "Long-context p95/p99 tail is explicitly modeled as hosted fallback until route-specific tail samples and benchmark evidence are available."
+      ],
+      providerIds: cloudOnlyTailRoute?.providerIds ?? [],
+      routeClassIds: cloudOnlyTailRouteClassIds,
+      scope: "cloud_only_tail"
     }),
     scopeSummary({
       computeTokensPerDay: repoCompute,
@@ -1617,6 +1630,17 @@ function buildHardwareBudgetScenarios(
       scope: "repo_automation_project",
       scopes,
       targetTokensPerSecond: workload.repoAutomationPeakTps
+    }),
+    hardwareBudgetScenario({
+      cloudFallbackRequired: true,
+      explanation:
+        "Long-context p95/p99 tail remains a hosted fallback sizing lane until route-specific tail samples and benchmark evidence prove local parity.",
+      fullReplacementAllowed: false,
+      goal: "steady_state_replacement",
+      profile: preferredProfile,
+      scope: "cloud_only_tail",
+      scopes,
+      targetTokensPerSecond: scopeTps(scopes, "cloud_only_tail", 0)
     }),
     hardwareBudgetScenario({
       cloudFallbackRequired: true,

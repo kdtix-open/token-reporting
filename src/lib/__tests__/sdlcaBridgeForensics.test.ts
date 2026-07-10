@@ -150,6 +150,7 @@ describe("sdlcaBridgeForensics", () => {
             ...forensicArtifact("codex", "Sensitive artifact"),
             apiToken: "api-secret",
             githubToken: "github-secret",
+            tokenCount: [123, 456],
             tokenUsage: {
               apiToken: "nested-api-secret",
               inputTokens: 123,
@@ -184,13 +185,8 @@ describe("sdlcaBridgeForensics", () => {
     expect(artifact).toMatchObject({
       apiToken: "[REDACTED]",
       githubToken: "[REDACTED]",
-      tokenUsage: {
-        apiToken: "[REDACTED]",
-        inputTokens: 123,
-        requestTokens: "[REDACTED]",
-        tokenUsage: "[REDACTED]",
-        totalTokens: 456
-      },
+      tokenCount: [123, 456],
+      tokenUsage: "[REDACTED]",
       tokens: "[REDACTED]",
       tokenValue: "[REDACTED]"
     });

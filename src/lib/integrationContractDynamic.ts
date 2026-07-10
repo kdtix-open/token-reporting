@@ -110,7 +110,7 @@ interface TerminalRefreshJobCacheEntry {
   persistenceAttempts: number;
 }
 
-const terminalDynamicRefreshJobs = new Map<string, TerminalRefreshJobCacheEntry>();
+type TerminalRefreshJobCache = Map<string, TerminalRefreshJobCacheEntry>;
 
 export function createDynamicIntegrationContractHandler(
   options: DynamicIntegrationContractOptions = {}
@@ -122,6 +122,7 @@ export function createDynamicIntegrationContractHandler(
     (() => loadProviderSummariesFromDataRoot(options.dataRoot ?? path.resolve("public/data")));
   const forensicRunStore = options.forensicRunStore ?? createMemoryForensicRunStore();
   const refreshJobStore = options.refreshJobStore ?? createMemoryRefreshJobStore();
+  const terminalRefreshJobs: TerminalRefreshJobCache = new Map();
 
   return async (request) => {
     const method = request.method.trim().toUpperCase();
@@ -143,6 +144,7 @@ export function createDynamicIntegrationContractHandler(
         options.refreshExecutor,
         loadSummaries,
         refreshJobStore,
+        terminalRefreshJobs,
         now(),
         env,
         options.asyncRefresh ?? readAsyncRefreshMode(env)
@@ -150,7 +152,7 @@ export function createDynamicIntegrationContractHandler(
     }
 
     if (method === "GET" && requestPath.startsWith("/api/refresh/")) {
-      return dynamicRefreshStatusResponse(requestPath, refreshJobStore, env);
+      return dynamicRefreshStatusResponse(requestPath, refreshJobStore, terminalRefreshJobs, env);
     }
 
     if (method === "POST" && requestPath === "/api/local-model-profiles/forensic-runs") {
@@ -288,6 +290,7 @@ async function dynamicRefreshResponse(
   refreshExecutor: DynamicRefreshExecutor | undefined,
   loadSummaries: () => Promise<ProviderReportSummary[]>,
   refreshJobStore: RefreshJobStore,
+  terminalRefreshJobs: TerminalRefreshJobCache,
   generatedAt: Date,
   env: NodeJS.ProcessEnv,
   asyncRefresh: boolean
@@ -346,7 +349,7 @@ async function dynamicRefreshResponse(
     })
       .then(async (job) => {
         latestJob = job;
-        await persistTerminalRefreshJob(refreshJobStore, jobId, job);
+        await persistTerminalRefreshJob(refreshJobStore, terminalRefreshJobs, jobId, job);
       })
       .catch(async (error) => {
         latestJob = buildFailedRefreshJob({
@@ -357,7 +360,7 @@ async function dynamicRefreshResponse(
           refreshRequest,
           startedAt
         });
-        await persistTerminalRefreshJob(refreshJobStore, jobId, latestJob);
+        await persistTerminalRefreshJob(refreshJobStore, terminalRefreshJobs, jobId, latestJob);
       })
       .finally(() => activeDynamicRefreshJobIds.delete(jobId));
 
@@ -415,40 +418,45 @@ async function persistProgressRefreshJob(
 
 async function persistTerminalRefreshJob(
   refreshJobStore: RefreshJobStore,
+  terminalRefreshJobs: TerminalRefreshJobCache,
   jobId: string,
   job: Record<string, unknown>
 ): Promise<void> {
-  cacheTerminalRefreshJob(jobId, job);
+  cacheTerminalRefreshJob(terminalRefreshJobs, jobId, job);
   await refreshJobStore
     .set(jobId, job)
-    .then(() => terminalDynamicRefreshJobs.delete(jobId))
-    .catch(() => cacheTerminalRefreshJob(jobId, terminalJobWithWarning(job, 1), 1));
+    .then(() => terminalRefreshJobs.delete(jobId))
+    .catch(() => cacheTerminalRefreshJob(terminalRefreshJobs, jobId, terminalJobWithWarning(job, 1), 1));
 }
 
 function cacheTerminalRefreshJob(
+  terminalRefreshJobs: TerminalRefreshJobCache,
   jobId: string,
   job: Record<string, unknown>,
   persistenceAttempts = 0
 ): void {
-  pruneTerminalRefreshJobs();
-  terminalDynamicRefreshJobs.set(jobId, {
+  pruneTerminalRefreshJobs(terminalRefreshJobs);
+  terminalRefreshJobs.set(jobId, {
     cachedAtMs: Date.now(),
     job,
     persistenceAttempts
   });
-  pruneTerminalRefreshJobs();
+  pruneTerminalRefreshJobs(terminalRefreshJobs);
 }
 
-function pruneTerminalRefreshJobs(now = Date.now()): void {
-  for (const [jobId, entry] of terminalDynamicRefreshJobs) {
+function pruneTerminalRefreshJobs(
+  terminalRefreshJobs: TerminalRefreshJobCache,
+  now = Date.now()
+): void {
+  for (const [jobId, entry] of terminalRefreshJobs) {
     if (now - entry.cachedAtMs > terminalRefreshJobCacheTtlMs) {
-      terminalDynamicRefreshJobs.delete(jobId);
+      terminalRefreshJobs.delete(jobId);
     }
   }
-  while (terminalDynamicRefreshJobs.size > terminalRefreshJobCacheLimit) {
-    const oldestJobId = terminalDynamicRefreshJobs.keys().next().value as string | undefined;
+  while (terminalRefreshJobs.size > terminalRefreshJobCacheLimit) {
+    const oldestJobId = terminalRefreshJobs.keys().next().value as string | undefined;
     if (!oldestJobId) return;
-    terminalDynamicRefreshJobs.delete(oldestJobId);
+    terminalRefreshJobs.delete(oldestJobId);
   }
 }
 
@@ -756,15 +764,22 @@ function latestTimestamp(values: Array<string | undefined | null>): string | und
 async function dynamicRefreshStatusResponse(
   requestPath: string,
   refreshJobStore: RefreshJobStore,
+  terminalRefreshJobs: TerminalRefreshJobCache,
   env: NodeJS.ProcessEnv
 ): Promise<IntegrationContractResponse> {
   const jobId = requestPath.split("/").at(-1) ?? "";
-  pruneTerminalRefreshJobs();
-  const terminalJob = terminalDynamicRefreshJobs.get(jobId);
+  pruneTerminalRefreshJobs(terminalRefreshJobs);
+  const terminalJob = terminalRefreshJobs.get(jobId);
   if (terminalJob && !activeDynamicRefreshJobIds.has(jobId)) {
     return jsonResponse(
       200,
-      await retryTerminalRefreshJobPersistence(jobId, terminalJob, refreshJobStore, env)
+      await retryTerminalRefreshJobPersistence(
+        jobId,
+        terminalJob,
+        refreshJobStore,
+        terminalRefreshJobs,
+        env
+      )
     );
   }
 
@@ -797,9 +812,10 @@ async function retryTerminalRefreshJobPersistence(
   jobId: string,
   entry: TerminalRefreshJobCacheEntry,
   refreshJobStore: RefreshJobStore,
+  terminalRefreshJobs: TerminalRefreshJobCache,
   env: NodeJS.ProcessEnv
 ): Promise<Record<string, unknown>> {
-  pruneTerminalRefreshJobs();
+  pruneTerminalRefreshJobs(terminalRefreshJobs);
   try {
     assertWritableOperationAllowed("Token Reporting terminal refresh job retry", env);
   } catch {
@@ -812,12 +828,12 @@ async function retryTerminalRefreshJobPersistence(
   const durableJob = durableTerminalJob(entry.job);
   try {
     await refreshJobStore.set(jobId, durableJob);
-    terminalDynamicRefreshJobs.delete(jobId);
+    terminalRefreshJobs.delete(jobId);
     return durableJob;
   } catch {
     const persistenceAttempts = entry.persistenceAttempts + 1;
     const cachedJob = terminalJobWithWarning(durableJob, persistenceAttempts);
-    cacheTerminalRefreshJob(jobId, cachedJob, persistenceAttempts);
+    cacheTerminalRefreshJob(terminalRefreshJobs, jobId, cachedJob, persistenceAttempts);
     return cachedJob;
   }
 }

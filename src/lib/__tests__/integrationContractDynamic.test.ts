@@ -749,6 +749,79 @@ describe("integrationContractDynamic", () => {
     expect(getJob).not.toHaveProperty("persistenceWarning");
   });
 
+  it("createDynamicIntegrationContractHandler_RefreshStatus_KeepsTerminalCacheScopedPerHandler", async () => {
+    let firstGetJob: Record<string, unknown> | undefined;
+    let firstSetCalls = 0;
+    const firstRefreshJobStore = {
+      async get() {
+        return firstGetJob;
+      },
+      async set(_jobId: string, job: Record<string, unknown>) {
+        firstSetCalls += 1;
+        if (firstSetCalls === 1) {
+          firstGetJob = job;
+          return;
+        }
+        throw new Error("disk full");
+      }
+    };
+    const firstHandler = createDynamicIntegrationContractHandler({
+      asyncRefresh: true,
+      loadSummaries: async () => summaries,
+      now: () => new Date("2026-06-07T16:47:00.000Z"),
+      refreshExecutor: vi.fn().mockResolvedValue({
+        providerResults: [
+          {
+            completedAt: "2026-06-07T16:47:08.000Z",
+            providerId: "codex",
+            status: "completed"
+          }
+        ]
+      }),
+      refreshJobStore: firstRefreshJobStore
+    });
+
+    await firstHandler({
+      body: { providers: ["codex"] },
+      method: "POST",
+      path: "/api/refresh"
+    });
+    await vi.waitFor(() => expect(firstSetCalls).toBeGreaterThanOrEqual(2));
+
+    const secondRefreshJobStore = {
+      get: vi.fn(async () => ({
+        jobId: "dynamic-refresh-20260607T164700000Z",
+        providerResults: [],
+        startedAt: "2026-06-07T16:47:00.000Z",
+        status: "running"
+      })),
+      set: vi.fn(async () => undefined)
+    };
+    const secondHandler = createDynamicIntegrationContractHandler({
+      loadSummaries: async () => summaries,
+      refreshJobStore: secondRefreshJobStore
+    });
+
+    const secondStatus = await secondHandler({
+      method: "GET",
+      path: "/api/refresh/dynamic-refresh-20260607T164700000Z"
+    });
+
+    expect(secondStatus.status).toBe(200);
+    expect(secondStatus.body).toMatchObject({
+      degradedReason: "refresh_job_worker_not_active_after_restart",
+      jobId: "dynamic-refresh-20260607T164700000Z",
+      status: "failed"
+    });
+    expect(secondStatus.body).not.toMatchObject({
+      providerResults: [expect.objectContaining({ providerId: "codex", status: "completed" })]
+    });
+    expect(secondRefreshJobStore.set).toHaveBeenCalledWith(
+      "dynamic-refresh-20260607T164700000Z",
+      expect.objectContaining({ status: "failed" })
+    );
+  });
+
   it("createDynamicIntegrationContractHandler_RefreshStatus_DoesNotRetryExpiredTerminalCache", async () => {
     const baseNowMs = Date.parse("2026-06-07T16:46:00.000Z");
     const nowSpy = vi.spyOn(Date, "now").mockReturnValue(baseNowMs);

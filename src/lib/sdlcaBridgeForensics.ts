@@ -727,8 +727,10 @@ function shouldRedactBridgeArtifactKey(key: string, value: unknown): boolean {
 }
 
 function isBridgeTokenTelemetryValue(value: unknown): boolean {
-  if (typeof value === "number" || isRecord(value)) return true;
-  return Array.isArray(value) && value.every(isBridgeTokenTelemetryValue);
+  if (typeof value === "number") return Number.isFinite(value);
+  if (Array.isArray(value)) return value.every(isBridgeTokenTelemetryValue);
+  if (!isRecord(value)) return false;
+  return Object.values(value).every(isBridgeTokenTelemetryValue);
 }
 
 function redactFreeText(value: string): string {
