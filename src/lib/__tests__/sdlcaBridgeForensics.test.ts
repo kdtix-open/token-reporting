@@ -584,6 +584,64 @@ describe("sdlcaBridgeForensics", () => {
     });
   });
 
+  it("createSdlcaBridgeForensicExecutor_SchemaOnlyBridgeResult_DoesNotNormalizeSyntheticArtifact", async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse({
+          result: [
+            {
+              forensicCapabilities,
+              kind: "claude",
+              providerId: "claude-reviewer",
+              providerName: "Claude Reviewer",
+              resolvedExecutable: "/usr/bin/claude"
+            }
+          ]
+        })
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({
+          result: {
+            schemaVersion: "sdlca.bridge.forensic.v0"
+          }
+        })
+      );
+
+    const executor = createSdlcaBridgeForensicExecutor({
+      bridgeToken: "bridge-token",
+      bridgeUrl: "http://127.0.0.1:4818",
+      fetcher,
+      workingDirectory: "/Users/ckreager/repos/kdtix/token_reporting"
+    });
+
+    const result = await executor({
+      createdAt: "2026-06-07T17:30:00.000Z",
+      evidencePacket,
+      huggingFaceCandidateSetId: "hf-candidates-test",
+      reviewerModels: ["opus"],
+      runId: "dynamic-forensic-20260607T173000000Z",
+      usageSnapshotId: "dynamic-usage-codex-2026-06-07"
+    });
+
+    expect(result.status).toBe("degraded");
+    expect(result.reviewerArtifacts[0]).toMatchObject({
+      bridgeProviderKind: "claude",
+      degradedReason: "sdlca_bridge_forensic_result_invalid",
+      diagnostics: {
+        bridgeHttpStatus: 200,
+        bridgeProviderKind: "claude",
+        validationErrors: expect.arrayContaining([
+          "artifactSchemaVersion_expected_sdlca.bridge.forensic.v0",
+          "findings_expected_array",
+          "summary_expected_string"
+        ])
+      },
+      reviewerModel: "opus",
+      status: "failed"
+    });
+  });
+
   it("createSdlcaBridgeForensicExecutor_StructuredSonnetBridgeResult_NormalizesReviewerArtifact", async () => {
     const fetcher = vi
       .fn()

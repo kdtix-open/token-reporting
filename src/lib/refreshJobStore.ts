@@ -20,15 +20,24 @@ export function createMemoryRefreshJobStore(): RefreshJobStore {
 }
 
 export function createFileRefreshJobStore(filePath: string): RefreshJobStore {
+  let writeQueue = Promise.resolve();
+  const enqueueWrite = (task: () => Promise<void>): Promise<void> => {
+    const nextWrite = writeQueue.then(task, task);
+    writeQueue = nextWrite.catch(() => undefined);
+    return nextWrite;
+  };
+
   return {
     async get(jobId) {
       const jobs = await readJobs(filePath);
       return jobs[jobId];
     },
     async set(jobId, job) {
-      const jobs = await readJobs(filePath);
-      jobs[jobId] = job;
-      await writeJobs(filePath, jobs);
+      await enqueueWrite(async () => {
+        const jobs = await readJobs(filePath);
+        jobs[jobId] = job;
+        await writeJobs(filePath, jobs);
+      });
     }
   };
 }

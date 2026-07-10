@@ -4,7 +4,7 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 
 ## Project Overview
 
-Token Reporting is a React + TypeScript dashboard for tracking AI/code-assistant token consumption and spending across five providers: GitHub Copilot, Cursor, Codex (Anthropic Admin API), Codex (local session telemetry), and OpenAI Codex. It fetches usage data via provider APIs and local session files, persists snapshots locally, and renders comparison charts, spend projections, and local-model migration analysis.
+Token Reporting is a React + TypeScript dashboard for tracking AI/code-assistant token consumption and spending across five providers: GitHub Copilot, Cursor, Claude (Anthropic Admin API), Claude Code (local session telemetry), and OpenAI Codex. It fetches usage data via provider APIs and local session files, persists snapshots locally, and renders comparison charts, spend projections, and local-model migration analysis.
 
 ## Commands
 

@@ -5,6 +5,11 @@ import type { ProviderReportSummary } from "./types";
 // ── Types ───────────────────────────────────────────────────────────────────
 
 export type ContextConfidence = "high" | "low" | "insufficient_data";
+export type ContextEvidenceSource =
+  | "none"
+  | "global_local_session_distribution"
+  | "global_local_session_distribution_scaled_to_scope"
+  | "scoped_cloud_token_heuristic";
 export type CodeCapability = "excellent" | "good" | "fair";
 export type ModelTier = "min" | "recommended" | "pro" | "enterprise";
 export type LocalModelWorkloadScopeId =
@@ -170,6 +175,7 @@ export interface LocalModelMigrationReport {
    */
   estimatedContextWindowNeeded: number | null;
   contextConfidence: ContextConfidence;
+  contextEvidenceSource: ContextEvidenceSource;
   /** Populated when the local-sessions snapshot was used. */
   localDistribution: LocalSessionDistribution | null;
 
@@ -655,13 +661,19 @@ export function buildLocalModelReport(
   let avgTokensPerObservedRequest: number | null = null;
   let estimatedContextWindowNeeded: number | null = null;
   let contextConfidence: ContextConfidence = "insufficient_data";
+  let contextEvidenceSource: ContextEvidenceSource = "none";
 
   // Prefer empirical p99 from local session telemetry when present.
   if (localDistribution && localDistribution.combined.sampleCount > 0) {
     estimatedContextWindowNeeded = ceilToStandardContext(
       Math.ceil(localDistribution.combined.p99 * selectedWorkloadScope.contextWindowMultiplier)
     );
-    contextConfidence = "high";
+    contextConfidence =
+      selectedWorkloadScope.id === "all_provider_traffic" ? "high" : "low";
+    contextEvidenceSource =
+      selectedWorkloadScope.id === "all_provider_traffic"
+        ? "global_local_session_distribution"
+        : "global_local_session_distribution_scaled_to_scope";
     if (
       tokenObservedRequests !== null &&
       tokenObservedRequests > 0 &&
@@ -683,6 +695,7 @@ export function buildLocalModelReport(
       Math.ceil(avgTokensPerObservedRequest * 2.5 * selectedWorkloadScope.contextWindowMultiplier)
     );
     contextConfidence = "low";
+    contextEvidenceSource = "scoped_cloud_token_heuristic";
   }
 
   // ── Throughput ────────────────────────────────────────────────────────────
@@ -760,6 +773,7 @@ export function buildLocalModelReport(
     avgTokensPerObservedRequest,
     estimatedContextWindowNeeded,
     contextConfidence,
+    contextEvidenceSource,
     localDistribution,
     windowDays,
     dailyAvgComputeTokens,

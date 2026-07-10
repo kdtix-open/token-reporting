@@ -399,6 +399,26 @@ describe("buildLocalModelReport", () => {
     );
   });
 
+  it("downgrades scoped context confidence when only global local-session evidence is available", () => {
+    const globalDistribution = {
+      generatedAt: "2025-01-01T00:00:00.000Z",
+      sources: [],
+      combined: { sampleCount: 100, mean: 200_000, p50: 150_000, p95: 280_000, p99: 300_000, max: 400_000 }
+    };
+
+    const report = buildLocalModelReport(
+      [copilotCliSummary, claudeSummary, codexSummary],
+      globalDistribution as never,
+      null,
+      null,
+      { workloadScopeId: "copilot_cli" }
+    );
+
+    expect(report.selectedWorkloadScope.id).toBe("copilot_cli");
+    expect(report.contextConfidence).toBe("low");
+    expect(report.contextEvidenceSource).toBe("global_local_session_distribution_scaled_to_scope");
+  });
+
   it("exposes tenant pipeline scope options for future multi-tenant reports", () => {
     const report = buildLocalModelReport([codexSummary], null, null, null, {
       workloadScopeId: "agent_memory"
