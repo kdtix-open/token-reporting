@@ -20,11 +20,7 @@ export async function runCodegraphTokenUsageReport(argv = process.argv.slice(2))
   const outDir = path.resolve(args.outDir ?? DEFAULT_OUT_DIR);
   const repoRoot = path.resolve(args.repoRoot ?? process.cwd());
   const generatedAt = new Date();
-  const instructionUpdatedAt = args.instructionUpdatedAt
-    ? new Date(args.instructionUpdatedAt)
-    : fs.existsSync(agentsFile)
-      ? fs.statSync(agentsFile).mtime
-      : null;
+  const instructionUpdatedAt = readInstructionUpdatedAt(args.instructionUpdatedAt, agentsFile);
 
   const sessionFiles = walkJsonl(sessionsDir);
   const includedSessionFiles = [];
@@ -142,6 +138,17 @@ function readOptionValue(argv, index, flag) {
   return value;
 }
 
+function readInstructionUpdatedAt(value, agentsFile) {
+  if (value) {
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) {
+      throw new Error(`Invalid --instruction-updated-at value: ${value}`);
+    }
+    return parsed;
+  }
+  return fs.existsSync(agentsFile) ? fs.statSync(agentsFile).mtime : null;
+}
+
 function printHelp() {
   console.log(`Usage: node scripts/analyze-codegraph-token-usage.mjs [options]
 
@@ -186,6 +193,7 @@ async function parseSession(file, repoRoot) {
   const turns = [];
   const toolCalls = [];
   let pendingSegment = emptySegment();
+  let previousTotalUsage = null;
   let sessionCwd = null;
   let isHeartbeatSession = false;
 
@@ -202,6 +210,7 @@ async function parseSession(file, repoRoot) {
     } catch {
       continue;
     }
+    if (!isRecord(event)) continue;
 
     const payload = event.payload;
     if (!payload || typeof payload !== "object") continue;
@@ -223,7 +232,9 @@ async function parseSession(file, repoRoot) {
     }
 
     if (event.type === "event_msg" && payload.type === "token_count") {
-      const usage = payload.info?.last_token_usage;
+      const usageResult = readTokenUsage(payload.info, previousTotalUsage);
+      previousTotalUsage = usageResult.previousTotalUsage;
+      const usage = usageResult.usage;
       if (usage && event.timestamp) {
         turns.push({
           timestamp: event.timestamp,
@@ -342,6 +353,47 @@ function isAnalyzerScriptPath(value) {
 
 function isRecord(value) {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function readTokenUsage(info, previousTotalUsage) {
+  if (!isRecord(info)) return { previousTotalUsage, usage: null };
+  const lastUsage = isRecord(info.last_token_usage) ? info.last_token_usage : null;
+  const totalUsage = isRecord(info.total_token_usage) ? info.total_token_usage : null;
+  if (lastUsage) {
+    return { previousTotalUsage: totalUsage ?? previousTotalUsage, usage: lastUsage };
+  }
+  if (!totalUsage) return { previousTotalUsage, usage: null };
+
+  const usage = previousTotalUsage ? deltaUsage(totalUsage, previousTotalUsage) : totalUsage;
+  return {
+    previousTotalUsage: totalUsage,
+    usage: usageHasTokens(usage) ? usage : null,
+  };
+}
+
+function deltaUsage(totalUsage, previousTotalUsage) {
+  return Object.fromEntries(
+    [
+      "cached_input_tokens",
+      "input_tokens",
+      "output_tokens",
+      "reasoning_output_tokens",
+      "total_tokens",
+    ].map((field) => [
+      field,
+      Math.max(numberOrZero(totalUsage[field]) - numberOrZero(previousTotalUsage[field]), 0),
+    ])
+  );
+}
+
+function usageHasTokens(usage) {
+  return (
+    numberOrZero(usage.input_tokens) +
+      numberOrZero(usage.output_tokens) +
+      numberOrZero(usage.reasoning_output_tokens) +
+      numberOrZero(usage.total_tokens) >
+    0
+  );
 }
 
 function isPathInside(candidate, root) {

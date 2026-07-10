@@ -30,6 +30,7 @@ describe("analyze-codegraph-token-usage", () => {
         total_tokens: 130
       }),
       "{bad json",
+      "null",
       toolCall("exec_command", "{\"cmd\":\"rg token scripts\"}"),
       tokenCount("2026-07-10T17:05:00.000Z", {
         cached_input_tokens: 10,
@@ -141,6 +142,36 @@ describe("analyze-codegraph-token-usage", () => {
       sessionFileCount: 1
     });
     expect(report.classifications.shell_search_read.turnCount).toBe(1);
+  });
+
+  it("analyzeCodeGraphTokenUsage_CumulativeTotalUsage_DerivesPerTurnDelta", async () => {
+    const fixture = await createFixture();
+    await writeSession(fixture.sessionsDir, "cumulative.jsonl", [
+      sessionMeta(fixture.repoRoot),
+      toolCall("mcp__codegraph.codegraph_explore", "{}"),
+      totalTokenCount("2026-07-10T17:00:00.000Z", {
+        input_tokens: 80,
+        output_tokens: 20,
+        total_tokens: 100
+      }),
+      toolCall("exec_command", "{\"cmd\":\"rg token src\"}"),
+      totalTokenCount("2026-07-10T17:02:00.000Z", {
+        input_tokens: 130,
+        output_tokens: 30,
+        total_tokens: 160
+      })
+    ]);
+
+    await runAnalyzer(fixture, ["--repo-root", fixture.repoRoot]);
+
+    const report = await readLatestReport(fixture.outDir);
+    expect(report.totals).toMatchObject({
+      includedSessionFileCount: 1,
+      measuredTurnCount: 2
+    });
+    expect(report.classifications.codegraph_assisted.billableProxyTokens.median).toBe(100);
+    expect(report.classifications.shell_search_read.billableProxyTokens.median).toBe(60);
+    expect(report.comparison.metrics.billableProxyTokens.delta).toBe(-40);
   });
 
   it("analyzeCodeGraphTokenUsage_EmptyComparisonCohort_RendersNotAvailableDelta", async () => {
@@ -364,6 +395,22 @@ describe("analyze-codegraph-token-usage", () => {
     await expect(pathExists(fixture.outDir)).resolves.toBe(false);
   });
 
+  it("analyzeCodeGraphTokenUsage_InvalidInstructionUpdatedAt_FailsFast", async () => {
+    const fixture = await createFixture();
+
+    await expect(
+      runAnalyzer(fixture, [
+        "--repo-root",
+        fixture.repoRoot,
+        "--instruction-updated-at",
+        "not-a-date"
+      ])
+    ).rejects.toMatchObject({
+      stderr: expect.stringContaining("Invalid --instruction-updated-at")
+    });
+    await expect(pathExists(fixture.outDir)).resolves.toBe(false);
+  });
+
   it("analyzeCodeGraphTokenUsage_MissingSessionsRoot_FailsInsteadOfReportingZeroTurns", async () => {
     const fixture = await createFixture();
     const missingSessionsDir = path.join(fixture.root, "missing-sessions");
@@ -457,6 +504,19 @@ function tokenCount(timestamp: string, lastTokenUsage: Record<string, number>): 
     payload: {
       info: {
         last_token_usage: lastTokenUsage
+      },
+      type: "token_count"
+    },
+    timestamp,
+    type: "event_msg"
+  };
+}
+
+function totalTokenCount(timestamp: string, totalTokenUsage: Record<string, number>): Record<string, unknown> {
+  return {
+    payload: {
+      info: {
+        total_token_usage: totalTokenUsage
       },
       type: "token_count"
     },
