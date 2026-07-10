@@ -125,6 +125,9 @@ export async function pollReportRefreshJob(
         }),
         timeout.promise
       ]);
+    } catch (error) {
+      if (timeout.didTimeout()) return timeoutResult(timeoutMs);
+      throw error;
     } finally {
       timeout.clear();
     }

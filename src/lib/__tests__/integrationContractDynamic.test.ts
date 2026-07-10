@@ -494,6 +494,66 @@ describe("integrationContractDynamic", () => {
     });
   });
 
+  it("createDynamicIntegrationContractHandler_RefreshEndpoint_AsyncModePreservesProviderResultsWhenProgressStoreFails", async () => {
+    const jobs = new Map<string, Record<string, unknown>>();
+    const refreshJobStore = {
+      get: vi.fn(async (jobId: string) => jobs.get(jobId)),
+      set: vi.fn(async (jobId: string, job: Record<string, unknown>) => {
+        const providerResults = job.providerResults as Array<Record<string, unknown>> | undefined;
+        if (
+          job.status === "running" &&
+          providerResults?.some((result) => result.status === "completed")
+        ) {
+          throw new Error("refresh progress store failed");
+        }
+        jobs.set(jobId, job);
+      })
+    };
+    const refreshExecutor = vi.fn().mockResolvedValue({
+      providerResults: [
+        {
+          accumulatedThrough: "2026-06-07",
+          completedAt: "2026-06-07T16:45:08.000Z",
+          providerId: "codex",
+          status: "completed"
+        }
+      ]
+    });
+    const handler = createDynamicIntegrationContractHandler({
+      asyncRefresh: true,
+      loadSummaries: async () => summaries,
+      now: () => new Date("2026-06-07T16:45:00.000Z"),
+      refreshExecutor,
+      refreshJobStore
+    });
+
+    await handler({
+      body: {
+        providers: ["codex"]
+      },
+      method: "POST",
+      path: "/api/refresh"
+    });
+
+    await vi.waitFor(async () => {
+      const completedResponse = await handler({
+        method: "GET",
+        path: "/api/refresh/dynamic-refresh-20260607T164500000Z"
+      });
+      expect(completedResponse.body).toMatchObject({
+        degradedReason: "refresh progress store failed",
+        providerResults: [
+          expect.objectContaining({
+            accumulatedThrough: "2026-06-07",
+            providerId: "codex",
+            status: "completed"
+          })
+        ],
+        status: "degraded"
+      });
+    });
+  });
+
   it("createDynamicIntegrationContractHandler_RefreshEndpoint_ReadOnlyModeBlocksMutation", async () => {
     const refreshExecutor = vi.fn();
     const handler = createDynamicIntegrationContractHandler({

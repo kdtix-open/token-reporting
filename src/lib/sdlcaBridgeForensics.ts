@@ -505,7 +505,6 @@ function isNormalizableBridgeResult(
   providerKind: SdlcaBridgeProviderKind
 ): boolean {
   if (raw.schemaVersion === "sdlca.bridge.forensic.v0") return true;
-  if (raw.artifactSchemaVersion === "sdlca.bridge.forensic.v0") return true;
 
   const bridgeProviderKind = readString(raw, "bridgeProviderKind");
   const reviewerModel = readString(raw, "reviewerModel");

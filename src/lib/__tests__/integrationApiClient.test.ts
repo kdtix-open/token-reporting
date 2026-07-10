@@ -238,4 +238,34 @@ describe("integrationApiClient", () => {
       vi.useRealTimers();
     }
   });
+
+  it("pollReportRefreshJob_AbortErrorFromTimeout_ReturnsFailedOutcome", async () => {
+    vi.useFakeTimers();
+    try {
+      const fetcher = vi.fn((_url: RequestInfo | URL, init?: RequestInit) => {
+        const signal = init?.signal;
+        return new Promise<Response>((_resolve, reject) => {
+          signal?.addEventListener("abort", () => {
+            reject(new DOMException("The operation was aborted.", "AbortError"));
+          });
+        });
+      });
+
+      const resultPromise = pollReportRefreshJob("dynamic-refresh-abort-timeout", {
+        apiBaseUrl: "http://127.0.0.1:8788",
+        fetcher,
+        timeoutMs: 50
+      });
+
+      await vi.advanceTimersByTimeAsync(50);
+
+      await expect(resultPromise).resolves.toEqual({
+        message:
+          "Refresh is still running after 0.1 seconds. Check the refresh status or try a narrower provider refresh.",
+        outcome: "failed"
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

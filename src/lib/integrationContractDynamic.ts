@@ -318,11 +318,18 @@ async function dynamicRefreshResponse(
       startedAt
     });
     await refreshJobStore.set(jobId, acceptedJob);
+    let latestJob = acceptedJob;
     void executeDynamicRefreshJob({
       ...requestContext,
-      onProgress: (job) => refreshJobStore.set(jobId, job)
+      onProgress: (job) => {
+        latestJob = job;
+        return refreshJobStore.set(jobId, job);
+      }
     })
-      .then((job) => refreshJobStore.set(jobId, job))
+      .then((job) => {
+        latestJob = job;
+        return refreshJobStore.set(jobId, job);
+      })
       .catch((error) =>
         refreshJobStore.set(
           jobId,
@@ -330,6 +337,7 @@ async function dynamicRefreshResponse(
             error,
             generatedAt,
             jobId,
+            previousJob: latestJob,
             refreshRequest,
             startedAt
           })
@@ -407,31 +415,71 @@ function buildFailedRefreshJob(args: {
   error: unknown;
   generatedAt: Date;
   jobId: string;
+  previousJob?: Record<string, unknown>;
   refreshRequest: DynamicRefreshRequest;
   startedAt: string;
 }): Record<string, unknown> {
-  const { error, generatedAt, jobId, refreshRequest, startedAt } = args;
+  const { error, generatedAt, jobId, previousJob, refreshRequest, startedAt } = args;
   const completedAt = new Date().toISOString();
   const degradedReason = error instanceof Error ? error.message : String(error);
+  const previousProviderResults = readProviderResults(previousJob?.providerResults);
+  const providerResults =
+    previousProviderResults.length > 0
+      ? previousProviderResults
+      : refreshRequest.providers.map((providerId) => ({
+          completedAt,
+          degradedReason,
+          providerId,
+          startedAt,
+          status: "failed" as const
+        }));
+  const status =
+    previousProviderResults.length > 0 && refreshJobStatus(providerResults) !== "failed"
+      ? "degraded"
+      : "failed";
 
   return {
     completedAt,
     contractVersion: dynamicContractVersion,
     degradedReason,
+    forensicRun: isRecord(previousJob?.forensicRun) ? previousJob.forensicRun : undefined,
     includeForensicModelProfiles: refreshRequest.includeForensicModelProfiles,
     includeHuggingFaceRefresh: refreshRequest.includeHuggingFaceRefresh,
     jobId,
     mode: refreshRequest.mode,
-    providerResults: refreshRequest.providers.map((providerId) => ({
-      completedAt,
-      degradedReason,
-      providerId,
-      startedAt,
-      status: "failed"
-    })),
+    providerResults,
     startedAt: generatedAt.toISOString(),
-    status: "failed"
+    status
   };
+}
+
+function readProviderResults(value: unknown): DynamicProviderRefreshResult[] {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .map((item): DynamicProviderRefreshResult | null => {
+      if (!isRecord(item)) return null;
+      const providerId = readStringField(item, "providerId");
+      const status = readProviderRefreshStatus(item.status);
+      if (!providerId || !status) return null;
+
+      return {
+        accumulatedThrough: readStringField(item, "accumulatedThrough") ?? undefined,
+        completedAt: readStringField(item, "completedAt") ?? undefined,
+        degradedReason: readStringField(item, "degradedReason") ?? undefined,
+        providerId,
+        startedAt: readStringField(item, "startedAt") ?? undefined,
+        status
+      };
+    })
+    .filter((item): item is DynamicProviderRefreshResult => item !== null);
+}
+
+function readProviderRefreshStatus(value: unknown): DynamicProviderRefreshStatus | null {
+  if (value === "completed" || value === "degraded" || value === "failed" || value === "skipped") {
+    return value;
+  }
+  return null;
 }
 
 async function executeDynamicRefreshJob(args: {

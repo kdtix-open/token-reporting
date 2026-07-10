@@ -32,7 +32,7 @@ import {
   type ReportForensicRun,
   type SqlDialect,
 } from "./lib/reportExports";
-import { requestReportRefresh } from "./lib/integrationApiClient";
+import { pollReportRefreshJob, requestReportRefresh } from "./lib/integrationApiClient";
 import { resolveRuntimeApiBaseUrl, resolveRuntimeAssetPath } from "./lib/runtimePaths";
 import { providerRegistry } from "./providers/registry";
 import "./App.css";
@@ -239,7 +239,19 @@ export default function App() {
     ];
 
     try {
-      const result = await requestReportRefresh({ defaultApiBaseUrl: apiBaseUrl });
+      let result = await requestReportRefresh({ defaultApiBaseUrl: apiBaseUrl });
+      if (result.outcome === "accepted") {
+        if (!isTerminalRefreshJobStatus(result.job.status)) {
+          result = await pollReportRefreshJob(result.job.jobId, {
+            defaultApiBaseUrl: apiBaseUrl,
+            onUpdate: (job) => {
+              setRefreshMessage(`Refresh job ${job.jobId} ${job.status}`);
+              setRefreshSteps(refreshStepsFromJob(job));
+            }
+          });
+        }
+      }
+
       if (result.outcome === "accepted") {
         setRefreshMessage(`Refresh job ${result.job.jobId} ${result.job.status}`);
         setRefreshSteps(refreshStepsFromJob(result.job));
@@ -562,6 +574,10 @@ function readStatus(value: unknown): RefreshStepStatus | null {
   }
   if (value === "running" || value === "queued") return value;
   return null;
+}
+
+function isTerminalRefreshJobStatus(status: string): boolean {
+  return status === "completed" || status === "degraded" || status === "failed";
 }
 
 function statusFromRecords(

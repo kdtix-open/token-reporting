@@ -4,6 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { buildBridgeEnvRepair } from "../src/lib/bridgeEnvRepair";
+import { assertWritableOperationAllowed } from "../src/lib/permissions";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -20,6 +21,14 @@ const timeoutMs = readPositiveInteger(process.env.TOKEN_REPORTING_SDLCA_BRIDGE_T
 await main();
 
 async function main(): Promise<void> {
+  try {
+    assertWritableOperationAllowed("Token Reporting bridge env repair");
+  } catch (error) {
+    process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
+    process.exitCode = 1;
+    return;
+  }
+
   const [adminEnvText, bridgeEnvText] = await Promise.all([
     readTextIfExists(adminEnvPath),
     fs.readFile(bridgeEnvPath, "utf8")
