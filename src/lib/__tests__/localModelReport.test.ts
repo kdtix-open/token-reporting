@@ -459,6 +459,22 @@ describe("buildLocalModelReport", () => {
     expect(report.requiredTokensPerSec).toBeCloseTo(100_000 / 28_800, 3);
   });
 
+  it("does not double-scale scoped request context by the workload multiplier", () => {
+    const heavyCopilotCli = {
+      ...copilotCliSummary,
+      cliInputTokens: 1_000_000_000,
+      cliOutputTokens: 0,
+      cliRequestCount: 10_000
+    } as unknown as ProviderReportSummary;
+
+    const report = buildLocalModelReport([heavyCopilotCli], null, null, null, {
+      workloadScopeId: "copilot_cli"
+    });
+
+    expect(report.avgTokensPerObservedRequest).toBe(100_000);
+    expect(report.estimatedContextWindowNeeded).toBe(500_000);
+  });
+
   it("downgrades scoped context confidence when only global local-session evidence is available", () => {
     const globalDistribution = {
       generatedAt: "2025-01-01T00:00:00.000Z",

@@ -726,9 +726,9 @@ export function buildLocalModelReport(
     totalPureComputeTokens > 0
   ) {
     avgTokensPerObservedRequest = totalPureComputeTokens / tokenObservedRequests;
-    // 2.5× heuristic safety factor — avg×multiplier proxy for p95 (low confidence).
+    // Counts are already scoped by provider weights; apply only the p95 safety factor here.
     estimatedContextWindowNeeded = ceilToStandardContext(
-      Math.ceil(avgTokensPerObservedRequest * 2.5 * selectedWorkloadScope.contextWindowMultiplier)
+      Math.ceil(avgTokensPerObservedRequest * 2.5)
     );
     contextConfidence = "low";
     contextEvidenceSource = "scoped_cloud_token_heuristic";

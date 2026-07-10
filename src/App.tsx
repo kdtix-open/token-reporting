@@ -251,7 +251,6 @@ export default function App() {
         if (!isTerminalRefreshStatus(job.status)) {
           const pollResult = await pollReportRefreshJob(job.jobId, {
             defaultApiBaseUrl: apiBaseUrl,
-            intervalMs: 500,
             onUpdate: (updatedJob) => {
               setRefreshMessage(`Refresh job ${updatedJob.jobId} ${updatedJob.status}`);
               setRefreshSteps(refreshStepsFromJob(updatedJob));

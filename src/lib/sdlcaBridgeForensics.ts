@@ -6,6 +6,8 @@ import type {
 import { redactLogValue, type ObservabilityLogger } from "./observabilityLogger";
 
 type SdlcaBridgeProviderKind = "claude" | "codex" | "copilot" | "cursor";
+const bridgeSensitiveKeyPattern =
+  /(?:api[_-]?key|authorization|bearer|credential|password|secret|token)/i;
 
 interface SdlcaBridgeProvider {
   forensicCapabilities?: {
@@ -520,7 +522,10 @@ function normalizeBridgeForensicArtifact(
   fallbackGeneratedAt: string
 ): { normalized: boolean; result: unknown } {
   const currentValidation = validateForensicArtifact(raw, providerKind);
-  if (currentValidation.artifact || !isRecord(raw)) {
+  if (currentValidation.artifact) {
+    return { normalized: false, result: sanitizeForensicArtifact(currentValidation.artifact) };
+  }
+  if (!isRecord(raw)) {
     return { normalized: false, result: raw };
   }
 
@@ -655,6 +660,26 @@ function normalizeArtifactSummary(raw: Record<string, unknown>): string {
 
 function stringifyRedacted(value: unknown): string {
   return redactFreeText(JSON.stringify(redactLogValue(value)));
+}
+
+function sanitizeForensicArtifact(artifact: Record<string, unknown>): Record<string, unknown> {
+  return redactBridgeArtifactValue(artifact) as Record<string, unknown>;
+}
+
+function redactBridgeArtifactValue(value: unknown, seen = new WeakSet<object>()): unknown {
+  if (typeof value === "string") return redactFreeText(value);
+  if (typeof value !== "object" || value === null) return value;
+  if (seen.has(value)) return "[Circular]";
+
+  seen.add(value);
+  if (Array.isArray(value)) return value.map((item) => redactBridgeArtifactValue(item, seen));
+
+  return Object.fromEntries(
+    Object.entries(value).map(([key, child]) => [
+      key,
+      bridgeSensitiveKeyPattern.test(key) ? "[REDACTED]" : redactBridgeArtifactValue(child, seen)
+    ])
+  );
 }
 
 function redactFreeText(value: string): string {

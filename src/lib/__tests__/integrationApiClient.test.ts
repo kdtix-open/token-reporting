@@ -190,6 +190,60 @@ describe("integrationApiClient", () => {
     expect(onUpdate).not.toHaveBeenCalled();
   });
 
+  it("pollReportRefreshJob_UnknownStatus_ReturnsFailedOutcome", async () => {
+    const fetcher = vi.fn().mockResolvedValue({
+      json: async () => ({
+        jobId: "dynamic-refresh-unknown-status",
+        status: "done"
+      }),
+      ok: true,
+      status: 200
+    });
+
+    const result = await pollReportRefreshJob("dynamic-refresh-unknown-status", {
+      apiBaseUrl: "http://127.0.0.1:8788",
+      fetcher,
+      intervalMs: 0,
+      timeoutMs: 1000
+    });
+
+    expect(result).toEqual({
+      httpStatus: 200,
+      message: "Refresh status request returned a malformed job payload.",
+      outcome: "failed"
+    });
+  });
+
+  it("pollReportRefreshJob_TransientFetchFailureBeforeDeadline_ContinuesPolling", async () => {
+    const fetcher = vi
+      .fn()
+      .mockRejectedValueOnce(new TypeError("connection reset"))
+      .mockResolvedValueOnce({
+        json: async () => ({
+          jobId: "dynamic-refresh-transient-network",
+          status: "completed"
+        }),
+        ok: true,
+        status: 200
+      });
+
+    const result = await pollReportRefreshJob("dynamic-refresh-transient-network", {
+      apiBaseUrl: "http://127.0.0.1:8788",
+      fetcher,
+      intervalMs: 0,
+      timeoutMs: 1000
+    });
+
+    expect(result).toEqual({
+      job: {
+        jobId: "dynamic-refresh-transient-network",
+        status: "completed"
+      },
+      outcome: "accepted"
+    });
+    expect(fetcher).toHaveBeenCalledTimes(2);
+  });
+
   it("pollReportRefreshJob_DefaultTimeout_AllowsFullSequentialForensicReviewerWindow", async () => {
     vi.useFakeTimers();
     const fetcher = vi.fn().mockResolvedValue({

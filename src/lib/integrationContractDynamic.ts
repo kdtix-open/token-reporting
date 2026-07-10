@@ -386,9 +386,12 @@ async function reserveRefreshJobIdIfAvailable(
   refreshJobStore: RefreshJobStore
 ): Promise<boolean> {
   if (activeDynamicRefreshJobIds.has(jobId)) return false;
-  if (await refreshJobStore.get(jobId)) return false;
-
   activeDynamicRefreshJobIds.add(jobId);
+  if (await refreshJobStore.get(jobId)) {
+    activeDynamicRefreshJobIds.delete(jobId);
+    return false;
+  }
+
   return true;
 }
 

@@ -369,6 +369,18 @@ describe("integrationContractDynamic", () => {
   });
 
   it("createDynamicIntegrationContractHandler_RefreshEndpoint_AsyncModeUsesUniqueForensicIdsWithinSameMillisecond", async () => {
+    const jobs = new Map<string, Record<string, unknown>>();
+    let releaseBaseRead: ((value: Record<string, unknown> | undefined) => void) | undefined;
+    const baseRead = new Promise<Record<string, unknown> | undefined>((resolve) => {
+      releaseBaseRead = resolve;
+    });
+    const baseJobId = "dynamic-refresh-20260607T164500000Z";
+    const refreshJobStore = {
+      get: vi.fn(async (jobId: string) => (jobId === baseJobId ? baseRead : jobs.get(jobId))),
+      set: vi.fn(async (jobId: string, job: Record<string, unknown>) => {
+        jobs.set(jobId, job);
+      })
+    };
     const refreshExecutor = vi.fn().mockResolvedValue({
       providerResults: [
         {
@@ -383,10 +395,11 @@ describe("integrationContractDynamic", () => {
       asyncRefresh: true,
       loadSummaries: async () => summaries,
       now: () => new Date("2026-06-07T16:45:00.000Z"),
-      refreshExecutor
+      refreshExecutor,
+      refreshJobStore
     });
 
-    const first = await handler({
+    const firstPromise = handler({
       body: {
         includeForensicModelProfiles: true,
         providers: ["codex"],
@@ -395,7 +408,8 @@ describe("integrationContractDynamic", () => {
       method: "POST",
       path: "/api/refresh"
     });
-    const second = await handler({
+    await vi.waitFor(() => expect(refreshJobStore.get).toHaveBeenCalledWith(baseJobId));
+    const secondPromise = handler({
       body: {
         includeForensicModelProfiles: true,
         providers: ["codex"],
@@ -404,6 +418,8 @@ describe("integrationContractDynamic", () => {
       method: "POST",
       path: "/api/refresh"
     });
+    releaseBaseRead?.(undefined);
+    const [first, second] = await Promise.all([firstPromise, secondPromise]);
     const firstBody = first.body as Record<string, unknown>;
     const secondBody = second.body as Record<string, unknown>;
     const secondRun = secondBody.forensicRun as {

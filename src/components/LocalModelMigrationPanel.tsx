@@ -257,11 +257,12 @@ export function LocalModelMigrationPanel({
   workloadScopeId,
   onWorkloadScopeChange
 }: LocalModelMigrationPanelProps) {
+  const forensicRunAppliesToScope = workloadScopeId === "all_provider_traffic";
   const report = buildLocalModelReport(
     summaries,
     distribution,
     huggingFaceCandidateSet,
-    forensicRun,
+    forensicRunAppliesToScope ? forensicRun : null,
     { workloadScopeId }
   );
 
@@ -479,7 +480,7 @@ export function LocalModelMigrationPanel({
         </>
       )}
 
-      {hasProviderTraffic && forensicRun?.parentSynthesis && (
+      {hasProviderTraffic && forensicRunAppliesToScope && forensicRun?.parentSynthesis && (
         <div className="lm-section lm-forensic">
           <h3 className="lm-section__heading">Forensic reviewer consensus</h3>
           <div className="lm-forensic__summary">

@@ -134,7 +134,7 @@ export async function pollReportRefreshJob(
         timeout.promise
       ]);
     } catch (error) {
-      if (timeout.didTimeout()) {
+      if (timeout.didTimeout() || isTransientPollingError(error)) {
         response = "timeout";
       } else {
         throw error;
@@ -210,9 +210,19 @@ function readMessage(body: unknown): string | undefined {
 function parseRefreshJob(body: unknown): ReportRefreshJob | null {
   if (typeof body !== "object" || body === null || Array.isArray(body)) return null;
   const job = body as Record<string, unknown>;
-  return typeof job.jobId === "string" && typeof job.status === "string"
+  return typeof job.jobId === "string" &&
+    typeof job.status === "string" &&
+    isKnownRefreshStatus(job.status)
     ? (job as ReportRefreshJob)
     : null;
+}
+
+function isKnownRefreshStatus(status: string): boolean {
+  return status === "queued" || status === "running" || isTerminalRefreshStatus(status);
+}
+
+function isTransientPollingError(error: unknown): boolean {
+  return error instanceof TypeError || error instanceof DOMException;
 }
 
 function trimTrailingSlash(value: string): string {

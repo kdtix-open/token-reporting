@@ -491,7 +491,11 @@ describe("App", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Refresh Report/i }));
 
-    expect(await screen.findByText("Refresh job dynamic-refresh-async completed")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Refresh job dynamic-refresh-async completed", undefined, {
+        timeout: 5_000
+      })
+    ).toBeInTheDocument();
     expect(fetchStub).toHaveBeenCalledWith(`${sameOriginRefreshUrl}/dynamic-refresh-async`, {
       method: "GET",
       signal: expect.any(AbortSignal)
