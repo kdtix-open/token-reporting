@@ -182,7 +182,9 @@ describe("reportExports", () => {
             cfoSummaryLines: expect.arrayContaining([
               "$150K is not enough for all-provider replacement."
             ]),
-            copilotDominanceWarning: expect.stringContaining("GitHub Copilot CLI dominates"),
+            copilotDominanceWarning: expect.stringContaining(
+              "GitHub Copilot CLI token telemetry is not present"
+            ),
             selectedScope: "repo_automation_project"
           },
           financials: {

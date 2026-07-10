@@ -318,6 +318,69 @@ describe("localInfrastructureSizing", () => {
     );
   });
 
+  it("hardwareBudgetScenarios_AcceptCustomHardwareProfilesWithoutBuiltInIds", () => {
+    const customProfile = customHardwareProfile({
+      estimatedCapexHighUsd: 145_000,
+      estimatedCapexLowUsd: 120_000,
+      firstServerRole: "worker_pool",
+      id: "custom-worker-pool",
+      phase: "pilot_server",
+      profileName: "Custom worker-pool profile",
+      quotePriority: "quote_now"
+    });
+    const report = buildLocalInfrastructureSizing({
+      distribution: localDistribution,
+      hardwareProfiles: [customProfile],
+      localModelReport: {
+        contextConfidence: "high",
+        estimatedContextWindowNeeded: 131_072,
+        requiredTokensPerSec: 250
+      } as LocalModelMigrationReport,
+      summaries: fixtureSummaries()
+    });
+
+    expect(
+      report.hardwareBudgetScenarios.some(
+        (scenario) => scenario.hardwareProfileId === "custom-worker-pool"
+      )
+    ).toBe(true);
+    expect(
+      report.hardwareBudgetScenarios.find(
+        (scenario) => scenario.replacementGoal === "p99_full_replacement"
+      )
+    ).toMatchObject({
+      hardwareProfileId: "custom-worker-pool"
+    });
+  });
+
+  it("hardwareBudgetSummary_ReflectsProviderMixAndSelectedProfileBudget", () => {
+    const customProfile = customHardwareProfile({
+      estimatedCapexHighUsd: 250_000,
+      estimatedCapexLowUsd: 200_000,
+      firstServerRole: "worker_pool",
+      id: "custom-expensive-worker-pool",
+      phase: "pilot_server",
+      profileName: "Custom expensive worker-pool profile",
+      quotePriority: "quote_now"
+    });
+    const report = buildLocalInfrastructureSizing({
+      distribution: localDistribution,
+      hardwareProfiles: [customProfile],
+      localModelReport: {
+        contextConfidence: "high",
+        estimatedContextWindowNeeded: 131_072,
+        requiredTokensPerSec: 250
+      } as LocalModelMigrationReport,
+      summaries: noCopilotSummaries()
+    });
+
+    expect(report.hardwareBudgetSummary.copilotDominanceWarning).toContain("not present");
+    expect(report.hardwareBudgetSummary.copilotDominanceWarning).not.toContain("dominates");
+    expect(report.hardwareBudgetSummary.cfoSummaryLines[0]).toContain(
+      "$150K is not enough for first-server"
+    );
+  });
+
   it("financials_ExcludeSeatBasedSpendFromCloudDisplacementPayback", () => {
     const report = buildCurrentSizingReport();
     const annualSpend = report.providerCoverage.reduce(
@@ -449,6 +512,28 @@ function buildJune10SizingReport(): LocalInfrastructureSizingReport {
     } as LocalModelMigrationReport,
     summaries: fixtureSummaries()
   });
+}
+
+function customHardwareProfile(
+  overrides: Partial<(typeof HARDWARE_PROFILES)[number]>
+): (typeof HARDWARE_PROFILES)[number] {
+  const base = HARDWARE_PROFILES.find(
+    (profile) => profile.id === "preferred_quad_rtxpro6000_blackwell_server"
+  );
+  if (!base) throw new Error("Missing preferred hardware fixture");
+  return {
+    ...base,
+    ...overrides
+  };
+}
+
+function noCopilotSummaries(): ProviderReportSummary[] {
+  return [
+    cursorWithTokens({ reportStartDay: "2026-04-01", reportEndDay: "2026-05-25" }),
+    seededClaudeReportSummary,
+    seededClaudeCodeReportSummary,
+    seededCodexReportSummary
+  ];
 }
 
 function githubWithCliTokens(): ProviderReportSummary {

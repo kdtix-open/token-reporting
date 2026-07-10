@@ -368,6 +368,60 @@ describe("integrationContractDynamic", () => {
     });
   });
 
+  it("createDynamicIntegrationContractHandler_RefreshEndpoint_AsyncModeUsesUniqueForensicIdsWithinSameMillisecond", async () => {
+    const refreshExecutor = vi.fn().mockResolvedValue({
+      providerResults: [
+        {
+          accumulatedThrough: "2026-06-07",
+          completedAt: "2026-06-07T16:45:08.000Z",
+          providerId: "codex",
+          status: "completed"
+        }
+      ]
+    });
+    const handler = createDynamicIntegrationContractHandler({
+      asyncRefresh: true,
+      loadSummaries: async () => summaries,
+      now: () => new Date("2026-06-07T16:45:00.000Z"),
+      refreshExecutor
+    });
+
+    const first = await handler({
+      body: {
+        includeForensicModelProfiles: true,
+        providers: ["codex"],
+        reviewerModels: ["sonnet"]
+      },
+      method: "POST",
+      path: "/api/refresh"
+    });
+    const second = await handler({
+      body: {
+        includeForensicModelProfiles: true,
+        providers: ["codex"],
+        reviewerModels: ["sonnet"]
+      },
+      method: "POST",
+      path: "/api/refresh"
+    });
+    const firstBody = first.body as Record<string, unknown>;
+    const secondBody = second.body as Record<string, unknown>;
+    const secondRun = secondBody.forensicRun as {
+      reviewerArtifacts: Array<{ artifactUri: string }>;
+      runId: string;
+    };
+
+    expect(firstBody.jobId).toBe("dynamic-refresh-20260607T164500000Z");
+    expect(secondBody.jobId).toEqual(
+      expect.stringMatching(/^dynamic-refresh-20260607T164500000Z-[a-f0-9]{8}$/)
+    );
+    expect(secondBody.jobId).not.toBe(firstBody.jobId);
+    expect(secondRun.runId).toBe(
+      String(secondBody.jobId).replace("dynamic-refresh-", "dynamic-forensic-")
+    );
+    expect(secondRun.reviewerArtifacts[0]?.artifactUri).toContain(secondRun.runId);
+  });
+
   it("createDynamicIntegrationContractHandler_RefreshEndpoint_AsyncModePublishesProviderAndReviewerProgress", async () => {
     let resolveRefresh:
       | ((result: {

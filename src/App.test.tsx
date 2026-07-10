@@ -67,7 +67,7 @@ describe("App", () => {
     expect(screen.getByText("Budget math scope")).toBeInTheDocument();
     expect(screen.getByText("Selected scope baseline")).toBeInTheDocument();
     expect(screen.getAllByText(/\$150K is not enough for all-provider replacement/).length).toBeGreaterThan(0);
-    expect(screen.getByText(/GitHub Copilot CLI dominates all-provider token volume/)).toBeInTheDocument();
+    expect(screen.getByText(/GitHub Copilot CLI token telemetry is not present/)).toBeInTheDocument();
     expect(screen.getAllByText("Target first-server migration objective").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Estimated full-workload capacity").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Safe initial production routing").length).toBeGreaterThan(0);

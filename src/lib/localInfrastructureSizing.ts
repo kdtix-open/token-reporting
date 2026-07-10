@@ -510,9 +510,11 @@ export function buildLocalInfrastructureSizing(
     workloadScopeSummaries,
     productionRoutingBlocked
   );
-  const hardwareBudgetSummary = buildHardwareBudgetSummary(
-    workloadScopeConfig.defaultSizingScope
-  );
+  const hardwareBudgetSummary = buildHardwareBudgetSummary({
+    providerCoverage,
+    scenarios: hardwareBudgetScenarios,
+    selectedScope: workloadScopeConfig.defaultSizingScope
+  });
   const recommendedFirstServer = recommendFirstServer({
     budgetHighUsd,
     budgetLowUsd,
@@ -1520,19 +1522,22 @@ function applySelectedWorkloadScope(
   };
 }
 
-function buildHardwareBudgetSummary(selectedScope: WorkloadScope): HardwareBudgetSummary {
+function buildHardwareBudgetSummary(input: {
+  providerCoverage: NormalizedProviderUsage[];
+  scenarios: HardwareBudgetScenario[];
+  selectedScope: WorkloadScope;
+}): HardwareBudgetSummary {
   return {
     cfoSummaryLines: [
-      "$150K is enough for first-server shadow/canary and benchmark collection.",
-      "$150K is not enough for all-provider replacement.",
+      firstServerBudgetLine(input.scenarios),
+      allProviderSteadyBudgetLine(input.scenarios),
       "For Repo Automation project-lane only, the $150K server may be sufficient for initial local worker testing, but full p99 replacement remains blocked by context, quality, and benchmark gates.",
       "For all-provider steady-state replacement, create a $1.2M-$2.0M production-pod planning envelope.",
       "For all-provider peak-safe replacement, create a $3.5M-$6.0M expansion envelope.",
       "NVL72-class rack scale should be tied to sold reserved-capacity product demand, not internal provider displacement alone."
     ],
-    copilotDominanceWarning:
-      "GitHub Copilot CLI dominates all-provider token volume. Do not let Copilot CLI define the Repo Automation project-lane budget unless the user explicitly selects all-provider or Copilot CLI replacement.",
-    selectedScope
+    copilotDominanceWarning: copilotBudgetWarning(input.providerCoverage),
+    selectedScope: input.selectedScope
   };
 }
 
@@ -1542,11 +1547,8 @@ function buildHardwareBudgetScenarios(
   scopes: WorkloadScopeSummary[],
   productionRoutingBlocked: boolean
 ): HardwareBudgetScenario[] {
-  const preferredProfile = profileById(
-    profiles,
-    "preferred_quad_rtxpro6000_blackwell_server"
-  );
-  const rackProfile = profileById(profiles, "rack_scale_gb200_nvl72");
+  const preferredProfile = selectPreferredBudgetProfile(profiles);
+  const rackProfile = selectRackScaleBudgetProfile(profiles, preferredProfile);
 
   return [
     hardwareBudgetScenario({
@@ -1633,6 +1635,99 @@ function buildHardwareBudgetScenarios(
   ];
 }
 
+function firstServerBudgetLine(scenarios: HardwareBudgetScenario[]): string {
+  const safeCanary = scenarios.find(
+    (scenario) =>
+      scenario.scope === "repo_automation_project" &&
+      scenario.replacementGoal === "safe_canary"
+  );
+  if (!safeCanary) {
+    return "First-server shadow/canary budget fit is unknown until hardware profiles are selected.";
+  }
+  if (safeCanary.estimatedCapexHighUsd === null) {
+    return "$150K first-server shadow/canary fit requires a vendor quote before approval.";
+  }
+  if (safeCanary.estimatedCapexHighUsd <= DEFAULT_BUDGET_HIGH_USD) {
+    return "$150K is enough for first-server shadow/canary and benchmark collection.";
+  }
+  return "$150K is not enough for first-server shadow/canary with the selected hardware profile.";
+}
+
+function allProviderSteadyBudgetLine(scenarios: HardwareBudgetScenario[]): string {
+  const steadyState = scenarios.find(
+    (scenario) =>
+      scenario.scope === "all_provider_traffic" &&
+      scenario.replacementGoal === "steady_state_replacement"
+  );
+  if (!steadyState) return "All-provider replacement budget fit is unknown.";
+  if (steadyState.estimatedCapexHighUsd === null) {
+    return "$150K all-provider replacement fit requires a vendor quote before approval.";
+  }
+  if (steadyState.estimatedCapexHighUsd <= DEFAULT_BUDGET_HIGH_USD) {
+    return "$150K appears enough for all-provider steady-state replacement under the selected workload.";
+  }
+  return "$150K is not enough for all-provider replacement.";
+}
+
+function copilotBudgetWarning(providerCoverage: NormalizedProviderUsage[]): string {
+  const totalComputeTokens = sum(providerCoverage.map((provider) => pureComputeTokens(provider)));
+  const copilotComputeTokens = sum(
+    providerCoverage
+      .filter((provider) => provider.providerId === "github-copilot")
+      .map((provider) => pureComputeTokens(provider))
+  );
+  if (totalComputeTokens <= 0 || copilotComputeTokens <= 0) {
+    return "GitHub Copilot CLI token telemetry is not present in this sizing window; budget guidance is based on observed providers only.";
+  }
+
+  const copilotShare = copilotComputeTokens / totalComputeTokens;
+  if (copilotShare >= 0.5) {
+    return "GitHub Copilot CLI dominates all-provider token volume. Do not let Copilot CLI define the Repo Automation project-lane budget unless the user explicitly selects all-provider or Copilot CLI replacement.";
+  }
+
+  return `GitHub Copilot CLI represents ${Math.round(
+    copilotShare * 100
+  )}% of observed compute tokens; budget guidance should follow the selected workload scope.`;
+}
+
+function selectPreferredBudgetProfile(profiles: HardwareProfile[]): HardwareProfile {
+  return (
+    profiles.find((profile) => profile.id === "preferred_quad_rtxpro6000_blackwell_server") ??
+    profiles.find(
+      (profile) => profile.quotePriority === "quote_now" && profile.firstServerRole === "worker_pool"
+    ) ??
+    profiles.find(
+      (profile) => profile.quotePriority === "quote_now" && isQuoteableFloorOrPilot(profile)
+    ) ??
+    profiles.find((profile) => isQuoteableFloorOrPilot(profile)) ??
+    profiles.find((profile) => profile.estimatedCapexHighUsd !== null) ??
+    profiles[0] ??
+    fallbackPreferredBudgetProfile()
+  );
+}
+
+function selectRackScaleBudgetProfile(
+  profiles: HardwareProfile[],
+  preferredProfile: HardwareProfile
+): HardwareProfile {
+  return (
+    profiles.find((profile) => profile.id === "rack_scale_gb200_nvl72") ??
+    profiles.find(
+      (profile) => profile.phase === "rack_scale" || profile.firstServerRole === "rack_scale"
+    ) ??
+    preferredProfile
+  );
+}
+
+function fallbackPreferredBudgetProfile(): HardwareProfile {
+  const fallback =
+    HARDWARE_PROFILES.find(
+      (profile) => profile.id === "preferred_quad_rtxpro6000_blackwell_server"
+    ) ?? HARDWARE_PROFILES[0];
+  if (!fallback) throw new Error("No hardware profiles are available for budget planning.");
+  return fallback;
+}
+
 function hardwareBudgetScenario(input: {
   capexOverride?: [number, number];
   cloudFallbackRequired: boolean;
@@ -1680,12 +1775,6 @@ function hardwareBudgetScenario(input: {
     scope: input.scope,
     targetTokensPerSecond: round2(input.targetTokensPerSecond)
   };
-}
-
-function profileById(profiles: HardwareProfile[], id: string): HardwareProfile {
-  const profile = profiles.find((candidate) => candidate.id === id);
-  if (!profile) throw new Error(`Missing hardware profile ${id}`);
-  return profile;
 }
 
 function scopeTps(
@@ -2145,6 +2234,12 @@ function aggregateTpsEstimate(profile: HardwareProfile): number | null {
   if (profile.id === "production_8x_rtxpro6000_blackwell_server") return 1440;
   if (profile.id === "production_node_hgx_h200_b200_8gpu") return 2200;
   if (profile.id === "rack_scale_gb200_nvl72") return 18_000;
+  if (profile.gpuType.includes("RTX PRO 6000") || profile.gpuArchitecture === "Blackwell") {
+    return profile.gpuCount * 180;
+  }
+  if (profile.gpuType.includes("H200") || profile.gpuType.includes("B200")) {
+    return profile.gpuCount * 275;
+  }
   return null;
 }
 

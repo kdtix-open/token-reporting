@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 
@@ -99,6 +100,7 @@ export interface DynamicIntegrationContractOptions {
 }
 
 const dynamicContractVersion = "sdlca-token-reporting-dynamic-v0.1";
+const activeDynamicRefreshJobIds = new Set<string>();
 
 export function createDynamicIntegrationContractHandler(
   options: DynamicIntegrationContractOptions = {}
@@ -294,13 +296,15 @@ async function dynamicRefreshResponse(
   if (validationError) return validationError;
 
   const executor = refreshExecutor ?? defaultRefreshExecutor;
-  const jobId = `dynamic-refresh-${compactTimestamp(generatedAt)}`;
+  const jobId = await createRefreshJobId(generatedAt, refreshJobStore);
+  const forensicRunId = forensicRunIdForRefreshJob(jobId, generatedAt);
   const startedAt = generatedAt.toISOString();
   const requestContext = {
     body,
     executor,
     forensicExecutor,
     forensicRunStore,
+    forensicRunId,
     generatedAt,
     jobId,
     loadSummaries,
@@ -312,12 +316,16 @@ async function dynamicRefreshResponse(
     const acceptedJob = buildAcceptedRefreshJob({
       body,
       forensicExecutor,
+      forensicRunId,
       generatedAt,
       jobId,
       refreshRequest,
       startedAt
     });
-    await refreshJobStore.set(jobId, acceptedJob);
+    await refreshJobStore.set(jobId, acceptedJob).catch((error) => {
+      activeDynamicRefreshJobIds.delete(jobId);
+      throw error;
+    });
     let latestJob = acceptedJob;
     void executeDynamicRefreshJob({
       ...requestContext,
@@ -340,28 +348,67 @@ async function dynamicRefreshResponse(
           startedAt
         });
         await refreshJobStore.set(jobId, latestJob).catch(() => undefined);
-      });
+      })
+      .finally(() => activeDynamicRefreshJobIds.delete(jobId));
 
     return jsonResponse(202, acceptedJob);
   }
 
-  const job = await executeDynamicRefreshJob(requestContext);
-  await refreshJobStore.set(jobId, job);
+  try {
+    const job = await executeDynamicRefreshJob(requestContext);
+    await refreshJobStore.set(jobId, job);
 
-  return jsonResponse(job.status === "failed" ? 500 : 202, job);
+    return jsonResponse(job.status === "failed" ? 500 : 202, job);
+  } finally {
+    activeDynamicRefreshJobIds.delete(jobId);
+  }
+}
+
+async function createRefreshJobId(
+  generatedAt: Date,
+  refreshJobStore: RefreshJobStore
+): Promise<string> {
+  const baseJobId = `dynamic-refresh-${compactTimestamp(generatedAt)}`;
+  if (await reserveRefreshJobIdIfAvailable(baseJobId, refreshJobStore)) return baseJobId;
+
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    const candidate = `${baseJobId}-${randomUUID().slice(0, 8)}`;
+    if (await reserveRefreshJobIdIfAvailable(candidate, refreshJobStore)) return candidate;
+  }
+
+  const fallback = `${baseJobId}-${Date.now().toString(36)}`;
+  activeDynamicRefreshJobIds.add(fallback);
+  return fallback;
+}
+
+async function reserveRefreshJobIdIfAvailable(
+  jobId: string,
+  refreshJobStore: RefreshJobStore
+): Promise<boolean> {
+  if (activeDynamicRefreshJobIds.has(jobId)) return false;
+  if (await refreshJobStore.get(jobId)) return false;
+
+  activeDynamicRefreshJobIds.add(jobId);
+  return true;
+}
+
+function forensicRunIdForRefreshJob(jobId: string, generatedAt: Date): string {
+  const prefix = "dynamic-refresh-";
+  if (jobId.startsWith(prefix)) return `dynamic-forensic-${jobId.slice(prefix.length)}`;
+  return `dynamic-forensic-${compactTimestamp(generatedAt)}`;
 }
 
 function buildAcceptedRefreshJob(args: {
   body: unknown;
   forensicExecutor: DynamicForensicExecutor | undefined;
+  forensicRunId: string;
   generatedAt: Date;
   jobId: string;
   refreshRequest: DynamicRefreshRequest;
   startedAt: string;
 }): Record<string, unknown> {
-  const { body, forensicExecutor, generatedAt, jobId, refreshRequest, startedAt } = args;
+  const { body, forensicExecutor, forensicRunId, jobId, refreshRequest, startedAt } = args;
   const huggingFaceCandidateSetId = readStringField(body, "huggingFaceCandidateSetId");
-  const runId = `dynamic-forensic-${compactTimestamp(generatedAt)}`;
   const reviewerModels =
     refreshRequest.reviewerModels.length > 0
       ? refreshRequest.reviewerModels
@@ -381,14 +428,14 @@ function buildAcceptedRefreshJob(args: {
           degradedReason: forensicExecutor ? undefined : "bridge_forensic_executor_not_configured",
           huggingFaceCandidateSetId,
           reviewerArtifacts: reviewerModels.map((reviewerModel) => ({
-            artifactUri: `local://token-reporting/forensics/${runId}/reviewers/${encodeURIComponent(
+            artifactUri: `local://token-reporting/forensics/${forensicRunId}/reviewers/${encodeURIComponent(
               reviewerModel
             )}.json`,
             reviewerModel,
             status: forensicExecutor ? "queued" : "failed"
           })),
           reviewerModels,
-          runId,
+          runId: forensicRunId,
           status: forensicExecutor ? "queued" : "degraded",
           updatedAt: startedAt,
           usageSnapshotId: readStringField(body, "usageSnapshotId")
@@ -452,6 +499,7 @@ async function executeDynamicRefreshJob(args: {
   executor: DynamicRefreshExecutor;
   forensicExecutor: DynamicForensicExecutor | undefined;
   forensicRunStore: ForensicRunStore;
+  forensicRunId: string;
   generatedAt: Date;
   jobId: string;
   loadSummaries: () => Promise<ProviderReportSummary[]>;
@@ -464,6 +512,7 @@ async function executeDynamicRefreshJob(args: {
     executor,
     forensicExecutor,
     forensicRunStore,
+    forensicRunId,
     generatedAt,
     jobId,
     loadSummaries,
@@ -516,6 +565,7 @@ async function executeDynamicRefreshJob(args: {
       ? buildProgressForensicRun({
           body,
           forensicExecutor,
+          forensicRunId,
           generatedAt,
           refreshRequest,
           startedAt
@@ -539,6 +589,7 @@ async function executeDynamicRefreshJob(args: {
         },
         forensicExecutor,
         forensicRunStore,
+        runId: forensicRunId,
         generatedAt,
         loadSummaries,
         onProgress: async (progressRun) => {
@@ -638,11 +689,12 @@ async function createDynamicForensicRun(args: {
   generatedAt: Date;
   loadSummaries: () => Promise<ProviderReportSummary[]>;
   onProgress?: (run: Record<string, unknown>) => Promise<void>;
+  runId?: string;
 }): Promise<Record<string, unknown>> {
   const { body, forensicExecutor, forensicRunStore, generatedAt, loadSummaries, onProgress } =
     args;
   const createdAt = generatedAt.toISOString();
-  const runId = `dynamic-forensic-${compactTimestamp(generatedAt)}`;
+  const runId = args.runId ?? `dynamic-forensic-${compactTimestamp(generatedAt)}`;
   const reviewerModels = readForensicReviewerModels(body);
   const summaries = await loadSummaries().catch(() => [] as ProviderReportSummary[]);
   const providerSnapshotIds = summaries.map(
@@ -761,17 +813,17 @@ async function createDynamicForensicRun(args: {
 function buildProgressForensicRun(args: {
   body: unknown;
   forensicExecutor: DynamicForensicExecutor | undefined;
+  forensicRunId: string;
   generatedAt: Date;
   refreshRequest: DynamicRefreshRequest;
   startedAt: string;
 }): Record<string, unknown> {
-  const runId = `dynamic-forensic-${compactTimestamp(args.generatedAt)}`;
   const reviewerModels =
     args.refreshRequest.reviewerModels.length > 0
       ? args.refreshRequest.reviewerModels
       : readForensicReviewerModels(args.body);
   const reviewerArtifacts = reviewerModels.map((reviewerModel) => ({
-    artifactUri: `local://token-reporting/forensics/${runId}/reviewers/${encodeURIComponent(
+    artifactUri: `local://token-reporting/forensics/${args.forensicRunId}/reviewers/${encodeURIComponent(
       reviewerModel
     )}.json`,
     reviewerModel,
@@ -785,7 +837,7 @@ function buildProgressForensicRun(args: {
     huggingFaceCandidateSetId: readStringField(args.body, "huggingFaceCandidateSetId"),
     reviewerArtifacts,
     reviewerModels,
-    runId,
+    runId: args.forensicRunId,
     status: args.forensicExecutor ? "queued" : "degraded",
     usageSnapshotId: readStringField(args.body, "usageSnapshotId")
   });
