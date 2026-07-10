@@ -1,13 +1,13 @@
 {
-  "candidateSetId": "hf-candidates-20260610T012449988Z",
+  "candidateSetId": "hf-candidates-20260707T230543349Z",
   "candidates": [
     {
       "architecture": "llama",
-      "downloads": 10031112,
+      "downloads": 9004427,
       "lastModified": "2024-09-25T17:00:57.000Z",
       "libraryName": "transformers",
       "license": "llama3.1",
-      "likes": 6035,
+      "likes": 6251,
       "modelId": "meta-llama/Llama-3.1-8B-Instruct",
       "parameterCount": 8030261248,
       "pipelineTag": "text-generation",
@@ -42,11 +42,11 @@
     },
     {
       "architecture": "qwen2",
-      "downloads": 2916010,
+      "downloads": 3956705,
       "lastModified": "2025-01-12T02:02:59.000Z",
       "libraryName": "transformers",
       "license": "apache-2.0",
-      "likes": 160,
+      "likes": 172,
       "modelId": "Qwen/Qwen2.5-Coder-14B-Instruct",
       "parameterCount": 14770033664,
       "pipelineTag": "text-generation",
@@ -77,11 +77,11 @@
     },
     {
       "architecture": "qwen2",
-      "downloads": 1516785,
+      "downloads": 1364763,
       "lastModified": "2025-01-12T02:02:22.000Z",
       "libraryName": "transformers",
       "license": "apache-2.0",
-      "likes": 2039,
+      "likes": 2069,
       "modelId": "Qwen/Qwen2.5-Coder-32B-Instruct",
       "parameterCount": 32763876352,
       "pipelineTag": "text-generation",
@@ -112,11 +112,11 @@
     },
     {
       "architecture": "qwen2",
-      "downloads": 867954,
+      "downloads": 669265,
       "lastModified": "2025-01-12T02:07:38.000Z",
       "libraryName": "transformers",
       "license": "other",
-      "likes": 949,
+      "likes": 964,
       "modelId": "Qwen/Qwen2.5-72B-Instruct",
       "parameterCount": 72706203648,
       "pipelineTag": "text-generation",
@@ -142,7 +142,7 @@
     },
     {
       "architecture": "qwen2",
-      "downloads": 74920,
+      "downloads": 26855,
       "lastModified": "2025-01-29T12:39:09.000Z",
       "libraryName": "transformers",
       "license": "apache-2.0",
@@ -170,6 +170,6 @@
       "url": "https://huggingface.co/Qwen/Qwen2.5-7B-Instruct-1M"
     }
   ],
-  "generatedAt": "2026-06-10T01:24:49.988Z",
+  "generatedAt": "2026-07-07T23:05:43.349Z",
   "source": "huggingface_hub_api"
 }

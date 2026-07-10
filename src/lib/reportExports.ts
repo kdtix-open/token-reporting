@@ -4,7 +4,13 @@ import {
   type LocalInfrastructureSizingReport,
 } from "./localInfrastructureSizing";
 import type { LocalSessionDistribution } from "./localSessionDistribution";
-import { buildLocalModelReport, type LocalModelMigrationReport } from "./localModelReport";
+import {
+  buildLocalModelReport,
+  type LocalModelMigrationReport,
+  type LocalModelTenant,
+  type LocalModelWorkloadScope,
+  type LocalModelWorkloadScopeId,
+} from "./localModelReport";
 import type { ProviderReportSummary } from "./types";
 
 export type ReportExportFormat =
@@ -69,6 +75,7 @@ export interface ReportExportContext {
   distribution?: LocalSessionDistribution | null;
   forensicRun?: ReportForensicRun | null;
   huggingFaceCandidateSet?: HuggingFaceCandidateSet | null;
+  localModelWorkloadScopeId?: LocalModelWorkloadScopeId;
   summaries: ProviderReportSummary[];
 }
 
@@ -251,6 +258,7 @@ interface ReportExportBreakdowns {
   };
   localModelMigration: {
     appliedForensicGuidance: LocalModelMigrationReport["appliedForensicGuidance"];
+    availableWorkloadScopes: LocalModelWorkloadScope[];
     contextConfidence: LocalModelMigrationReport["contextConfidence"];
     dailyAvgComputeTokens: number;
     estimatedContextWindowNeeded: number | null;
@@ -277,6 +285,8 @@ interface ReportExportBreakdowns {
     }>;
     recommendedProfile: string | null;
     requiredTokensPerSec: number;
+    selectedWorkloadScope: LocalModelWorkloadScope;
+    tenant: LocalModelTenant;
     totalCacheCreationTokens: number;
     totalCacheReadTokens: number;
     totalInputTokens: number;
@@ -309,13 +319,15 @@ function buildReportExportBreakdowns(
     context.summaries,
     context.distribution ?? null,
     context.huggingFaceCandidateSet ?? null,
-    context.forensicRun ?? null
+    context.forensicRun ?? null,
+    { workloadScopeId: context.localModelWorkloadScopeId }
   );
 
   return {
     forensic: summarizeForensicRun(context.forensicRun ?? null),
     localModelMigration: {
       appliedForensicGuidance: localModelReport.appliedForensicGuidance,
+      availableWorkloadScopes: localModelReport.availableWorkloadScopes,
       contextConfidence: localModelReport.contextConfidence,
       dailyAvgComputeTokens: localModelReport.dailyAvgComputeTokens,
       estimatedContextWindowNeeded: localModelReport.estimatedContextWindowNeeded,
@@ -342,6 +354,8 @@ function buildReportExportBreakdowns(
       })),
       recommendedProfile: localModelReport.recommendedProfile?.name ?? null,
       requiredTokensPerSec: localModelReport.requiredTokensPerSec,
+      selectedWorkloadScope: localModelReport.selectedWorkloadScope,
+      tenant: localModelReport.tenant,
       totalCacheCreationTokens: localModelReport.totalCacheCreationTokens,
       totalCacheReadTokens: localModelReport.totalCacheReadTokens,
       totalInputTokens: localModelReport.totalInputTokens,
@@ -511,6 +525,46 @@ function createCsv(rows: ReportExportRow[], report?: ReportExportBreakdowns): st
       );
     }
     lines.push(
+      [
+        "local_model_migration",
+        "tenant",
+        "tenant_name",
+        report.localModelMigration.tenant.tenantName
+      ]
+        .map(csvCell)
+        .join(",")
+    );
+    lines.push(
+      [
+        "local_model_migration",
+        "selected_scope",
+        "scope_id",
+        report.localModelMigration.selectedWorkloadScope.id
+      ]
+        .map(csvCell)
+        .join(",")
+    );
+    lines.push(
+      [
+        "local_model_migration",
+        "selected_scope",
+        "scope_label",
+        report.localModelMigration.selectedWorkloadScope.label
+      ]
+        .map(csvCell)
+        .join(",")
+    );
+    lines.push(
+      [
+        "local_model_migration",
+        "selected_scope",
+        "allocation_mode",
+        report.localModelMigration.selectedWorkloadScope.allocationMode
+      ]
+        .map(csvCell)
+        .join(",")
+    );
+    lines.push(
       ["local_model_migration", "sizing", "required_tokens_per_sec", report.localModelMigration.requiredTokensPerSec]
         .map(csvCell)
         .join(",")
@@ -565,8 +619,58 @@ function createCsv(rows: ReportExportRow[], report?: ReportExportBreakdowns): st
       [
         "local_infrastructure_sizing",
         "workload_summary",
-        "current_project_lane_compute_tps",
-        report.localInfrastructureSizing.workloadSummary.currentProjectLaneComputeTps
+        "all_provider_compute_tps",
+        report.localInfrastructureSizing.workloadSummary.allProviderComputeTps
+      ]
+        .map(csvCell)
+        .join(",")
+    );
+    lines.push(
+      [
+        "local_infrastructure_sizing",
+        "workload_summary",
+        "all_provider_peak_tps",
+        report.localInfrastructureSizing.workloadSummary.allProviderPeakTps
+      ]
+        .map(csvCell)
+        .join(",")
+    );
+    lines.push(
+      [
+        "local_infrastructure_sizing",
+        "workload_summary",
+        "selected_scope_compute_tps",
+        report.localInfrastructureSizing.workloadSummary.selectedScopeComputeTps
+      ]
+        .map(csvCell)
+        .join(",")
+    );
+    lines.push(
+      [
+        "local_infrastructure_sizing",
+        "workload_summary",
+        "selected_scope_peak_tps",
+        report.localInfrastructureSizing.workloadSummary.selectedScopePeakTps
+      ]
+        .map(csvCell)
+        .join(",")
+    );
+    lines.push(
+      [
+        "local_infrastructure_sizing",
+        "workload_summary",
+        "repo_automation_compute_tps",
+        report.localInfrastructureSizing.workloadSummary.repoAutomationComputeTps
+      ]
+        .map(csvCell)
+        .join(",")
+    );
+    lines.push(
+      [
+        "local_infrastructure_sizing",
+        "workload_summary",
+        "repo_automation_peak_tps",
+        report.localInfrastructureSizing.workloadSummary.repoAutomationPeakTps
       ]
         .map(csvCell)
         .join(",")
@@ -607,6 +711,55 @@ function createCsv(rows: ReportExportRow[], report?: ReportExportBreakdowns): st
           .map(csvCell)
           .join(",")
       );
+    }
+    for (const line of report.localInfrastructureSizing.hardwareBudgetSummary.cfoSummaryLines) {
+      lines.push(
+        ["local_infrastructure_hardware_budget_summary", "cfo_answer", "summary_line", line]
+          .map(csvCell)
+          .join(",")
+      );
+    }
+    lines.push(
+      [
+        "local_infrastructure_hardware_budget_summary",
+        "warning",
+        "copilot_dominance_warning",
+        report.localInfrastructureSizing.hardwareBudgetSummary.copilotDominanceWarning
+      ]
+        .map(csvCell)
+        .join(",")
+    );
+    for (const scenario of report.localInfrastructureSizing.hardwareBudgetScenarios) {
+      for (const [field, value] of Object.entries({
+        replacement_goal: scenario.replacementGoal,
+        target_tokens_per_second: scenario.targetTokensPerSecond,
+        required_context_tokens: scenario.requiredContextTokens,
+        hardware_profile_id: scenario.hardwareProfileId,
+        hardware_profile_name: scenario.hardwareProfileName,
+        estimated_node_throughput_tps: scenario.estimatedNodeThroughputTps,
+        required_nodes: scenario.requiredNodes,
+        required_gpu_count: scenario.requiredGpuCount,
+        estimated_capex_low_usd: scenario.estimatedCapexLowUsd,
+        estimated_capex_high_usd: scenario.estimatedCapexHighUsd,
+        estimated_annual_opex_usd: scenario.estimatedAnnualOpexUsd,
+        estimated_system_power_kw: scenario.estimatedSystemPowerKw,
+        rack_units_required: scenario.rackUnitsRequired,
+        full_replacement_allowed: scenario.fullReplacementAllowed,
+        cloud_fallback_required: scenario.cloudFallbackRequired,
+        confidence: scenario.confidence,
+        explanation: scenario.explanation
+      })) {
+        lines.push(
+          [
+            "local_infrastructure_hardware_budget_scenarios",
+            scenario.scope,
+            field,
+            value
+          ]
+            .map(csvCell)
+            .join(",")
+        );
+      }
     }
     const coverage = report.localInfrastructureSizing.localCoverageSummary;
     for (const [field, value] of Object.entries({
@@ -872,6 +1025,28 @@ function createYaml(rows: ReportExportRow[], report?: ReportExportBreakdowns): s
       );
     }
     lines.push(
+      `    tenantId: ${yamlValue(report.localModelMigration.tenant.tenantId)}`
+    );
+    lines.push(
+      `    tenantName: ${yamlValue(report.localModelMigration.tenant.tenantName)}`
+    );
+    lines.push("    selectedWorkloadScope:");
+    lines.push(
+      `      id: ${yamlValue(report.localModelMigration.selectedWorkloadScope.id)}`
+    );
+    lines.push(
+      `      label: ${yamlValue(report.localModelMigration.selectedWorkloadScope.label)}`
+    );
+    lines.push(
+      `      pipelineKey: ${yamlValue(report.localModelMigration.selectedWorkloadScope.pipelineKey)}`
+    );
+    lines.push(
+      `      allocationMode: ${yamlValue(report.localModelMigration.selectedWorkloadScope.allocationMode)}`
+    );
+    lines.push(
+      `      description: ${yamlValue(report.localModelMigration.selectedWorkloadScope.description)}`
+    );
+    lines.push(
       `    huggingFaceCandidateSetId: ${yamlValue(report.localModelMigration.huggingFaceCandidateSetId)}`
     );
     lines.push(`    contextConfidence: ${yamlValue(report.localModelMigration.contextConfidence)}`);
@@ -914,6 +1089,24 @@ function createYaml(rows: ReportExportRow[], report?: ReportExportBreakdowns): s
       }
     }
     lines.push("    workloadSummary:");
+    lines.push(
+      `      allProviderComputeTps: ${report.localInfrastructureSizing.workloadSummary.allProviderComputeTps}`
+    );
+    lines.push(
+      `      allProviderPeakTps: ${report.localInfrastructureSizing.workloadSummary.allProviderPeakTps}`
+    );
+    lines.push(
+      `      selectedScopeComputeTps: ${report.localInfrastructureSizing.workloadSummary.selectedScopeComputeTps}`
+    );
+    lines.push(
+      `      selectedScopePeakTps: ${report.localInfrastructureSizing.workloadSummary.selectedScopePeakTps}`
+    );
+    lines.push(
+      `      repoAutomationComputeTps: ${report.localInfrastructureSizing.workloadSummary.repoAutomationComputeTps}`
+    );
+    lines.push(
+      `      repoAutomationPeakTps: ${report.localInfrastructureSizing.workloadSummary.repoAutomationPeakTps}`
+    );
     lines.push(
       `      currentProjectLaneComputeTps: ${report.localInfrastructureSizing.workloadSummary.currentProjectLaneComputeTps}`
     );
@@ -1039,6 +1232,40 @@ function createYaml(rows: ReportExportRow[], report?: ReportExportBreakdowns): s
       );
       lines.push(`        analystNarrative: ${yamlValue(profile.analystNarrative)}`);
     }
+    lines.push("    hardwareBudgetSummary:");
+    lines.push(
+      `      selectedScope: ${yamlValue(report.localInfrastructureSizing.hardwareBudgetSummary.selectedScope)}`
+    );
+    lines.push("      cfoSummaryLines:");
+    for (const line of report.localInfrastructureSizing.hardwareBudgetSummary.cfoSummaryLines) {
+      lines.push(`        - ${yamlValue(line)}`);
+    }
+    lines.push(
+      `      copilotDominanceWarning: ${yamlValue(report.localInfrastructureSizing.hardwareBudgetSummary.copilotDominanceWarning)}`
+    );
+    lines.push("    hardwareBudgetScenarios:");
+    for (const scenario of report.localInfrastructureSizing.hardwareBudgetScenarios) {
+      lines.push(`      - scope: ${yamlValue(scenario.scope)}`);
+      lines.push(`        replacementGoal: ${yamlValue(scenario.replacementGoal)}`);
+      lines.push(`        targetTokensPerSecond: ${scenario.targetTokensPerSecond}`);
+      lines.push(`        requiredContextTokens: ${scenario.requiredContextTokens}`);
+      lines.push(`        hardwareProfileId: ${yamlValue(scenario.hardwareProfileId)}`);
+      lines.push(`        hardwareProfileName: ${yamlValue(scenario.hardwareProfileName)}`);
+      lines.push(
+        `        estimatedNodeThroughputTps: ${yamlValue(scenario.estimatedNodeThroughputTps)}`
+      );
+      lines.push(`        requiredNodes: ${yamlValue(scenario.requiredNodes)}`);
+      lines.push(`        requiredGpuCount: ${yamlValue(scenario.requiredGpuCount)}`);
+      lines.push(`        estimatedCapexLowUsd: ${yamlValue(scenario.estimatedCapexLowUsd)}`);
+      lines.push(`        estimatedCapexHighUsd: ${yamlValue(scenario.estimatedCapexHighUsd)}`);
+      lines.push(`        estimatedAnnualOpexUsd: ${yamlValue(scenario.estimatedAnnualOpexUsd)}`);
+      lines.push(`        estimatedSystemPowerKw: ${yamlValue(scenario.estimatedSystemPowerKw)}`);
+      lines.push(`        rackUnitsRequired: ${yamlValue(scenario.rackUnitsRequired)}`);
+      lines.push(`        fullReplacementAllowed: ${scenario.fullReplacementAllowed}`);
+      lines.push(`        cloudFallbackRequired: ${scenario.cloudFallbackRequired}`);
+      lines.push(`        confidence: ${yamlValue(scenario.confidence)}`);
+      lines.push(`        explanation: ${yamlValue(scenario.explanation)}`);
+    }
     lines.push("    financials:");
     lines.push(`      capexLowUsd: ${yamlValue(report.localInfrastructureSizing.financials.capexLowUsd)}`);
     lines.push(`      capexHighUsd: ${yamlValue(report.localInfrastructureSizing.financials.capexHighUsd)}`);
@@ -1162,7 +1389,10 @@ function buildTextReportLines(report: ReportExportBreakdowns): string[] {
     ),
     "",
     "Local model migration sizing",
-    `Aggregated token load across providers - ${report.localModelMigration.windowDays}-day window`,
+    `Tenant: ${report.localModelMigration.tenant.tenantName}`,
+    `Pipeline scope: ${report.localModelMigration.selectedWorkloadScope.label} (${report.localModelMigration.selectedWorkloadScope.allocationMode})`,
+    `Scope note: ${report.localModelMigration.selectedWorkloadScope.description}`,
+    `Scoped token load - ${report.localModelMigration.windowDays}-day window`,
     `Input tokens: ${formatNumber(report.localModelMigration.totalInputTokens)}`,
     `Output tokens: ${formatNumber(report.localModelMigration.totalOutputTokens)}`,
     `Cache creation tokens: ${formatNumber(report.localModelMigration.totalCacheCreationTokens)}`,
@@ -1211,9 +1441,45 @@ function buildTextReportLines(report: ReportExportBreakdowns): string[] {
     `Payback from cloud displacement: ${report.localInfrastructureSizing.executiveSummary.paybackFromCloudDisplacement}`,
     `Payback from reserved-capacity product revenue: ${report.localInfrastructureSizing.executiveSummary.paybackFromReservedCapacityProductRevenue}`,
     `Next scale trigger: ${report.localInfrastructureSizing.executiveSummary.nextScaleTrigger}`,
-    `Current workload baseline: ${report.localInfrastructureSizing.workloadSummary.currentProjectLaneComputeTps.toFixed(
+    "",
+    "Hardware Budget Required by Scope",
+    ...report.localInfrastructureSizing.hardwareBudgetSummary.cfoSummaryLines,
+    `Copilot Dominance Warning: ${report.localInfrastructureSizing.hardwareBudgetSummary.copilotDominanceWarning}`,
+    `Selected scope: ${report.localInfrastructureSizing.hardwareBudgetSummary.selectedScope}; selected steady ${report.localInfrastructureSizing.workloadSummary.selectedScopeComputeTps.toFixed(
       1
-    )} tok/s steady state; peak planning ${report.localInfrastructureSizing.workloadSummary.currentProjectLanePeakTps.toFixed(
+    )} tok/s; selected peak ${report.localInfrastructureSizing.workloadSummary.selectedScopePeakTps.toFixed(
+      1
+    )} tok/s`,
+    `All-provider traffic: ${report.localInfrastructureSizing.workloadSummary.allProviderComputeTps.toFixed(
+      1
+    )} steady tok/s; peak-safe ${report.localInfrastructureSizing.workloadSummary.allProviderPeakTps.toFixed(
+      1
+    )} tok/s`,
+    `Repo Automation project-lane: ${report.localInfrastructureSizing.workloadSummary.repoAutomationComputeTps.toFixed(
+      1
+    )} steady tok/s; peak-safe ${report.localInfrastructureSizing.workloadSummary.repoAutomationPeakTps.toFixed(
+      1
+    )} tok/s`,
+    ...report.localInfrastructureSizing.hardwareBudgetScenarios.flatMap((scenario) => [
+      `${scenario.scope} / ${scenario.replacementGoal}: target ${scenario.targetTokensPerSecond.toFixed(
+        1
+      )} tok/s; context ${formatNumber(scenario.requiredContextTokens)}; ${scenario.hardwareProfileName}`,
+      `  Nodes ${formatNullableNumber(scenario.requiredNodes)}; GPUs ${formatNullableNumber(
+        scenario.requiredGpuCount
+      )}; capex ${formatOptionalCurrency(scenario.estimatedCapexLowUsd)} to ${formatOptionalCurrency(
+        scenario.estimatedCapexHighUsd
+      )}; opex ${formatOptionalCurrency(scenario.estimatedAnnualOpexUsd)}; power ${
+        scenario.estimatedSystemPowerKw === null
+          ? "quote required"
+          : `${scenario.estimatedSystemPowerKw.toFixed(1)} kW`
+      }; RU ${formatNullableNumber(scenario.rackUnitsRequired)}`,
+      `  Full replacement allowed: ${
+        scenario.fullReplacementAllowed ? "yes" : "no"
+      }; cloud fallback: ${scenario.cloudFallbackRequired ? "required" : "optional"}; confidence ${scenario.confidence}; ${scenario.explanation}`
+    ]),
+    `Current workload baseline: ${report.localInfrastructureSizing.workloadSummary.allProviderComputeTps.toFixed(
+      1
+    )} tok/s steady state; peak planning ${report.localInfrastructureSizing.workloadSummary.allProviderPeakTps.toFixed(
       1
     )} tok/s; p99 context ${
       report.localInfrastructureSizing.workloadSummary.currentProjectLaneP99Context === null
@@ -1418,6 +1684,10 @@ function formatNumber(value: number): string {
 
 function formatOptionalNumber(value: number | undefined): string {
   return typeof value === "number" && Number.isFinite(value) ? formatNumber(value) : "unknown";
+}
+
+function formatNullableNumber(value: number | null): string {
+  return value === null ? "quote required" : formatNumber(value);
 }
 
 function wrapTextLine(line: string, maxChars: number): string[] {

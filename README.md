@@ -65,10 +65,19 @@ npm run startup:install:wsl
 The macOS and WSL startup installers pin the exact `node` binary resolved on the
 local machine and run Token Reporting on `TOKEN_REPORTING_PORT=8095` by default,
 which matches the current SDLCA Caddy upstream at `host.docker.internal:8095`.
-They also remove the stale production PID file before each start. The startup
-unit stores only non-secret runtime settings; provider Admin/API credentials stay
-in `TOKEN_REPORTING_ADMIN_ENV_FILE`, normally `.env.admin.credentials` on the
-operator host.
+They also remove the stale production PID file before each start. The macOS
+LaunchAgent persists a launchd-safe `PATH` so provider refresh scripts can find
+`npm` after reboot. The startup unit stores only non-secret runtime settings;
+provider Admin/API credentials stay in `TOKEN_REPORTING_ADMIN_ENV_FILE`,
+normally `.env.admin.credentials` on the operator host.
+
+For bridge-backed local model forensics, repair the Token Reporting bridge
+connection from the SDLCA local bridge env without printing the token:
+
+```bash
+npm run startup:repair-bridge-env
+curl http://127.0.0.1:8095/tools/token-reporting/api/operational-status
+```
 
 For the KDTIX `mac-local` bridge, `dev.projectit.ai/tools/token-reporting` is an
 operator view over KDTIX-owned provider Admin/API credentials and KDTIX paid
@@ -92,33 +101,43 @@ and UAT scenarios.
 ### GitHub Copilot
 
 ```bash
-export GITHUB_TOKEN=your-token
-export GITHUB_ORG=kdtix-open
+set -a
+source .env.admin.credentials
+set +a
 npm run report:copilot
 ```
 
-Requires `read:org` scope (classic token) or fine-grained `Organization Copilot metrics` read permission.
+Requires `GITHUB_ADMIN_TOKEN` in `.env.admin.credentials` with `read:org`
+scope (classic token) or fine-grained `Organization Copilot metrics` read
+permission. `GITHUB_ORG` defaults to `kdtix-open`.
 Endpoint: `GET https://api.github.com/orgs/{org}/copilot/metrics/reports/users-28-day/latest`
 Recommended header: `X-GitHub-Api-Version: 2026-03-10`
 
 ### Cursor
 
 ```bash
-export CURSOR_API_KEY=your-cursor-api-key
+set -a
+source .env.admin.credentials
+set +a
 npm run report:cursor
 ```
 
-Requires a Cursor team Admin API key. Create one in your Cursor team settings.
+Requires `CURSOR_ADMIN_API_KEY` in `.env.admin.credentials`. Create one in
+your Cursor team settings.
 Endpoint: `POST https://api.cursor.com/teams/daily-usage-data` (Basic Auth, 28-day window)
 
 ### Claude (Anthropic)
 
 ```bash
-export ANTHROPIC_API_KEY=sk-ant-admin-...
+set -a
+source .env.admin.credentials
+set +a
 npm run report:claude
 ```
 
-Requires an **Admin API key** (starts with `sk-ant-admin...`). Standard API keys will not work.
+Requires `ANTHROPIC_ADMIN_API_KEY` in `.env.admin.credentials`. It must be an
+**Admin API key** (starts with `sk-ant-admin...`). Standard API keys will not
+work.
 Only organization admins can provision Admin API keys via the Claude Console → Settings → Admin Keys.
 Endpoint: `GET https://api.anthropic.com/v1/organizations/usage_report/messages`
 
@@ -137,11 +156,14 @@ Endpoint: `GET https://api.anthropic.com/v1/organizations/usage_report/messages`
 ### OpenAI Codex
 
 ```bash
-export OPENAI_API_KEY=your-openai-org-admin-key
+set -a
+source .env.admin.credentials
+set +a
 npm run report:codex
 ```
 
-Requires an org admin API key with the `api.usage.read` scope enabled.
+Requires `OPENAI_ADMIN_API_KEY` in `.env.admin.credentials`, using an org
+admin API key with the `api.usage.read` scope enabled.
 Endpoint: `GET https://api.openai.com/v1/organization/usage/completions`
 
 ---

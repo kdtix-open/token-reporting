@@ -16,15 +16,21 @@ Use the devcontainer in `.devcontainer/devcontainer.json` for a reproducible Nod
 6. For the mac-local projectit.ai operator host, run
    `TOKEN_REPORTING_NODE_BIN=/opt/homebrew/bin/node npm run startup:install:macos`.
    The LaunchAgent listens on `8095`, which is the upstream used by the SDLCA
-   Docker Caddy route.
+   Docker Caddy route. The installer writes a launchd-safe `PATH` so refresh
+   scripts can find `npm` after a reboot.
+7. If bridge-backed forensics should be enabled on the operator host, run
+   `npm run startup:repair-bridge-env`. It copies the SDLCA local bridge token
+   into `.env.admin.credentials`, writes a backup, chmods the file to `600`, and
+   prints only a redacted summary.
 
 ## Environment variables
 
-- `GITHUB_TOKEN`: required for live GitHub Copilot report fetches
+- `.env.admin.credentials`: local-only admin credential file sourced before live provider refreshes
+- `GITHUB_ADMIN_TOKEN`: required for live GitHub Copilot report fetches
 - `GITHUB_ORG`: defaults to `kdtix-open`
-- `CURSOR_API_KEY`: required for live Cursor usage fetches (team Admin API key)
-- `ANTHROPIC_API_KEY`: required for live Claude usage fetches (Admin API key, `sk-ant-admin...`)
-- `OPENAI_API_KEY`: required for live OpenAI Codex usage fetches (org admin key with `api.usage.read` scope)
+- `CURSOR_ADMIN_API_KEY`: required for live Cursor usage fetches (team Admin API key)
+- `ANTHROPIC_ADMIN_API_KEY`: required for live Claude usage fetches (Admin API key, `sk-ant-admin...`)
+- `OPENAI_ADMIN_API_KEY`: required for live OpenAI Codex usage fetches (org admin key with `api.usage.read` scope)
 - `TOKEN_REPORTING_READ_ONLY`: set to `true` or `1` to block file-writing operations
 - `TOKEN_REPORTING_PUBLIC_BASE_PATH`: runtime mount path, normally `/tools/token-reporting`
 - `TOKEN_REPORTING_BASE_PATH`: Vite build base path, normally `/tools/token-reporting`
@@ -36,6 +42,10 @@ Use the devcontainer in `.devcontainer/devcontainer.json` for a reproducible Nod
 - `TOKEN_REPORTING_NODE_BIN`: absolute Node executable pinned into macOS launchd or WSL systemd-user startup units.
 - `TOKEN_REPORTING_PORT`: local production port, `8095` for the SDLCA Caddy route.
 - `TOKEN_REPORTING_HOST`: bind address, normally `0.0.0.0` so Docker Desktop can reach the host service through `host.docker.internal`.
+- `TOKEN_REPORTING_SDLCA_BRIDGE_URL`: SDLCA local bridge URL for forensic reviewer execution.
+- `TOKEN_REPORTING_SDLCA_BRIDGE_TOKEN`: SDLCA bridge bearer token; store only in the admin env file or secret store and never print.
+- `TOKEN_REPORTING_SDLCA_BRIDGE_WORKING_DIRECTORY`: working directory sent to the local bridge for forensic reviewer execution.
+- `TOKEN_REPORTING_SDLCA_BRIDGE_TIMEOUT_MS`: bridge forensic execution timeout, default `120000`.
 
 ## Startup and tenancy notes
 
@@ -54,6 +64,7 @@ Useful probes:
 ```bash
 launchctl print gui/$(id -u)/com.kdtix.token-reporting
 curl http://127.0.0.1:8095/tools/token-reporting/api/integration/contract
+curl http://127.0.0.1:8095/tools/token-reporting/api/operational-status
 curl https://dev.projectit.ai/tools/token-reporting
 ```
 

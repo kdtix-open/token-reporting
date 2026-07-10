@@ -279,6 +279,53 @@
   text-decoration: none;
 }
 
+.lm-scope-bar {
+  display: grid;
+  grid-template-columns: minmax(14rem, 22rem) 1fr;
+  gap: 1rem;
+  align-items: stretch;
+  margin: 0 0 1.5rem;
+  padding: 1rem;
+  border: 1px solid #bfdbfe;
+  border-radius: 0.75rem;
+  background: #f8fafc;
+}
+
+.lm-scope-field {
+  display: grid;
+  gap: 0.35rem;
+  color: #475569;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.lm-scope-field select {
+  min-height: 2.5rem;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid #64748b;
+  border-radius: 0.5rem;
+  background: #fff;
+  color: #0f172a;
+  font: inherit;
+  font-size: 0.85rem;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.lm-scope-summary {
+  display: grid;
+  gap: 0.2rem;
+  color: #475569;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.lm-scope-summary strong {
+  color: #0f172a;
+}
+
 .lm-section {
   margin-bottom: 2rem;
 }
@@ -810,6 +857,21 @@
   margin-top: 1.3rem;
 }
 
+.infra-section--budget {
+  padding: 1rem;
+  border: 1px solid #c7d2fe;
+  border-radius: 0.5rem;
+  background: #f8fafc;
+}
+
+.infra-section__heading-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.65rem;
+}
+
 .infra-section h3 {
   margin: 0 0 0.55rem;
   color: #334155;
@@ -819,10 +881,58 @@
   text-transform: uppercase;
 }
 
+.infra-section__heading-row h3 {
+  margin-bottom: 0;
+}
+
+.infra-select-field {
+  display: grid;
+  gap: 0.25rem;
+  min-width: min(100%, 20rem);
+  color: #475569;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.infra-select-field select {
+  min-height: 2.35rem;
+  padding: 0.4rem 0.65rem;
+  border: 1px solid #94a3b8;
+  border-radius: 0.5rem;
+  background: #fff;
+  color: #0f172a;
+  font: inherit;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.infra-callout {
+  display: grid;
+  gap: 0.4rem;
+  margin-bottom: 0.8rem;
+  padding: 0.8rem;
+  border: 1px solid #bae6fd;
+  border-radius: 0.5rem;
+  background: #f0f9ff;
+  color: #0f172a;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.infra-callout p {
+  margin: 0;
+}
+
 .infra-table-wrap {
   overflow-x: auto;
   border: 1px solid #e2e8f0;
   border-radius: 0.5rem;
+}
+
+.infra-table-wrap--wide {
+  max-width: 100%;
 }
 
 .infra-table {
@@ -865,6 +975,14 @@
   margin-top: 0.15rem;
   color: #64748b;
   font-size: 0.7rem;
+}
+
+.infra-table--budget {
+  min-width: 1280px;
+}
+
+.infra-table__selected-row td {
+  background: #eef2ff;
 }
 
 .infra-route {
@@ -928,6 +1046,10 @@
 }
 
 @media (max-width: 640px) {
+  .lm-scope-bar {
+    grid-template-columns: 1fr;
+  }
+
   .infra-panel__header {
     display: grid;
   }
@@ -944,6 +1066,15 @@
 
   .infra-card {
     min-height: auto;
+  }
+
+  .infra-section__heading-row {
+    align-items: stretch;
+    display: grid;
+  }
+
+  .infra-select-field {
+    min-width: 0;
   }
 }
 
@@ -1443,7 +1574,7 @@
 /* ── Local migration forensic synthesis ─────────────────────────────────── */
 
 .lm-forensic {
-  border-top: 1px solid rgba(148, 163, 184, 0.25);
+  border-top: 1px solid #cbd5e1;
   padding-top: 1.2rem;
 }
 
@@ -1462,7 +1593,7 @@
 }
 
 .lm-forensic__label {
-  color: #94a3b8;
+  color: #475569;
   font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -1470,14 +1601,14 @@
 }
 
 .lm-forensic__summary strong {
-  color: #e2e8f0;
+  color: #0f172a;
   font-size: 0.88rem;
   overflow-wrap: anywhere;
 }
 
 .lm-forensic__recommendation {
   margin: 0;
-  color: #d9f99d;
+  color: #365314;
   font-size: 0.95rem;
   line-height: 1.55;
 }
@@ -1491,12 +1622,15 @@
 }
 
 .lm-forensic__findings li {
-  border-left: 3px solid #facc15;
-  padding-left: 0.75rem;
+  background: #fff8e1;
+  border: 1px solid #f59e0b;
+  border-left: 4px solid #d97706;
+  border-radius: 0.5rem;
+  padding: 0.75rem 0.85rem;
 }
 
 .lm-forensic__findings span {
-  color: #fde68a;
+  color: #7c2d12;
   display: block;
   font-size: 0.68rem;
   font-weight: 800;
@@ -1505,35 +1639,38 @@
 }
 
 .lm-forensic__findings strong {
-  color: #f8fafc;
+  color: #111827;
   display: block;
   font-size: 0.9rem;
   margin-top: 0.1rem;
 }
 
 .lm-forensic__findings p {
-  color: #cbd5e1;
+  color: #334155;
   font-size: 0.82rem;
   line-height: 1.5;
   margin: 0.25rem 0 0;
 }
 
 .lm-forensic-applied {
-  border-left: 3px solid #5eead4;
-  color: #ccfbf1;
+  background: #ecfeff;
+  border: 1px solid #0891b2;
+  border-left: 4px solid #0e7490;
+  border-radius: 0.5rem;
+  color: #164e63;
   font-size: 0.86rem;
   line-height: 1.55;
   margin-top: 0.9rem;
-  padding-left: 0.75rem;
+  padding: 0.7rem 0.85rem;
 }
 
 .lm-forensic-applied strong {
-  color: #f8fafc;
+  color: #083344;
 }
 
 .lm-profile__forensic {
-  border-top: 1px solid rgba(148, 163, 184, 0.22);
-  color: #99f6e4;
+  border-top: 1px solid #cbd5e1;
+  color: #334155;
   font-size: 0.82rem;
   line-height: 1.5;
   margin: 0.8rem 0 0;

@@ -75,6 +75,13 @@ const copilotSummary: ProviderReportSummary = {
   billedSeats: 5
 } as unknown as ProviderReportSummary;
 
+const copilotCliSummary: ProviderReportSummary = {
+  ...copilotSummary,
+  cliInputTokens: 120_000_000,
+  cliOutputTokens: 8_000_000,
+  cliRequestCount: 20_000
+} as unknown as ProviderReportSummary;
+
 describe("buildLocalModelReport", () => {
   it("returns empty report for summaries with no token data", () => {
     const report = buildLocalModelReport([cursorSummary, copilotSummary]);
@@ -370,6 +377,46 @@ describe("buildLocalModelReport", () => {
     const report = buildLocalModelReport([highThroughputSummary]);
     expect(report.recommendedProfile).toBeNull();
     expect(report.alternativeProfiles).toHaveLength(0);
+  });
+
+  it("scopes model-profile sizing to the selected tenant pipeline instead of inheriting all-provider traffic", () => {
+    const allTraffic = buildLocalModelReport([copilotCliSummary, claudeSummary, codexSummary]);
+    const repoAutomation = buildLocalModelReport(
+      [copilotCliSummary, claudeSummary, codexSummary],
+      null,
+      null,
+      null,
+      { workloadScopeId: "repo_automation_project" }
+    );
+
+    expect(allTraffic.selectedWorkloadScope.id).toBe("all_provider_traffic");
+    expect(repoAutomation.selectedWorkloadScope.id).toBe("repo_automation_project");
+    expect(repoAutomation.tenant).toMatchObject({ tenantId: "kdtix", tenantName: "KDTIX" });
+    expect(repoAutomation.requiredTokensPerSec).toBeLessThan(allTraffic.requiredTokensPerSec);
+    expect(repoAutomation.requiredTokensPerSec).not.toBe(allTraffic.requiredTokensPerSec);
+    expect(repoAutomation.tokenObservedProviders.map((provider) => provider.providerId)).not.toContain(
+      "github-copilot"
+    );
+  });
+
+  it("exposes tenant pipeline scope options for future multi-tenant reports", () => {
+    const report = buildLocalModelReport([codexSummary], null, null, null, {
+      workloadScopeId: "agent_memory"
+    });
+
+    expect(report.selectedWorkloadScope).toMatchObject({
+      id: "agent_memory",
+      label: "Agent Memory",
+      tenantId: "kdtix"
+    });
+    expect(report.availableWorkloadScopes.map((scope) => scope.id)).toEqual([
+      "all_provider_traffic",
+      "repo_automation_project",
+      "agent_memory",
+      "copilot_cli",
+      "agentic_worker",
+      "reviewer"
+    ]);
   });
 
   it("applies forensic synthesis as direct routing guidance for sizing and profiles", () => {

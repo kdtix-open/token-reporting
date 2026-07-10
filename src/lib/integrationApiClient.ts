@@ -28,8 +28,18 @@ export interface RequestReportRefreshOptions {
   timeoutMs?: number;
 }
 
+export interface PollReportRefreshJobOptions {
+  apiBaseUrl?: string;
+  defaultApiBaseUrl?: string;
+  fetcher?: typeof fetch;
+  intervalMs?: number;
+  onUpdate?: (job: ReportRefreshJob) => void;
+  timeoutMs?: number;
+}
+
 const defaultApiBaseUrl = "http://127.0.0.1:8788";
-const defaultTimeoutMs = 300_000;
+const defaultTimeoutMs = 1_200_000;
+const defaultPollIntervalMs = 3_000;
 
 export async function requestReportRefresh(
   options: RequestReportRefreshOptions = {}
@@ -89,6 +99,59 @@ export async function requestReportRefresh(
   };
 }
 
+export async function pollReportRefreshJob(
+  jobId: string,
+  options: PollReportRefreshJobOptions = {}
+): Promise<ReportRefreshResult> {
+  const apiBaseUrl = trimTrailingSlash(
+    options.apiBaseUrl ?? options.defaultApiBaseUrl ?? defaultApiBaseUrl
+  );
+  const fetcher = options.fetcher ?? fetch;
+  const timeoutMs = options.timeoutMs ?? defaultTimeoutMs;
+  const intervalMs = Math.max(0, options.intervalMs ?? defaultPollIntervalMs);
+  const startedAt = Date.now();
+
+  while (Date.now() - startedAt <= timeoutMs) {
+    const timeout = createTimeoutController(Math.min(30_000, timeoutMs));
+    let response: Response | "timeout";
+    try {
+      response = await Promise.race([
+        fetcher(`${apiBaseUrl}/api/refresh/${encodeURIComponent(jobId)}`, {
+          method: "GET",
+          signal: timeout.signal
+        }),
+        timeout.promise
+      ]);
+    } finally {
+      timeout.clear();
+    }
+
+    if (response === "timeout") return timeoutResult(timeoutMs);
+
+    const body = await readJsonBody(response);
+    if (!response.ok) {
+      return {
+        httpStatus: response.status,
+        message: readMessage(body) ?? `Refresh status request failed with HTTP ${response.status}.`,
+        outcome: response.status === 403 ? "blocked" : "failed"
+      };
+    }
+
+    const job = body as ReportRefreshJob;
+    options.onUpdate?.(job);
+    if (isTerminalRefreshStatus(job.status)) {
+      return {
+        job,
+        outcome: "accepted"
+      };
+    }
+
+    await delay(intervalMs);
+  }
+
+  return timeoutResult(timeoutMs);
+}
+
 function refreshRequestBody(options: RequestReportRefreshOptions): Record<string, unknown> {
   return {
     includeForensicModelProfiles: options.includeForensicModelProfiles ?? true,
@@ -114,6 +177,14 @@ function readMessage(body: unknown): string | undefined {
 
 function trimTrailingSlash(value: string): string {
   return value.endsWith("/") ? value.slice(0, -1) : value;
+}
+
+function isTerminalRefreshStatus(status: string): boolean {
+  return status === "completed" || status === "degraded" || status === "failed";
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function createTimeoutController(timeoutMs: number): {

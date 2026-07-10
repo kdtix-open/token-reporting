@@ -79,6 +79,60 @@ describe("productionServer", () => {
     expect(response.status).toBe(302);
     expect(response.headers.get("location")).toBe("/tools/token-reporting/");
   });
+
+  it("createTokenReportingProductionServer_OperationalStatusWithoutBridgeEnv_ReportsForensicsNotConfigured", async () => {
+    const roots = await createFixtureRoots();
+    const server = createTokenReportingProductionServer({
+      basePath: "/tools/token-reporting",
+      dataRoot: roots.dataRoot,
+      distRoot: roots.distRoot,
+      env: {}
+    });
+    const baseUrl = await listen(server);
+
+    const response = await fetch(`${baseUrl}/tools/token-reporting/api/operational-status`);
+    await expectJson(response, 200, {
+      forensics: {
+        bridgeTimeoutMs: 120000,
+        bridgeUrlConfigured: false,
+        status: "not_configured",
+        tokenConfigured: false,
+        workingDirectoryConfigured: false
+      },
+      service: "token-reporting-production"
+    });
+  });
+
+  it("createTokenReportingProductionServer_OperationalStatusWithBridgeEnv_ReportsForensicsConfiguredWithoutSecrets", async () => {
+    const roots = await createFixtureRoots();
+    const server = createTokenReportingProductionServer({
+      basePath: "/tools/token-reporting",
+      dataRoot: roots.dataRoot,
+      distRoot: roots.distRoot,
+      env: {
+        TOKEN_REPORTING_SDLCA_BRIDGE_TIMEOUT_MS: "45000",
+        TOKEN_REPORTING_SDLCA_BRIDGE_TOKEN: "secret-token-value",
+        TOKEN_REPORTING_SDLCA_BRIDGE_URL: "http://127.0.0.1:4318",
+        TOKEN_REPORTING_SDLCA_BRIDGE_WORKING_DIRECTORY: "/repo"
+      }
+    });
+    const baseUrl = await listen(server);
+
+    const response = await fetch(`${baseUrl}/tools/token-reporting/api/operational-status`);
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(body).not.toContain("secret-token-value");
+    expect(JSON.parse(body)).toEqual({
+      forensics: {
+        bridgeTimeoutMs: 45000,
+        bridgeUrlConfigured: true,
+        status: "configured",
+        tokenConfigured: true,
+        workingDirectoryConfigured: true
+      },
+      service: "token-reporting-production"
+    });
+  });
 });
 
 async function createFixtureRoots(): Promise<{ dataRoot: string; distRoot: string }> {

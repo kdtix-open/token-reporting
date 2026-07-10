@@ -12,6 +12,7 @@
     "build:projectit": "TOKEN_REPORTING_BASE_PATH=/tools/token-reporting npm run build",
     "preview": "vite preview",
     "serve:production": "tsx scripts/serve-production.ts",
+    "startup:repair-bridge-env": "tsx scripts/repair-bridge-env.ts",
     "startup:install:macos": "bash scripts/install-macos-launchagent.sh",
     "startup:install:wsl": "bash scripts/install-wsl-systemd.sh",
     "test": "vitest run --coverage",

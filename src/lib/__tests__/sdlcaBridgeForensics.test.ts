@@ -109,6 +109,7 @@ describe("sdlcaBridgeForensics", () => {
     });
     expect(firstExecuteBody.prompt).toContain("dynamic-forensic-20260607T173000000Z");
     expect(firstExecuteBody.prompt).toContain("hf-candidates-test");
+    expect(firstExecuteBody.prompt).toContain("Return exactly one JSON object and nothing else.");
 
     expect(result.status).toBe("completed");
     expect(result.reviewerArtifacts).toEqual([
@@ -215,6 +216,143 @@ describe("sdlcaBridgeForensics", () => {
       })
     ]);
     expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+
+  it("createSdlcaBridgeForensicExecutor_BridgeExecuteInProgress_PublishesRunningArtifactBeforeCompletion", async () => {
+    let resolveExecute: ((response: Response) => void) | undefined;
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse({
+          result: [
+            {
+              forensicCapabilities,
+              kind: "codex",
+              providerId: "codex-reviewer",
+              providerName: "Codex Reviewer",
+              resolvedExecutable: "/usr/bin/codex"
+            }
+          ]
+        })
+      )
+      .mockReturnValueOnce(
+        new Promise<Response>((resolve) => {
+          resolveExecute = resolve;
+        })
+      );
+    const progressArtifacts: Array<Array<{ reviewerModel: string; status: string }>> = [];
+    const executor = createSdlcaBridgeForensicExecutor({
+      bridgeToken: "bridge-token",
+      bridgeUrl: "http://127.0.0.1:4818",
+      fetcher,
+      workingDirectory: "/Users/ckreager/repos/kdtix/token_reporting"
+    });
+
+    const resultPromise = executor({
+      createdAt: "2026-06-07T17:30:00.000Z",
+      evidencePacket,
+      huggingFaceCandidateSetId: "hf-candidates-test",
+      onReviewerArtifact: (_artifact, artifacts) => {
+        progressArtifacts.push(
+          artifacts.map((artifact) => ({
+            reviewerModel: artifact.reviewerModel,
+            status: artifact.status
+          }))
+        );
+      },
+      reviewerModels: ["kimi"],
+      runId: "dynamic-forensic-20260607T173000000Z",
+      usageSnapshotId: "dynamic-usage-codex-2026-06-07"
+    });
+
+    await vi.waitFor(() => {
+      expect(fetcher).toHaveBeenCalledTimes(2);
+    });
+    expect(progressArtifacts[0]).toEqual([{ reviewerModel: "kimi", status: "running" }]);
+
+    resolveExecute?.(
+      jsonResponse({
+        result: forensicArtifact("codex", "Kimi perspective")
+      })
+    );
+    await expect(resultPromise).resolves.toMatchObject({
+      reviewerArtifacts: [expect.objectContaining({ reviewerModel: "kimi", status: "completed" })],
+      status: "completed"
+    });
+  });
+
+  it("createSdlcaBridgeForensicExecutor_BridgeExecuteTimeout_ReturnsFailedTimeoutArtifact", async () => {
+    vi.useFakeTimers();
+    let executeInit: RequestInit | undefined;
+    try {
+      const fetcher = vi
+        .fn()
+        .mockResolvedValueOnce(
+          jsonResponse({
+            result: [
+              {
+                forensicCapabilities,
+                kind: "codex",
+                providerId: "codex-reviewer",
+                providerName: "Codex Reviewer",
+                resolvedExecutable: "/usr/bin/codex"
+              }
+            ]
+          })
+        )
+        .mockImplementationOnce((_url: string, init?: RequestInit) => {
+          executeInit = init;
+          if (!init?.signal) {
+            return Promise.resolve(textResponse({ error: "missing abort signal" }, 599));
+          }
+          return new Promise<Response>((_resolve, reject) => {
+            init.signal?.addEventListener("abort", () => {
+              const error = new Error("The bridge execute request was aborted.");
+              error.name = "AbortError";
+              reject(error);
+            });
+          });
+        });
+
+      const executor = createSdlcaBridgeForensicExecutor({
+        bridgeToken: "bridge-token",
+        bridgeUrl: "http://127.0.0.1:4818",
+        fetcher,
+        timeoutMs: 1_000,
+        workingDirectory: "/Users/ckreager/repos/kdtix/token_reporting"
+      });
+
+      const resultPromise = executor({
+        createdAt: "2026-06-07T17:30:00.000Z",
+        evidencePacket,
+        huggingFaceCandidateSetId: "hf-candidates-test",
+        reviewerModels: ["kimi"],
+        runId: "dynamic-forensic-20260607T173000000Z",
+        usageSnapshotId: "dynamic-usage-codex-2026-06-07"
+      });
+
+      await vi.waitFor(() => {
+        expect(executeInit?.signal).toBeDefined();
+      });
+      await vi.advanceTimersByTimeAsync(1_001);
+
+      const result = await resultPromise;
+      expect(result.status).toBe("degraded");
+      expect(result.reviewerArtifacts).toEqual([
+        expect.objectContaining({
+          bridgeProviderKind: "codex",
+          degradedReason: "sdlca_bridge_forensic_execute_timeout",
+          diagnostics: expect.objectContaining({
+            bridgeProviderKind: "codex",
+            timeoutMs: 1_000
+          }),
+          reviewerModel: "kimi",
+          status: "failed"
+        })
+      ]);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("createSdlcaBridgeForensicExecutor_CopilotReviewerLabel_DoesNotSendInvalidModelOverride", async () => {
@@ -328,6 +466,61 @@ describe("sdlcaBridgeForensics", () => {
     expect(JSON.stringify(result.reviewerArtifacts[0]?.diagnostics)).not.toContain("super-secret");
   });
 
+  it("createSdlcaBridgeForensicExecutor_BridgeJsonParseFailure_LabelsReviewerOutputParseFailure", async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse({
+          result: [
+            {
+              forensicCapabilities,
+              kind: "claude",
+              providerId: "claude-reviewer",
+              providerName: "Claude Reviewer",
+              resolvedExecutable: "/usr/bin/claude"
+            }
+          ]
+        })
+      )
+      .mockResolvedValueOnce(
+        textResponse(
+          {
+            error: "Unexpected non-whitespace character after JSON at position 3851 (line 68 column 1)"
+          },
+          500
+        )
+      );
+
+    const executor = createSdlcaBridgeForensicExecutor({
+      bridgeToken: "bridge-token",
+      bridgeUrl: "http://127.0.0.1:4818",
+      fetcher,
+      workingDirectory: "/Users/ckreager/repos/kdtix/token_reporting"
+    });
+
+    const result = await executor({
+      createdAt: "2026-06-07T17:30:00.000Z",
+      evidencePacket,
+      huggingFaceCandidateSetId: "hf-candidates-test",
+      reviewerModels: ["sonnet"],
+      runId: "dynamic-forensic-20260607T173000000Z",
+      usageSnapshotId: "dynamic-usage-codex-2026-06-07"
+    });
+
+    expect(result.status).toBe("degraded");
+    expect(result.reviewerArtifacts[0]).toMatchObject({
+      bridgeProviderKind: "claude",
+      degradedReason: "sdlca_bridge_forensic_output_parse_failed",
+      diagnostics: expect.objectContaining({
+        bridgeErrorSummary: expect.stringContaining("Unexpected non-whitespace character"),
+        bridgeHttpStatus: 500,
+        bridgeProviderKind: "claude"
+      }),
+      reviewerModel: "sonnet",
+      status: "failed"
+    });
+  });
+
   it("createSdlcaBridgeForensicExecutor_InvalidBridgeResult_PersistsValidationDiagnostics", async () => {
     const fetcher = vi
       .fn()
@@ -388,6 +581,223 @@ describe("sdlcaBridgeForensics", () => {
       },
       reviewerModel: "opus",
       status: "failed"
+    });
+  });
+
+  it("createSdlcaBridgeForensicExecutor_StructuredSonnetBridgeResult_NormalizesReviewerArtifact", async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse({
+          result: [
+            {
+              forensicCapabilities,
+              kind: "claude",
+              providerId: "claude-reviewer",
+              providerName: "Claude Reviewer",
+              resolvedExecutable: "/usr/bin/claude"
+            }
+          ]
+        })
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({
+          result: {
+            evidenceIntegrity: {
+              redacted: true,
+              source: "provider_execution"
+            },
+            findings: [
+              {
+                details:
+                  "Cache-heavy workload can start with local short-context routing while hosted providers keep the tail.",
+                severity: "medium",
+                title: "Tiered local routing remains appropriate"
+              }
+            ],
+            generatedAt: "2026-06-10T03:31:17.923Z",
+            inputs: {
+              authorization: "Bearer super-secret",
+              usageSnapshotId: "dynamic-usage-codex-2026-06-10"
+            },
+            localModelAssessment: {
+              migrationFit: "partial",
+              serverSizing: "dual workstation lane"
+            },
+            nextActions: [
+              "Apply short-context workloads to local candidates first.",
+              {
+                title: "Keep hosted tail workloads",
+                details: "Long-context and cache-heavy forensic workloads stay hosted."
+              }
+            ],
+            redactions: {
+              rawProviderSnapshots: "omitted"
+            },
+            reviewer: {
+              model: "sonnet",
+              providerKind: "claude"
+            },
+            runId: "dynamic-forensic-20260610T033047026Z",
+            schemaVersion: "sdlca.bridge.forensic.v0",
+            summary: {
+              conclusion:
+                "Tiered local routing is supported, but long-context work should remain hosted.",
+              confidence: 0.91
+            }
+          }
+        })
+      );
+
+    const executor = createSdlcaBridgeForensicExecutor({
+      bridgeToken: "bridge-token",
+      bridgeUrl: "http://127.0.0.1:4818",
+      fetcher,
+      workingDirectory: "/Users/ckreager/repos/kdtix/token_reporting"
+    });
+
+    const result = await executor({
+      createdAt: "2026-06-10T03:30:47.026Z",
+      evidencePacket,
+      huggingFaceCandidateSetId: "hf-candidates-test",
+      reviewerModels: ["sonnet"],
+      runId: "dynamic-forensic-20260610T033047026Z",
+      usageSnapshotId: "dynamic-usage-codex-2026-06-10"
+    });
+
+    expect(result.status).toBe("completed");
+    expect(result.reviewerArtifacts[0]).toMatchObject({
+      artifact: {
+        artifactKind: "local_model_forensic_review",
+        artifactSchemaVersion: "sdlca.bridge.forensic.v0",
+        generatedAt: "2026-06-10T03:31:17.923Z",
+        providerKind: "claude",
+        providerRole: "reviewer",
+        provenance: {
+          redacted: true,
+          source: "provider_execution"
+        },
+        recommendations: [
+          "Apply short-context workloads to local candidates first.",
+          "Keep hosted tail workloads: Long-context and cache-heavy forensic workloads stay hosted."
+        ],
+        summary:
+          "Tiered local routing is supported, but long-context work should remain hosted."
+      },
+      bridgeProviderKind: "claude",
+      diagnostics: {
+        normalizedFromBridgeResult: true,
+        originalResultSummary: expect.objectContaining({
+          hasFindings: true,
+          hasRecommendations: false,
+          hasSummary: false
+        })
+      },
+      reviewerModel: "sonnet",
+      status: "completed"
+    });
+    expect(JSON.stringify(result.reviewerArtifacts[0])).not.toContain("super-secret");
+  });
+
+  it("createSdlcaBridgeForensicExecutor_BridgeAttributedSonnetVerdict_NormalizesReviewerArtifact", async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse({
+          result: [
+            {
+              forensicCapabilities,
+              kind: "claude",
+              providerId: "claude-reviewer",
+              providerName: "Claude Reviewer",
+              resolvedExecutable: "/usr/bin/claude"
+            }
+          ]
+        })
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({
+          result: {
+            bridgeProviderKind: "claude",
+            evidence: {
+              artifactUri:
+                "local://token-reporting/forensics/dynamic-forensic-20260610T034941921Z/evidence-packet.json",
+              providerSnapshotIds: ["dynamic-usage-codex-2026-06-11"]
+            },
+            findings: [
+              {
+                category: "snapshot_freshness",
+                detail: "Trend comparisons should account for asymmetric collection windows.",
+                severity: "medium",
+                summary: "Primary usage snapshot lags other providers"
+              }
+            ],
+            generatedAt: "2026-06-10T03:49:41.921Z",
+            huggingFaceCandidateSetId: "dynamic-hf-candidates-unavailable-20260610T034941921Z",
+            recommendations: [
+              {
+                action:
+                  "Re-run the Hugging Face candidate fetch before publishing local-model fit conclusions.",
+                priority: "high"
+              }
+            ],
+            reviewerModel: "sonnet",
+            runId: "dynamic-forensic-20260610T034941921Z",
+            usageSnapshotId: "dynamic-usage-github-copilot-2026-06-08",
+            verdict: {
+              confidence: "low",
+              rationale:
+                "Reviewer can validate snapshot structure, but candidate-set evidence is unavailable.",
+              status: "provisional"
+            }
+          }
+        })
+      );
+
+    const executor = createSdlcaBridgeForensicExecutor({
+      bridgeToken: "bridge-token",
+      bridgeUrl: "http://127.0.0.1:4818",
+      fetcher,
+      workingDirectory: "/Users/ckreager/repos/kdtix/token_reporting"
+    });
+
+    const result = await executor({
+      createdAt: "2026-06-10T03:49:41.921Z",
+      evidencePacket,
+      huggingFaceCandidateSetId: "dynamic-hf-candidates-unavailable-20260610T034941921Z",
+      reviewerModels: ["sonnet"],
+      runId: "dynamic-forensic-20260610T034941921Z",
+      usageSnapshotId: "dynamic-usage-github-copilot-2026-06-08"
+    });
+
+    expect(result.status).toBe("completed");
+    expect(result.reviewerArtifacts[0]).toMatchObject({
+      artifact: {
+        artifactKind: "local_model_forensic_review",
+        artifactSchemaVersion: "sdlca.bridge.forensic.v0",
+        findings: [
+          {
+            details: "Trend comparisons should account for asymmetric collection windows.",
+            severity: "medium",
+            title: "Primary usage snapshot lags other providers"
+          }
+        ],
+        providerKind: "claude",
+        recommendations: [
+          "Re-run the Hugging Face candidate fetch before publishing local-model fit conclusions."
+        ],
+        summary: "provisional: Reviewer can validate snapshot structure, but candidate-set evidence is unavailable."
+      },
+      diagnostics: {
+        normalizedFromBridgeResult: true,
+        originalResultSummary: expect.objectContaining({
+          hasFindings: true,
+          hasRecommendations: true,
+          hasSummary: false
+        })
+      },
+      reviewerModel: "sonnet",
+      status: "completed"
     });
   });
 });

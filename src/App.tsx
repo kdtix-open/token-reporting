@@ -32,7 +32,8 @@ import {
   type ReportForensicRun,
   type SqlDialect,
 } from "./lib/reportExports";
-import { requestReportRefresh } from "./lib/integrationApiClient";
+import type { LocalModelWorkloadScopeId } from "./lib/localModelReport";
+import { pollReportRefreshJob, requestReportRefresh } from "./lib/integrationApiClient";
 import { resolveRuntimeApiBaseUrl, resolveRuntimeAssetPath } from "./lib/runtimePaths";
 import { providerRegistry } from "./providers/registry";
 import "./App.css";
@@ -143,6 +144,8 @@ export default function App() {
   const [forensicRun, setForensicRun] = useState<ReportForensicRun | null>(null);
   const [exportFormat, setExportFormat] = useState<ReportExportFormat>("pdf");
   const [sqlDialect, setSqlDialect] = useState<SqlDialect>("sqlite");
+  const [localModelWorkloadScopeId, setLocalModelWorkloadScopeId] =
+    useState<LocalModelWorkloadScopeId>("all_provider_traffic");
   // Counter guards against stale responses from concurrent or Strict Mode loads
   const loadCounterRef = useRef(0);
 
@@ -241,8 +244,29 @@ export default function App() {
     try {
       const result = await requestReportRefresh({ defaultApiBaseUrl: apiBaseUrl });
       if (result.outcome === "accepted") {
-        setRefreshMessage(`Refresh job ${result.job.jobId} ${result.job.status}`);
-        setRefreshSteps(refreshStepsFromJob(result.job));
+        let job = result.job;
+        setRefreshMessage(`Refresh job ${job.jobId} ${job.status}`);
+        setRefreshSteps(refreshStepsFromJob(job));
+
+        if (!isTerminalRefreshStatus(job.status)) {
+          const pollResult = await pollReportRefreshJob(job.jobId, {
+            defaultApiBaseUrl: apiBaseUrl,
+            intervalMs: 500,
+            onUpdate: (updatedJob) => {
+              setRefreshMessage(`Refresh job ${updatedJob.jobId} ${updatedJob.status}`);
+              setRefreshSteps(refreshStepsFromJob(updatedJob));
+            }
+          });
+
+          if (pollResult.outcome === "accepted") {
+            job = pollResult.job;
+            setRefreshMessage(`Refresh job ${job.jobId} ${job.status}`);
+            setRefreshSteps(refreshStepsFromJob(job));
+          } else {
+            setRefreshMessage(pollResult.message);
+            setRefreshSteps(failedRefreshSteps(pollResult.message));
+          }
+        }
       } else {
         setRefreshMessage(result.message);
         setRefreshSteps(failedRefreshSteps(result.message));
@@ -269,12 +293,21 @@ export default function App() {
         distribution,
         forensicRun,
         huggingFaceCandidateSet,
+        localModelWorkloadScopeId,
         summaries
       },
       exportFormat,
       sqlDialect
     );
-  }, [distribution, exportFormat, forensicRun, huggingFaceCandidateSet, sqlDialect, summaries]);
+  }, [
+    distribution,
+    exportFormat,
+    forensicRun,
+    huggingFaceCandidateSet,
+    localModelWorkloadScopeId,
+    sqlDialect,
+    summaries
+  ]);
   const reportFreshness = reportFreshnessLabel(summaries);
 
   return (
@@ -350,6 +383,8 @@ export default function App() {
         distribution={distribution}
         forensicRun={forensicRun}
         huggingFaceCandidateSet={huggingFaceCandidateSet}
+        workloadScopeId={localModelWorkloadScopeId}
+        onWorkloadScopeChange={setLocalModelWorkloadScopeId}
       />
       <LocalInfrastructureSizingPanel
         summaries={summaries}
@@ -517,11 +552,7 @@ function refreshStepsFromJob(job: Record<string, unknown>): RefreshProgressStep[
       title: "Hugging Face candidates"
     },
     {
-      detail:
-        summarizeRecords(reviewerArtifacts, "reviewerModel") ||
-        (forensicRun
-          ? `Forensic run ${readStatus(forensicRun.status) ?? "completed"}.`
-          : "No forensic run was returned for this refresh."),
+      detail: forensicStepDetail(forensicRun, reviewerArtifacts),
       id: "forensics",
       status: statusFromRecords(
         reviewerArtifacts,
@@ -536,6 +567,40 @@ function refreshStepsFromJob(job: Record<string, unknown>): RefreshProgressStep[
       title: "Report snapshot reload"
     }
   ];
+}
+
+function forensicStepDetail(
+  forensicRun: Record<string, unknown> | null,
+  reviewerArtifacts: Record<string, unknown>[]
+): string {
+  if (forensicRun && bridgeExecutorWasNotConfigured(forensicRun)) {
+    const reviewerNames = reviewerArtifacts
+      .map((artifact) => readStringField(artifact, "reviewerModel"))
+      .filter((value): value is string => value !== null);
+    const reviewerList = reviewerNames.length > 0 ? `${humanList(reviewerNames)} ` : "";
+    return `Bridge forensic executor was not configured; ${reviewerList}were not dispatched.`;
+  }
+
+  return (
+    summarizeRecords(reviewerArtifacts, "reviewerModel") ||
+    (forensicRun
+      ? `Forensic run ${readStatus(forensicRun.status) ?? "completed"}.`
+      : "No forensic run was returned for this refresh.")
+  );
+}
+
+function bridgeExecutorWasNotConfigured(forensicRun: Record<string, unknown>): boolean {
+  if (readStringField(forensicRun, "degradedReason") === "bridge_forensic_executor_not_configured") {
+    return true;
+  }
+
+  const bridgeDispatch = forensicRun.bridgeDispatch;
+  return isRecord(bridgeDispatch) && bridgeDispatch.status === "not_configured";
+}
+
+function humanList(values: string[]): string {
+  if (values.length <= 2) return values.join(", ");
+  return `${values.slice(0, -1).join(", ")}, ${values[values.length - 1]}`;
 }
 
 function updateRefreshStep(
@@ -564,15 +629,24 @@ function readStatus(value: unknown): RefreshStepStatus | null {
   return null;
 }
 
+function isTerminalRefreshStatus(status: string): boolean {
+  return status === "completed" || status === "degraded" || status === "failed";
+}
+
+function readStringField(record: Record<string, unknown>, field: string): string | null {
+  const value = record[field];
+  return typeof value === "string" ? value : null;
+}
+
 function statusFromRecords(
   records: Record<string, unknown>[],
   fallback: RefreshStepStatus | null
 ): RefreshStepStatus {
   const statuses = records.map((record) => readStatus(record.status)).filter(Boolean);
   if (statuses.includes("failed")) return "failed";
-  if (statuses.includes("degraded") || statuses.includes("queued") || statuses.includes("running")) {
-    return "degraded";
-  }
+  if (statuses.includes("running")) return "running";
+  if (statuses.includes("degraded")) return "degraded";
+  if (statuses.includes("queued")) return fallback && fallback !== "completed" ? fallback : "queued";
   if (statuses.length > 0 && statuses.every((status) => status === "completed")) {
     return "completed";
   }
@@ -584,10 +658,29 @@ function summarizeRecords(records: Record<string, unknown>[], labelField: string
     .map((record) => {
       const label = record[labelField];
       const status = readStatus(record.status);
-      return typeof label === "string" && status ? `${label} ${status}` : null;
+      const reason =
+        status === "failed" || status === "degraded"
+          ? refreshStatusReasonLabel(readStringField(record, "degradedReason"))
+          : null;
+      return typeof label === "string" && status
+        ? `${label} ${status}${reason ? ` (${reason})` : ""}`
+        : null;
     })
     .filter((value): value is string => value !== null)
     .join("; ");
+}
+
+function refreshStatusReasonLabel(reason: string | null): string | null {
+  if (!reason) return null;
+  const reasonLabels: Record<string, string> = {
+    bridge_forensic_executor_not_configured: "bridge not configured",
+    bridge_forensic_provider_unavailable: "provider unavailable",
+    sdlca_bridge_forensic_execute_failed_500: "bridge execute failed",
+    sdlca_bridge_forensic_execute_timeout: "bridge execute timed out",
+    sdlca_bridge_forensic_output_parse_failed: "bridge output parse failed",
+    sdlca_bridge_forensic_result_invalid: "invalid reviewer result"
+  };
+  return reasonLabels[reason] ?? reason.replaceAll("_", " ");
 }
 
 function statusLabel(status: RefreshStepStatus): string {

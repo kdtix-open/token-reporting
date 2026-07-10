@@ -63,7 +63,11 @@ describe("App", () => {
 
     expect(await screen.findByText("Local AI Infrastructure Sizing")).toBeInTheDocument();
     expect(screen.getByText("Executive Hardware Decision Summary")).toBeInTheDocument();
-    expect(screen.getByText("Current workload baseline")).toBeInTheDocument();
+    expect(screen.getByText("Hardware Budget Required by Scope")).toBeInTheDocument();
+    expect(screen.getByText("Budget math scope")).toBeInTheDocument();
+    expect(screen.getByText("Selected scope baseline")).toBeInTheDocument();
+    expect(screen.getAllByText(/\$150K is not enough for all-provider replacement/).length).toBeGreaterThan(0);
+    expect(screen.getByText(/GitHub Copilot CLI dominates all-provider token volume/)).toBeInTheDocument();
     expect(screen.getAllByText("Target first-server migration objective").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Estimated full-workload capacity").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Safe initial production routing").length).toBeGreaterThan(0);
@@ -194,6 +198,30 @@ describe("App", () => {
     expect(screen.getAllByText(/partial local migration/).length).toBeGreaterThan(0);
   });
 
+  it("lets operators scope on-prem model profiles by tenant pipeline", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: false
+      })
+    );
+
+    render(<App />);
+
+    const scopeSelect = await screen.findByRole("combobox", { name: "Tenant pipeline scope" });
+    expect(scopeSelect).toHaveValue("all_provider_traffic");
+    expect(screen.getByRole("option", { name: "All KDTIX provider traffic" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Repo Automation" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Agent Memory" })).toBeInTheDocument();
+
+    fireEvent.change(scopeSelect, { target: { value: "repo_automation_project" } });
+
+    expect(scopeSelect).toHaveValue("repo_automation_project");
+    expect(screen.getByText(/Current tenant: KDTIX/)).toBeInTheDocument();
+    expect(screen.getByText(/Pipeline allocation: estimated/)).toBeInTheDocument();
+    expect(screen.getAllByText(/Repo Automation/).length).toBeGreaterThan(0);
+  });
+
   it("refresh button requests dynamic refresh before reloading snapshots", async () => {
     const fetchStub = vi.fn().mockImplementation((input: RequestInfo | URL) => {
       const url = String(input);
@@ -288,7 +316,11 @@ describe("App", () => {
             forensicRun: {
               reviewerArtifacts: [
                 { reviewerModel: "gpt", status: "completed" },
-                { reviewerModel: "composer", status: "failed" }
+                {
+                  degradedReason: "sdlca_bridge_forensic_result_invalid",
+                  reviewerModel: "composer",
+                  status: "failed"
+                }
               ],
               status: "degraded"
             },
@@ -320,8 +352,119 @@ describe("App", () => {
 
     expect(await screen.findByText("Refresh job dynamic-refresh-002 degraded")).toBeInTheDocument();
     expect(screen.getByText("github-copilot completed; cursor degraded")).toBeInTheDocument();
-    expect(screen.getByText("gpt completed; composer failed")).toBeInTheDocument();
+    expect(
+      screen.getByText("gpt completed; composer failed (invalid reviewer result)")
+    ).toBeInTheDocument();
     expect(screen.getByText("Snapshots reloaded after refresh response.")).toBeInTheDocument();
+  });
+
+  it("refresh activity panel polls accepted background refresh jobs", async () => {
+    let pollCount = 0;
+    const fetchStub = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url === sameOriginRefreshUrl) {
+        return Promise.resolve({
+          json: async () => ({
+            jobId: "dynamic-refresh-async",
+            providerResults: [{ providerId: "github-copilot", status: "running" }],
+            status: "running"
+          }),
+          ok: true,
+          status: 202
+        });
+      }
+
+      if (url === `${sameOriginRefreshUrl}/dynamic-refresh-async`) {
+        pollCount += 1;
+        return Promise.resolve({
+          json: async () =>
+            pollCount === 1
+              ? {
+                  jobId: "dynamic-refresh-async",
+                  providerResults: [{ providerId: "github-copilot", status: "running" }],
+                  status: "running"
+                }
+              : {
+                  jobId: "dynamic-refresh-async",
+                  providerResults: [{ providerId: "github-copilot", status: "completed" }],
+                  status: "completed"
+                },
+          ok: true,
+          status: 200
+        });
+      }
+
+      return Promise.resolve({ ok: false });
+    });
+    vi.stubGlobal("fetch", fetchStub);
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(fetchStub).toHaveBeenCalledWith(
+        expect.stringContaining("/data/github-copilot/accumulated-metadata.json")
+      );
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /Refresh Report/i }));
+
+    expect(await screen.findByText("Refresh job dynamic-refresh-async completed")).toBeInTheDocument();
+    expect(fetchStub).toHaveBeenCalledWith(`${sameOriginRefreshUrl}/dynamic-refresh-async`, {
+      method: "GET",
+      signal: expect.any(AbortSignal)
+    });
+  });
+
+  it("refresh activity panel explains when forensic reviewers were not dispatched", async () => {
+    const fetchStub = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url === sameOriginRefreshUrl) {
+        return Promise.resolve({
+          json: async () => ({
+            forensicRun: {
+              bridgeDispatch: {
+                executionKind: "forensic",
+                status: "not_configured"
+              },
+              degradedReason: "bridge_forensic_executor_not_configured",
+              reviewerArtifacts: [
+                { reviewerModel: "sonnet", status: "queued" },
+                { reviewerModel: "opus", status: "queued" },
+                { reviewerModel: "gpt", status: "queued" }
+              ],
+              status: "degraded"
+            },
+            jobId: "dynamic-refresh-not-configured",
+            providerResults: [{ providerId: "github-copilot", status: "completed" }],
+            status: "degraded"
+          }),
+          ok: true,
+          status: 202
+        });
+      }
+
+      return Promise.resolve({ ok: false });
+    });
+    vi.stubGlobal("fetch", fetchStub);
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(fetchStub).toHaveBeenCalledWith(
+        expect.stringContaining("/data/github-copilot/accumulated-metadata.json")
+      );
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /Refresh Report/i }));
+
+    expect(
+      await screen.findByText("Refresh job dynamic-refresh-not-configured degraded")
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Bridge forensic executor was not configured; sonnet, opus, gpt were not dispatched."
+      )
+    ).toBeInTheDocument();
   });
 
   it("refresh button keeps the report freshness visible when dynamic refresh is blocked", async () => {

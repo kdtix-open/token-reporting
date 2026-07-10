@@ -7,11 +7,35 @@ import type { ProviderReportSummary } from "./types";
 export type ContextConfidence = "high" | "low" | "insufficient_data";
 export type CodeCapability = "excellent" | "good" | "fair";
 export type ModelTier = "min" | "recommended" | "pro" | "enterprise";
+export type LocalModelWorkloadScopeId =
+  | "all_provider_traffic"
+  | "repo_automation_project"
+  | "agent_memory"
+  | "copilot_cli"
+  | "agentic_worker"
+  | "reviewer";
 export type ForensicRoutingStrategy =
   | "hosted_guardrail"
   | "local_candidate"
   | "reviewer_consensus"
   | "tiered_hybrid";
+
+export interface LocalModelTenant {
+  tenantId: string;
+  tenantName: string;
+}
+
+export interface LocalModelWorkloadScope {
+  allocationMode: "observed" | "estimated";
+  contextWindowMultiplier: number;
+  description: string;
+  id: LocalModelWorkloadScopeId;
+  label: string;
+  pipelineKey: string;
+  providerWeights: Record<string, number>;
+  tenantId: string;
+  tenantName: string;
+}
 
 export interface LocalModelForensicFinding {
   details: string;
@@ -89,6 +113,7 @@ export interface LocalModelProfile {
 }
 
 export interface TokenObservedProvider {
+  allocationWeight?: number;
   providerId: string;
   inputTokens: number;
   outputTokens: number;
@@ -99,12 +124,24 @@ export interface TokenObservedProvider {
 }
 
 export interface RequestOnlyProvider {
+  allocationWeight?: number;
   providerId: string;
   requestCount: number;
   note: string;
 }
 
+export interface BuildLocalModelReportOptions {
+  tenantId?: string;
+  tenantName?: string;
+  workloadScopeId?: LocalModelWorkloadScopeId;
+  workloadScopes?: LocalModelWorkloadScope[];
+}
+
 export interface LocalModelMigrationReport {
+  tenant: LocalModelTenant;
+  selectedWorkloadScope: LocalModelWorkloadScope;
+  availableWorkloadScopes: LocalModelWorkloadScope[];
+
   /** Providers that contributed real token counts */
   tokenObservedProviders: TokenObservedProvider[];
   /** Providers with request counts but no token telemetry */
@@ -348,16 +385,192 @@ function getNum(s: ProviderReportSummary, field: string): number {
   return typeof val === "number" ? val : 0;
 }
 
+function defaultLocalModelWorkloadScopes(tenant: LocalModelTenant): LocalModelWorkloadScope[] {
+  return [
+    {
+      allocationMode: "observed",
+      contextWindowMultiplier: 1,
+      description: "All provider Admin/API token usage currently visible for this tenant.",
+      id: "all_provider_traffic",
+      label: `All ${tenant.tenantName} provider traffic`,
+      pipelineKey: "all",
+      providerWeights: {},
+      tenantId: tenant.tenantId,
+      tenantName: tenant.tenantName
+    },
+    {
+      allocationMode: "estimated",
+      contextWindowMultiplier: 0.55,
+      description:
+        "Repo automation project lane, excluding Copilot CLI dominance unless explicitly selected.",
+      id: "repo_automation_project",
+      label: "Repo Automation",
+      pipelineKey: "repo-automation",
+      providerWeights: {
+        claude: 0.45,
+        "claude-code": 0.25,
+        codex: 0.25,
+        cursor: 0.05
+      },
+      tenantId: tenant.tenantId,
+      tenantName: tenant.tenantName
+    },
+    {
+      allocationMode: "estimated",
+      contextWindowMultiplier: 1,
+      description: "Long-context memory, retrieval, and context-carrying agent work.",
+      id: "agent_memory",
+      label: "Agent Memory",
+      pipelineKey: "agent-memory",
+      providerWeights: {
+        claude: 0.5,
+        "claude-code": 0.2,
+        codex: 0.3
+      },
+      tenantId: tenant.tenantId,
+      tenantName: tenant.tenantName
+    },
+    {
+      allocationMode: "observed",
+      contextWindowMultiplier: 0.15,
+      description: "GitHub Copilot CLI token telemetry only.",
+      id: "copilot_cli",
+      label: "Copilot CLI",
+      pipelineKey: "copilot-cli",
+      providerWeights: {
+        "github-copilot": 1
+      },
+      tenantId: tenant.tenantId,
+      tenantName: tenant.tenantName
+    },
+    {
+      allocationMode: "estimated",
+      contextWindowMultiplier: 0.7,
+      description: "Agentic worker execution lane across hosted coding providers.",
+      id: "agentic_worker",
+      label: "Agentic Worker",
+      pipelineKey: "agentic-worker",
+      providerWeights: {
+        claude: 0.3,
+        "claude-code": 0.1,
+        codex: 0.45,
+        cursor: 0.15
+      },
+      tenantId: tenant.tenantId,
+      tenantName: tenant.tenantName
+    },
+    {
+      allocationMode: "estimated",
+      contextWindowMultiplier: 0.5,
+      description: "Reviewer and forensic validation lane.",
+      id: "reviewer",
+      label: "Reviewer",
+      pipelineKey: "reviewer",
+      providerWeights: {
+        claude: 0.4,
+        codex: 0.45,
+        cursor: 0.15
+      },
+      tenantId: tenant.tenantId,
+      tenantName: tenant.tenantName
+    }
+  ];
+}
+
+function resolveWorkloadScope(
+  options: BuildLocalModelReportOptions | undefined
+): {
+  availableWorkloadScopes: LocalModelWorkloadScope[];
+  selectedWorkloadScope: LocalModelWorkloadScope;
+  tenant: LocalModelTenant;
+} {
+  const tenant = {
+    tenantId: options?.tenantId ?? "kdtix",
+    tenantName: options?.tenantName ?? "KDTIX"
+  };
+  const availableWorkloadScopes =
+    options?.workloadScopes && options.workloadScopes.length > 0
+      ? options.workloadScopes
+      : defaultLocalModelWorkloadScopes(tenant);
+  const selectedWorkloadScope =
+    availableWorkloadScopes.find((scope) => scope.id === options?.workloadScopeId) ??
+    availableWorkloadScopes[0]!;
+
+  return { availableWorkloadScopes, selectedWorkloadScope, tenant };
+}
+
+function scopeProviderWeight(scope: LocalModelWorkloadScope, providerId: string): number {
+  if (scope.id === "all_provider_traffic") return 1;
+  return scope.providerWeights[providerId] ?? 0;
+}
+
+function scaleCount(value: number, weight: number): number {
+  return Math.round(value * weight);
+}
+
+function scopedTokenProviders(
+  providers: TokenObservedProvider[],
+  scope: LocalModelWorkloadScope
+): TokenObservedProvider[] {
+  return providers.flatMap((provider) => {
+    const weight = scopeProviderWeight(scope, provider.providerId);
+    if (weight <= 0) return [];
+    const scopedProvider = {
+      ...provider,
+      allocationWeight: weight,
+      cacheCreationTokens: scaleCount(provider.cacheCreationTokens, weight),
+      cacheReadTokens: scaleCount(provider.cacheReadTokens, weight),
+      inputTokens: scaleCount(provider.inputTokens, weight),
+      outputTokens: scaleCount(provider.outputTokens, weight),
+      requestCount:
+        provider.requestCount === null ? null : Math.max(1, scaleCount(provider.requestCount, weight))
+    };
+    const hasUsage =
+      scopedProvider.inputTokens +
+        scopedProvider.outputTokens +
+        scopedProvider.cacheCreationTokens +
+        scopedProvider.cacheReadTokens >
+        0 || scopedProvider.requestCount !== null;
+    return hasUsage ? [scopedProvider] : [];
+  });
+}
+
+function scopedRequestOnlyProviders(
+  providers: RequestOnlyProvider[],
+  scope: LocalModelWorkloadScope
+): RequestOnlyProvider[] {
+  return providers.flatMap((provider) => {
+    const weight = scopeProviderWeight(scope, provider.providerId);
+    if (weight <= 0) return [];
+    const requestCount = scaleCount(provider.requestCount, weight);
+    return requestCount > 0
+      ? [
+          {
+            ...provider,
+            allocationWeight: weight,
+            note:
+              weight === 1
+                ? provider.note
+                : `${provider.note}; ${Math.round(weight * 100)}% allocated to ${scope.label}`,
+            requestCount
+          }
+        ]
+      : [];
+  });
+}
+
 // ── Builder ─────────────────────────────────────────────────────────────────
 
 export function buildLocalModelReport(
   summaries: ProviderReportSummary[],
   localDistribution: LocalSessionDistribution | null = null,
   huggingFaceCandidateSet: HuggingFaceCandidateSet | null = null,
-  forensicRun: LocalModelForensicRunInput | null = null
+  forensicRun: LocalModelForensicRunInput | null = null,
+  options?: BuildLocalModelReportOptions
 ): LocalModelMigrationReport {
-  const tokenObservedProviders: TokenObservedProvider[] = [];
-  const requestOnlyProviders: RequestOnlyProvider[] = [];
+  const rawTokenObservedProviders: TokenObservedProvider[] = [];
+  const rawRequestOnlyProviders: RequestOnlyProvider[] = [];
+  const { availableWorkloadScopes, selectedWorkloadScope, tenant } = resolveWorkloadScope(options);
   const appliedForensicGuidance = buildAppliedForensicGuidance(forensicRun);
 
   for (const s of summaries) {
@@ -367,7 +580,7 @@ export function buildLocalModelReport(
       const uncached = (s as unknown as Record<string, unknown>)["uncachedInputTokens"];
       const inputForCompute =
         typeof uncached === "number" ? uncached : getNum(s, "inputTokens");
-      tokenObservedProviders.push({
+      rawTokenObservedProviders.push({
         providerId: s.providerId,
         inputTokens: inputForCompute,
         outputTokens: getNum(s, "outputTokens"),
@@ -382,7 +595,7 @@ export function buildLocalModelReport(
         getNum(s, "totalChatRequests") +
         getNum(s, "totalAgentRequests");
       if (totalReqs > 0) {
-        requestOnlyProviders.push({
+        rawRequestOnlyProviders.push({
           providerId: s.providerId,
           requestCount: totalReqs,
           note: "Request counts only — token telemetry not available via Cursor admin API"
@@ -398,7 +611,7 @@ export function buildLocalModelReport(
         // CLI token telemetry available — treat as token-observed.
         // cliRequestCount is CLI API calls, used as request denominator for sizing.
         // Note: coverage is CLI-only; IDE chat/agent interactions are not counted.
-        tokenObservedProviders.push({
+        rawTokenObservedProviders.push({
           providerId: s.providerId,
           inputTokens: cliInput,
           outputTokens: cliOutput,
@@ -407,7 +620,7 @@ export function buildLocalModelReport(
           cacheCreationTokens: 0
         });
       } else if (interactions > 0) {
-        requestOnlyProviders.push({
+        rawRequestOnlyProviders.push({
           providerId: s.providerId,
           requestCount: interactions,
           note: "Interaction counts only — CLI token telemetry not available in this snapshot"
@@ -415,6 +628,15 @@ export function buildLocalModelReport(
       }
     }
   }
+
+  const tokenObservedProviders = scopedTokenProviders(
+    rawTokenObservedProviders,
+    selectedWorkloadScope
+  );
+  const requestOnlyProviders = scopedRequestOnlyProviders(
+    rawRequestOnlyProviders,
+    selectedWorkloadScope
+  );
 
   // ── Token aggregates ──────────────────────────────────────────────────────
   const totalInputTokens = tokenObservedProviders.reduce((a, p) => a + p.inputTokens, 0);
@@ -437,7 +659,7 @@ export function buildLocalModelReport(
   // Prefer empirical p99 from local session telemetry when present.
   if (localDistribution && localDistribution.combined.sampleCount > 0) {
     estimatedContextWindowNeeded = ceilToStandardContext(
-      Math.ceil(localDistribution.combined.p99)
+      Math.ceil(localDistribution.combined.p99 * selectedWorkloadScope.contextWindowMultiplier)
     );
     contextConfidence = "high";
     if (
@@ -447,7 +669,8 @@ export function buildLocalModelReport(
     ) {
       avgTokensPerObservedRequest = totalPureComputeTokens / tokenObservedRequests;
     } else {
-      avgTokensPerObservedRequest = localDistribution.combined.mean;
+      avgTokensPerObservedRequest =
+        localDistribution.combined.mean * selectedWorkloadScope.contextWindowMultiplier;
     }
   } else if (
     tokenObservedRequests !== null &&
@@ -457,7 +680,7 @@ export function buildLocalModelReport(
     avgTokensPerObservedRequest = totalPureComputeTokens / tokenObservedRequests;
     // 2.5× heuristic safety factor — avg×multiplier proxy for p95 (low confidence).
     estimatedContextWindowNeeded = ceilToStandardContext(
-      Math.ceil(avgTokensPerObservedRequest * 2.5)
+      Math.ceil(avgTokensPerObservedRequest * 2.5 * selectedWorkloadScope.contextWindowMultiplier)
     );
     contextConfidence = "low";
   }
@@ -523,6 +746,9 @@ export function buildLocalModelReport(
       : null;
 
   return {
+    tenant,
+    selectedWorkloadScope,
+    availableWorkloadScopes,
     tokenObservedProviders,
     requestOnlyProviders,
     totalInputTokens,

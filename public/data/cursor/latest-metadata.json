@@ -1,24 +1,37 @@
 {
-  "generatedAt": "2026-06-10T01:24:51.844Z",
+  "generatedAt": "2026-07-08T17:17:34.074Z",
   "daily": {
     "data": [
       {
         "userId": "user_6SPHHLfZB2hOegWEViUzY7KvGb",
-        "day": "2026-06-10",
-        "date": 1781049600000,
+        "day": "2026-07-07",
+        "date": 1783382400000,
         "email": "chris.kreager@kdtix.com",
         "cmdkUsages": 0,
         "composerRequests": 0,
         "chatRequests": 0,
-        "agentRequests": 1,
-        "usageBasedReqs": 1,
+        "agentRequests": 10,
+        "usageBasedReqs": 0,
+        "subscriptionIncludedReqs": 6,
+        "bugbotUsages": 0
+      },
+      {
+        "userId": "user_6SPHHLfZB2hOegWEViUzY7KvGb",
+        "day": "2026-07-08",
+        "date": 1783468800000,
+        "email": "chris.kreager@kdtix.com",
+        "cmdkUsages": 0,
+        "composerRequests": 0,
+        "chatRequests": 0,
+        "agentRequests": 0,
+        "usageBasedReqs": 0,
         "subscriptionIncludedReqs": 0,
         "bugbotUsages": 0
       },
       {
         "userId": "user_6SPHHLfZB2hOegWEViUzY7KvGb",
-        "day": "2026-06-11",
-        "date": 1781136000000,
+        "day": "2026-07-09",
+        "date": 1783555200000,
         "email": "chris.kreager@kdtix.com",
         "cmdkUsages": 0,
         "composerRequests": 0,
@@ -30,8 +43,8 @@
       }
     ],
     "period": {
-      "startDate": 1781049600000,
-      "endDate": 1781136000000
+      "startDate": 1783382400000,
+      "endDate": 1783555200000
     }
   },
   "spend": {
@@ -41,20 +54,20 @@
         "name": "Chris Kreager",
         "email": "chris.kreager@kdtix.com",
         "role": "owner",
-        "spendCents": 30184.726927,
-        "includedSpendCents": 8212.30008,
+        "spendCents": 0,
+        "includedSpendCents": 62.5007,
         "fastPremiumRequests": 0,
         "monthlyLimitDollars": null,
         "hardLimitOverrideDollars": 0
       }
     ],
-    "subscriptionCycleStart": 1778942747000,
+    "subscriptionCycleStart": 1783459946000,
     "totalMembers": 1,
     "limitedUsersCount": 0,
-    "maxUserSpendCents": 30184.726927
+    "maxUserSpendCents": 0
   },
   "events": {
-    "totalUsageEventsCount": 1,
+    "totalUsageEventsCount": 15,
     "pagination": {
       "numPages": 1,
       "currentPage": 1,
@@ -64,29 +77,309 @@
     },
     "usageEvents": [
       {
-        "timestamp": "1781051265200",
+        "timestamp": "1783465726921",
         "model": "composer-2.5-fast",
-        "kind": "Usage-based",
+        "kind": "Included in Business",
         "maxMode": false,
-        "requestsCosts": 11,
+        "requestsCosts": 10.7,
         "isTokenBasedCall": true,
         "tokenUsage": {
-          "inputTokens": 75318,
-          "outputTokens": 3697,
+          "inputTokens": 63598,
+          "outputTokens": 4482,
           "cacheWriteTokens": 0,
-          "cacheReadTokens": 317755,
-          "totalCents": 44.02865
+          "cacheReadTokens": 338752,
+          "totalCents": 42.74
         },
         "userEmail": "chris.kreager@kdtix.com",
-        "cursorTokenFee": 9.91925,
+        "cursorTokenFee": 10.1708,
         "isChargeable": true,
         "isHeadless": false,
-        "chargedCents": 53.9479
+        "chargedCents": 52.9108
+      },
+      {
+        "timestamp": "1783463174517",
+        "model": "default",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 1.5,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 11686,
+          "outputTokens": 586,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 34210,
+          "totalCents": 6.0953
+        },
+        "userEmail": "chris.kreager@kdtix.com",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 2.6676
+      },
+      {
+        "timestamp": "1783461400929",
+        "model": "default",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 0.8,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 5047,
+          "outputTokens": 423,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 17536,
+          "totalCents": 3.0254
+        },
+        "userEmail": "chris.kreager@kdtix.com",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 1.323075
+      },
+      {
+        "timestamp": "1783461199612",
+        "model": "default",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 1.6,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 16253,
+          "outputTokens": 474,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 17696,
+          "totalCents": 6.4717
+        },
+        "userEmail": "chris.kreager@kdtix.com",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 2.758425
+      },
+      {
+        "timestamp": "1783460507727",
+        "model": "default",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 1,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 9990,
+          "outputTokens": 287,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 11727,
+          "totalCents": 4.01385
+        },
+        "userEmail": "chris.kreager@kdtix.com",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 1.714125
+      },
+      {
+        "timestamp": "1783460304702",
+        "model": "default",
+        "kind": "Included in Business",
+        "maxMode": false,
+        "requestsCosts": 0.6,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 4007,
+          "outputTokens": 303,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 17760,
+          "totalCents": 2.5446
+        },
+        "userEmail": "chris.kreager@kdtix.com",
+        "cursorTokenFee": 0,
+        "isChargeable": true,
+        "isHeadless": false,
+        "chargedCents": 1.126675
+      },
+      {
+        "timestamp": "1783459576546",
+        "model": "default",
+        "kind": "Free",
+        "maxMode": false,
+        "requestsCosts": 0,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 4102,
+          "outputTokens": 347,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 17696,
+          "totalCents": 2.6359
+        },
+        "userEmail": "chris.kreager@kdtix.com",
+        "cursorTokenFee": 0,
+        "isChargeable": false,
+        "isHeadless": false,
+        "chargedCents": 0
+      },
+      {
+        "timestamp": "1783459371826",
+        "model": "default",
+        "kind": "Free",
+        "maxMode": false,
+        "requestsCosts": 0,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 11134,
+          "outputTokens": 582,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 23808,
+          "totalCents": 5.4036
+        },
+        "userEmail": "chris.kreager@kdtix.com",
+        "cursorTokenFee": 0,
+        "isChargeable": false,
+        "isHeadless": false,
+        "chargedCents": 0
+      },
+      {
+        "timestamp": "1783395312642",
+        "model": "composer-2.5",
+        "kind": "Free",
+        "maxMode": false,
+        "requestsCosts": 0,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 15847,
+          "outputTokens": 1747,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 75442,
+          "totalCents": 4.12196
+        },
+        "userEmail": "chris.kreager@kdtix.com",
+        "cursorTokenFee": 0,
+        "isChargeable": false,
+        "isHeadless": false,
+        "chargedCents": 0
+      },
+      {
+        "timestamp": "1783395039734",
+        "model": "composer-2.5",
+        "kind": "Free",
+        "maxMode": false,
+        "requestsCosts": 0,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 15847,
+          "outputTokens": 1170,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 74938,
+          "totalCents": 4.03453
+        },
+        "userEmail": "chris.kreager@kdtix.com",
+        "cursorTokenFee": 0,
+        "isChargeable": false,
+        "isHeadless": false,
+        "chargedCents": 0
+      },
+      {
+        "timestamp": "1783394750094",
+        "model": "composer-2.5",
+        "kind": "Free",
+        "maxMode": false,
+        "requestsCosts": 0,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 15867,
+          "outputTokens": 1987,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 74428,
+          "totalCents": 4.01083
+        },
+        "userEmail": "chris.kreager@kdtix.com",
+        "cursorTokenFee": 0,
+        "isChargeable": false,
+        "isHeadless": false,
+        "chargedCents": 0
+      },
+      {
+        "timestamp": "1783394028636",
+        "model": "composer-2.5",
+        "kind": "Free",
+        "maxMode": false,
+        "requestsCosts": 0,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 15873,
+          "outputTokens": 2361,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 73920,
+          "totalCents": 4.28497
+        },
+        "userEmail": "chris.kreager@kdtix.com",
+        "cursorTokenFee": 0,
+        "isChargeable": false,
+        "isHeadless": false,
+        "chargedCents": 0
+      },
+      {
+        "timestamp": "1783393408638",
+        "model": "composer-2.5",
+        "kind": "Free",
+        "maxMode": false,
+        "requestsCosts": 0,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 15880,
+          "outputTokens": 1938,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 73409,
+          "totalCents": 4.48859
+        },
+        "userEmail": "chris.kreager@kdtix.com",
+        "cursorTokenFee": 0,
+        "isChargeable": false,
+        "isHeadless": false,
+        "chargedCents": 0
+      },
+      {
+        "timestamp": "1783392913417",
+        "model": "composer-2.5",
+        "kind": "Free",
+        "maxMode": false,
+        "requestsCosts": 0,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 15871,
+          "outputTokens": 1794,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 72900,
+          "totalCents": 3.94257
+        },
+        "userEmail": "chris.kreager@kdtix.com",
+        "cursorTokenFee": 0,
+        "isChargeable": false,
+        "isHeadless": false,
+        "chargedCents": 0
+      },
+      {
+        "timestamp": "1783392305666",
+        "model": "composer-2.5",
+        "kind": "Free",
+        "maxMode": false,
+        "requestsCosts": 0,
+        "isTokenBasedCall": true,
+        "tokenUsage": {
+          "inputTokens": 80183,
+          "outputTokens": 1677,
+          "cacheWriteTokens": 0,
+          "cacheReadTokens": 8075,
+          "totalCents": 5.90576
+        },
+        "userEmail": "chris.kreager@kdtix.com",
+        "cursorTokenFee": 0,
+        "isChargeable": false,
+        "isHeadless": false,
+        "chargedCents": 0
       }
     ],
     "period": {
-      "startDate": 1781049600000,
-      "endDate": 1781136000000
+      "startDate": 1783382400000,
+      "endDate": 1783555200000
     }
   }
 }

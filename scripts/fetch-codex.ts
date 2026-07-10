@@ -10,8 +10,8 @@ async function main() {
 
   if (!apiKey) {
     throw new Error(
-      "OPENAI_API_KEY is required to fetch OpenAI Codex usage data. " +
-        "This must be an org admin API key with the api.usage.read scope."
+      "OPENAI_ADMIN_API_KEY is required to fetch OpenAI Codex usage data. " +
+        "Load it from .env.admin.credentials; it must be an org admin API key with the api.usage.read scope."
     );
   }
 

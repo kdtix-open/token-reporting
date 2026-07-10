@@ -1,19 +1,19 @@
 {
-  "generatedAt": "2026-06-10T01:24:53.175Z",
+  "generatedAt": "2026-07-08T17:17:35.761Z",
   "usage": {
     "data": [
       {
-        "starting_at": "2026-06-08T00:00:00Z",
-        "ending_at": "2026-06-09T00:00:00Z",
+        "starting_at": "2026-07-05T00:00:00Z",
+        "ending_at": "2026-07-06T00:00:00Z",
         "results": [
           {
-            "uncached_input_tokens": 7815,
+            "uncached_input_tokens": 1839,
             "cache_creation": {
               "ephemeral_1h_input_tokens": 0,
               "ephemeral_5m_input_tokens": 0
             },
             "cache_read_input_tokens": 0,
-            "output_tokens": 158,
+            "output_tokens": 43,
             "server_tool_use": {
               "web_search_requests": 0
             },
@@ -27,13 +27,13 @@
             "inference_geo": null
           },
           {
-            "uncached_input_tokens": 72,
+            "uncached_input_tokens": 26,
             "cache_creation": {
               "ephemeral_1h_input_tokens": 0,
-              "ephemeral_5m_input_tokens": 170715
+              "ephemeral_5m_input_tokens": 7469
             },
-            "cache_read_input_tokens": 711259,
-            "output_tokens": 25036,
+            "cache_read_input_tokens": 34832,
+            "output_tokens": 5212,
             "server_tool_use": {
               "web_search_requests": 0
             },
@@ -41,7 +41,7 @@
             "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
             "account_id": null,
             "service_account_id": null,
-            "model": "claude-opus-4-7",
+            "model": "claude-opus-4-8",
             "service_tier": "standard",
             "context_window": "0-200k",
             "inference_geo": null
@@ -49,17 +49,17 @@
         ]
       },
       {
-        "starting_at": "2026-06-09T00:00:00Z",
-        "ending_at": "2026-06-10T00:00:00Z",
+        "starting_at": "2026-07-06T00:00:00Z",
+        "ending_at": "2026-07-07T00:00:00Z",
         "results": [
           {
-            "uncached_input_tokens": 1547,
+            "uncached_input_tokens": 2854,
             "cache_creation": {
               "ephemeral_1h_input_tokens": 0,
               "ephemeral_5m_input_tokens": 0
             },
             "cache_read_input_tokens": 0,
-            "output_tokens": 32,
+            "output_tokens": 52,
             "server_tool_use": {
               "web_search_requests": 0
             },
@@ -73,13 +73,13 @@
             "inference_geo": null
           },
           {
-            "uncached_input_tokens": 14,
+            "uncached_input_tokens": 22,
             "cache_creation": {
               "ephemeral_1h_input_tokens": 0,
-              "ephemeral_5m_input_tokens": 35146
+              "ephemeral_5m_input_tokens": 48610
             },
-            "cache_read_input_tokens": 127278,
-            "output_tokens": 6089,
+            "cache_read_input_tokens": 22634,
+            "output_tokens": 3826,
             "server_tool_use": {
               "web_search_requests": 0
             },
@@ -87,7 +87,53 @@
             "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
             "account_id": null,
             "service_account_id": null,
-            "model": "claude-opus-4-7",
+            "model": "claude-opus-4-8",
+            "service_tier": "standard",
+            "context_window": "0-200k",
+            "inference_geo": null
+          }
+        ]
+      },
+      {
+        "starting_at": "2026-07-07T00:00:00Z",
+        "ending_at": "2026-07-08T00:00:00Z",
+        "results": [
+          {
+            "uncached_input_tokens": 7986,
+            "cache_creation": {
+              "ephemeral_1h_input_tokens": 0,
+              "ephemeral_5m_input_tokens": 0
+            },
+            "cache_read_input_tokens": 0,
+            "output_tokens": 154,
+            "server_tool_use": {
+              "web_search_requests": 0
+            },
+            "api_key_id": null,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "account_id": null,
+            "service_account_id": null,
+            "model": "claude-haiku-4-5-20251001",
+            "service_tier": "standard",
+            "context_window": "0-200k",
+            "inference_geo": null
+          },
+          {
+            "uncached_input_tokens": 40954,
+            "cache_creation": {
+              "ephemeral_1h_input_tokens": 0,
+              "ephemeral_5m_input_tokens": 70407
+            },
+            "cache_read_input_tokens": 272796,
+            "output_tokens": 4574,
+            "server_tool_use": {
+              "web_search_requests": 0
+            },
+            "api_key_id": null,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "account_id": null,
+            "service_account_id": null,
+            "model": "claude-opus-4-8",
             "service_tier": "standard",
             "context_window": "0-200k",
             "inference_geo": null
@@ -101,12 +147,12 @@
   "costs": {
     "data": [
       {
-        "starting_at": "2026-06-08T00:00:00Z",
-        "ending_at": "2026-06-09T00:00:00Z",
+        "starting_at": "2026-07-05T00:00:00Z",
+        "ending_at": "2026-07-06T00:00:00Z",
         "results": [
           {
             "currency": "USD",
-            "amount": 0.7815,
+            "amount": 0.1839,
             "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
             "description": "Claude Haiku 4.5 Usage - Input Tokens",
             "cost_type": "tokens",
@@ -118,7 +164,7 @@
           },
           {
             "currency": "USD",
-            "amount": 0.079,
+            "amount": 0.0215,
             "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
             "description": "Claude Haiku 4.5 Usage - Output Tokens",
             "cost_type": "tokens",
@@ -130,48 +176,48 @@
           },
           {
             "currency": "USD",
-            "amount": 35.56295,
+            "amount": 1.7416,
             "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
-            "description": "Claude Opus 4.7 Usage - Input Tokens, Cache Hit",
+            "description": "Claude Opus 4.8 Usage - Input Tokens, Cache Hit",
             "cost_type": "tokens",
             "context_window": "0-200k",
-            "model": "claude-opus-4-7",
+            "model": "claude-opus-4-8",
             "service_tier": "standard",
             "token_type": "cache_read_input_tokens",
             "inference_geo": "global"
           },
           {
             "currency": "USD",
-            "amount": 106.696875,
+            "amount": 4.668125,
             "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
-            "description": "Claude Opus 4.7 Usage - Input Tokens, Cache Write",
+            "description": "Claude Opus 4.8 Usage - Input Tokens, Cache Write",
             "cost_type": "tokens",
             "context_window": "0-200k",
-            "model": "claude-opus-4-7",
+            "model": "claude-opus-4-8",
             "service_tier": "standard",
             "token_type": "cache_creation.ephemeral_5m_input_tokens",
             "inference_geo": "global"
           },
           {
             "currency": "USD",
-            "amount": 0.036,
+            "amount": 0.013,
             "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
-            "description": "Claude Opus 4.7 Usage - Input Tokens",
+            "description": "Claude Opus 4.8 Usage - Input Tokens",
             "cost_type": "tokens",
             "context_window": "0-200k",
-            "model": "claude-opus-4-7",
+            "model": "claude-opus-4-8",
             "service_tier": "standard",
             "token_type": "uncached_input_tokens",
             "inference_geo": "global"
           },
           {
             "currency": "USD",
-            "amount": 62.59,
+            "amount": 13.03,
             "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
-            "description": "Claude Opus 4.7 Usage - Output Tokens",
+            "description": "Claude Opus 4.8 Usage - Output Tokens",
             "cost_type": "tokens",
             "context_window": "0-200k",
-            "model": "claude-opus-4-7",
+            "model": "claude-opus-4-8",
             "service_tier": "standard",
             "token_type": "output_tokens",
             "inference_geo": "global"
@@ -179,12 +225,12 @@
         ]
       },
       {
-        "starting_at": "2026-06-09T00:00:00Z",
-        "ending_at": "2026-06-10T00:00:00Z",
+        "starting_at": "2026-07-06T00:00:00Z",
+        "ending_at": "2026-07-07T00:00:00Z",
         "results": [
           {
             "currency": "USD",
-            "amount": 0.1547,
+            "amount": 0.2854,
             "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
             "description": "Claude Haiku 4.5 Usage - Input Tokens",
             "cost_type": "tokens",
@@ -196,7 +242,7 @@
           },
           {
             "currency": "USD",
-            "amount": 0.016,
+            "amount": 0.026,
             "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
             "description": "Claude Haiku 4.5 Usage - Output Tokens",
             "cost_type": "tokens",
@@ -208,48 +254,126 @@
           },
           {
             "currency": "USD",
-            "amount": 6.3639,
+            "amount": 1.1317,
             "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
-            "description": "Claude Opus 4.7 Usage - Input Tokens, Cache Hit",
+            "description": "Claude Opus 4.8 Usage - Input Tokens, Cache Hit",
             "cost_type": "tokens",
             "context_window": "0-200k",
-            "model": "claude-opus-4-7",
+            "model": "claude-opus-4-8",
             "service_tier": "standard",
             "token_type": "cache_read_input_tokens",
             "inference_geo": "global"
           },
           {
             "currency": "USD",
-            "amount": 21.96625,
+            "amount": 30.38125,
             "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
-            "description": "Claude Opus 4.7 Usage - Input Tokens, Cache Write",
+            "description": "Claude Opus 4.8 Usage - Input Tokens, Cache Write",
             "cost_type": "tokens",
             "context_window": "0-200k",
-            "model": "claude-opus-4-7",
+            "model": "claude-opus-4-8",
             "service_tier": "standard",
             "token_type": "cache_creation.ephemeral_5m_input_tokens",
             "inference_geo": "global"
           },
           {
             "currency": "USD",
-            "amount": 0.007,
+            "amount": 0.011,
             "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
-            "description": "Claude Opus 4.7 Usage - Input Tokens",
+            "description": "Claude Opus 4.8 Usage - Input Tokens",
             "cost_type": "tokens",
             "context_window": "0-200k",
-            "model": "claude-opus-4-7",
+            "model": "claude-opus-4-8",
             "service_tier": "standard",
             "token_type": "uncached_input_tokens",
             "inference_geo": "global"
           },
           {
             "currency": "USD",
-            "amount": 15.2225,
+            "amount": 9.565,
             "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
-            "description": "Claude Opus 4.7 Usage - Output Tokens",
+            "description": "Claude Opus 4.8 Usage - Output Tokens",
             "cost_type": "tokens",
             "context_window": "0-200k",
-            "model": "claude-opus-4-7",
+            "model": "claude-opus-4-8",
+            "service_tier": "standard",
+            "token_type": "output_tokens",
+            "inference_geo": "global"
+          }
+        ]
+      },
+      {
+        "starting_at": "2026-07-07T00:00:00Z",
+        "ending_at": "2026-07-08T00:00:00Z",
+        "results": [
+          {
+            "currency": "USD",
+            "amount": 0.7986,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "description": "Claude Haiku 4.5 Usage - Input Tokens",
+            "cost_type": "tokens",
+            "context_window": "0-200k",
+            "model": "claude-haiku-4-5-20251001",
+            "service_tier": "standard",
+            "token_type": "uncached_input_tokens",
+            "inference_geo": "not_available"
+          },
+          {
+            "currency": "USD",
+            "amount": 0.077,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "description": "Claude Haiku 4.5 Usage - Output Tokens",
+            "cost_type": "tokens",
+            "context_window": "0-200k",
+            "model": "claude-haiku-4-5-20251001",
+            "service_tier": "standard",
+            "token_type": "output_tokens",
+            "inference_geo": "not_available"
+          },
+          {
+            "currency": "USD",
+            "amount": 13.6398,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "description": "Claude Opus 4.8 Usage - Input Tokens, Cache Hit",
+            "cost_type": "tokens",
+            "context_window": "0-200k",
+            "model": "claude-opus-4-8",
+            "service_tier": "standard",
+            "token_type": "cache_read_input_tokens",
+            "inference_geo": "global"
+          },
+          {
+            "currency": "USD",
+            "amount": 44.004375,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "description": "Claude Opus 4.8 Usage - Input Tokens, Cache Write",
+            "cost_type": "tokens",
+            "context_window": "0-200k",
+            "model": "claude-opus-4-8",
+            "service_tier": "standard",
+            "token_type": "cache_creation.ephemeral_5m_input_tokens",
+            "inference_geo": "global"
+          },
+          {
+            "currency": "USD",
+            "amount": 20.477,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "description": "Claude Opus 4.8 Usage - Input Tokens",
+            "cost_type": "tokens",
+            "context_window": "0-200k",
+            "model": "claude-opus-4-8",
+            "service_tier": "standard",
+            "token_type": "uncached_input_tokens",
+            "inference_geo": "global"
+          },
+          {
+            "currency": "USD",
+            "amount": 11.435,
+            "workspace_id": "wrkspc_01Ndi6URXANgR7EcpPCTgV34",
+            "description": "Claude Opus 4.8 Usage - Output Tokens",
+            "cost_type": "tokens",
+            "context_window": "0-200k",
+            "model": "claude-opus-4-8",
             "service_tier": "standard",
             "token_type": "output_tokens",
             "inference_geo": "global"

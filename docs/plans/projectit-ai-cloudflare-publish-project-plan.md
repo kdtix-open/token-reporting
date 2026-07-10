@@ -843,3 +843,379 @@ The publishing lane is not done until a realistic user can verify it.
 - Add runbook.
 - Update README.
 - Update onboarding.
+
+## Initiative: INIT-004 Tenant Pipeline Telemetry and Scoped Analytics
+Priority: P1
+Size: L
+
+#### Objective
+
+Replace estimated pipeline allocation with measured tenant and pipeline telemetry
+so Local Model Migration, Local AI Infrastructure Sizing, exports, and forensic
+evidence can distinguish all-provider traffic from Repo Automation,
+Agent Memory, Copilot CLI, Agentic Worker, Reviewer, and future tenant-defined
+pipelines.
+
+#### Release Value
+
+Operators and customer tenants can trust scoped analytics because the report
+will show whether each value is measured, estimated, or global source evidence.
+This prevents Copilot-dominant all-provider traffic from accidentally defining a
+Repo Automation budget or on-prem migration claim.
+
+#### Success Criteria
+
+- Pipeline-scoped telemetry records persist tenant id, pipeline id, provider id,
+  route class, token counts, request counts, context-window statistics, cost, and
+  provenance.
+- Refresh ingestion can write measured pipeline telemetry when source data
+  carries pipeline attribution, and can mark derived estimates when it does not.
+- Local Model Migration and Local AI Infrastructure reports can filter by tenant
+  pipeline without reusing all-provider values as if they were measured.
+- UI, PDF, DOCX, CSV, JSON, YAML, and database exports label each section as
+  measured, estimated allocation, or global evidence source.
+- Regression tests prove selected pipeline scopes do not inherit all-provider
+  token totals, throughput, context evidence, or budget claims without an
+  explicit provenance label.
+
+#### Feature Scope
+
+- Tenant pipeline telemetry domain model and persistence.
+- Pipeline attribution during provider refresh and local session ingestion.
+- Scoped report builders for local-model, infrastructure, export, and forensic
+  evidence sections.
+- UAT coverage for KDTIX default tenant and at least one simulated customer
+  tenant fixture.
+
+#### Assumptions
+
+- KDTIX remains the default tenant until customer identity is wired.
+- Provider Admin/API tokens stay server-side or customer-install-local.
+- Some providers will not expose native pipeline ids; those rows must be marked
+  as estimated or unattributed rather than measured.
+- SDLCA bridge forensic reviewer execution remains separate from Token Reporting
+  Admin/API telemetry ingestion.
+
+#### Dependencies
+
+| Ticket | Description | Status |
+|--------|-------------|--------|
+| #1 | Project Scope: Publish Token Reporting to projectit.ai on Cloudflare | In review |
+| #1244 | SDLCA bridge/API contract remains historical context, but this telemetry work is Token Reporting-owned. | Closed |
+
+#### I Know I Am Done When
+
+- Project 16 contains a child issue tree for measured tenant pipeline telemetry.
+- KDTIX UAT can select Repo Automation and see measured-vs-estimated provenance
+  for every token, context, profile, budget, and forensic section.
+- Exported reports carry the same tenant pipeline scope and provenance labels as
+  the website.
+
+### Epic: EP-006 Measured Tenant Pipeline Telemetry
+Priority: P1
+Size: L
+
+#### Objective
+
+Build the storage, ingestion, report, and export contract required to turn
+pipeline filters from weighted estimates into measured tenant-scoped analytics.
+
+#### Release Value
+
+Scoped local infrastructure and model migration decisions become defensible for
+KDTIX and later customer tenants.
+
+#### Success Criteria
+
+- A normalized telemetry schema records measured pipeline usage separately from
+  all-provider rollups.
+- Report builders consume selected tenant pipeline telemetry before falling back
+  to weighted estimates.
+- Global evidence sections remain visible only when clearly labeled as global
+  evidence source.
+- UAT verifies KDTIX Repo Automation and simulated tenant scopes.
+
+#### Feature Scope
+
+- Domain types and persistence for tenant pipeline telemetry.
+- Historical refresh enrichment and incremental resume.
+- UI and export provenance labeling.
+- Regression and UAT coverage.
+
+#### Assumptions
+
+- The initial pipeline catalog can be static: all-provider traffic, Repo
+  Automation, Agent Memory, Copilot CLI, Agentic Worker, and Reviewer.
+- Pipeline attribution will improve over time as SDLCA and provider reports add
+  richer identifiers.
+
+#### Dependencies
+
+| Ticket | Description | Status |
+|--------|-------------|--------|
+| INIT-003 | Cloudflare-native dynamic refresh remains a future lane; this can ship in the hybrid service first. | In review |
+
+#### I Know I Am Done When
+
+- All stories under this epic are implemented, tested, exported, and UAT-ready.
+- No scoped report section presents all-provider data as measured pipeline data.
+
+#### Code Areas
+
+- `src/lib/localModelReport.ts`
+- `src/lib/localInfrastructureSizing.ts`
+- `src/lib/reportExports.ts`
+- `src/lib/dynamicRefreshExecutor.ts`
+- `public/data/**`
+- `src/App.tsx`
+- `src/components/*`
+
+#### Questions for Tech Lead
+
+- Should pipeline ids be owned by Token Reporting, SDLCA, or a shared suite
+  extension schema package?
+- Should customer tenant telemetry persist in local filesystem JSON for hybrid
+  MVP, SQLite, or a Cloudflare D1/R2-compatible format?
+
+#### Security/Compliance
+
+- Tenant ids must be explicit on every telemetry row.
+- Customer provider admin tokens must never be stored in shared KDTIX hosted
+  infrastructure.
+- Cross-tenant report reads must be blocked by default once identity exists.
+
+#### Story: Implement measured tenant pipeline telemetry records
+Priority: P1
+Size: M
+
+##### User Story
+
+As the operator, I want selected pipeline reports to use measured tenant
+pipeline telemetry when available so Repo Automation, Agent Memory, Reviewer,
+and Copilot CLI scopes are not inferred from all-provider traffic.
+
+##### TL;DR
+
+Add tenant pipeline telemetry records, ingestion, report-builder selection, and
+provenance labels.
+
+##### Why This Matters
+
+Current pipeline filters use configured weights. That is useful for early UAT,
+but it is not enough evidence for CFO hardware budgets, on-prem replacement
+claims, customer tenant reporting, or forensic reviewer conclusions.
+
+##### MoSCoW
+
+**Must Have**:
+- Persist tenant id, pipeline id, provider id, route class, token counts,
+  requests, context statistics, cost, period, and provenance.
+- Mark each record as measured, estimated allocation, unattributed, or global
+  evidence source.
+- Prefer measured selected-pipeline records in local model and infrastructure
+  report builders.
+- Keep all-provider comparisons available without mixing them into selected
+  pipeline claims.
+
+**Should Have**:
+- Backfill KDTIX historical snapshots into tenant pipeline records where current
+  provider data can be attributed.
+- Add a simulated customer tenant fixture for regression and UAT.
+- Add export parity across PDF, DOCX, CSV, JSON, YAML, XLSX, and database SQL.
+
+**Could Have**:
+- Add operator-editable pipeline attribution rules.
+- Add import hooks for future SDLCA route-class telemetry.
+
+**Won't Have**:
+- Full customer identity and OIDC enforcement in this story; that remains a
+  follow-up identity boundary story.
+
+##### Acceptance Criteria
+
+- Selecting Repo Automation no longer displays global context p95/p99 as if it
+  were measured Repo Automation context.
+- UI labels every local model, infrastructure, and forensic evidence section as
+  measured, estimated allocation, or global source evidence.
+- JSON export includes selected tenant, selected pipeline, telemetry provenance,
+  and whether each analytic result is measured or estimated.
+- Regression tests fail if selected pipeline compute TPS equals all-provider TPS
+  without an explicit all-provider selection.
+- UAT uses KDTIX data plus one simulated tenant fixture.
+
+##### Constraints
+
+- Do not expose provider Admin/API token values in UI, logs, exports, issues, or
+  fixtures.
+- Do not route customer tenant data through the SDLCA provider CLI bridge.
+- Do not remove all-provider comparison tables; label them correctly.
+
+##### Implementation Notes
+
+- Add a `tenant_pipeline_telemetry` normalized shape before changing UI claims.
+- Keep existing weighted scopes as fallback estimates with explicit provenance.
+- Treat local session p95/p99 as global source evidence until session records
+  can be attributed to a tenant pipeline.
+
+##### Security/Compliance
+
+- Validate tenant and pipeline ids at ingestion boundaries.
+- Keep tenant filesystem paths or database partitions isolated.
+- Add tests for cross-tenant read prevention once identity boundaries are
+  introduced.
+
+##### Subtasks Needed
+
+- Define tenant pipeline telemetry schema and provenance enum.
+- Add fixture and persistence tests.
+- Backfill KDTIX historical snapshots into measured or estimated pipeline rows.
+- Update local model and infrastructure report builders.
+- Update UI labels and export payloads.
+- Add UAT scenario for KDTIX and simulated customer tenant scopes.
+
+##### Task: Define tenant pipeline telemetry schema
+Priority: P1
+Size: S
+
+###### Summary
+
+Define the normalized telemetry record, provenance enum, and static pipeline
+catalog needed by report builders.
+
+###### Context
+
+The current scope selector stores pipeline weights in code but does not persist
+measured pipeline records.
+
+###### Assumptions
+
+- The first schema can use the existing KDTIX tenant and static pipeline catalog.
+- Future tenant identity work will add enforcement around the schema.
+
+###### MoSCoW
+
+**Must Have**:
+- Tenant, pipeline, provider, route class, token, request, context, cost, period,
+  and provenance fields.
+- Tests for measured and estimated telemetry rows.
+
+**Should Have**:
+- Database-export-compatible field names.
+
+**Could Have**:
+- Reserved fields for future attribution rules.
+
+**Won't Have**:
+- Customer identity enforcement in this task.
+
+###### I Know I Am Done When
+
+- Type definitions cover tenant id, pipeline id, provider id, route class,
+  token counts, request counts, context stats, cost, period, and provenance.
+- Unit tests cover measured, estimated, unattributed, and global evidence rows.
+
+###### Implementation Notes
+
+- Keep the schema compatible with future database SQL export.
+
+###### Security/Compliance
+
+- No raw admin credentials or provider secrets appear in fixtures.
+
+##### Task: Wire measured telemetry into report builders and exports
+Priority: P1
+Size: M
+
+###### Summary
+
+Use selected tenant pipeline telemetry in local model, infrastructure, and export
+builders before falling back to weighted estimates.
+
+###### Context
+
+UAT showed that token totals and throughput were scoped, but context evidence
+and forensic consensus remained global without clear labeling.
+
+###### Assumptions
+
+- Existing weighted scope behavior remains as a fallback estimate.
+- Local session context distribution remains global until sessions can be
+  attributed to tenant pipelines.
+
+###### MoSCoW
+
+**Must Have**:
+- Report builders prefer measured selected-pipeline telemetry.
+- UI and exports label fallback estimates and global evidence source data.
+
+**Should Have**:
+- JSON/YAML/CSV/PDF/DOCX parity for scope provenance.
+
+**Could Have**:
+- XLSX worksheet-level provenance summaries.
+
+**Won't Have**:
+- Removing all-provider comparison tables.
+
+###### I Know I Am Done When
+
+- Report builders prefer measured selected-pipeline rows.
+- Fallback estimates are labeled as estimates.
+- Exports carry the same scope and provenance labels as the website.
+
+###### Implementation Notes
+
+- Add failing tests before changing builder behavior.
+
+###### Security/Compliance
+
+- Validate tenant and pipeline selection before reading telemetry.
+
+##### Task: Add measured pipeline telemetry UAT scenario
+Priority: P1
+Size: S
+
+###### Summary
+
+Document and execute a UAT scenario that proves scoped analytics are measured or
+clearly marked as estimated/global.
+
+###### Context
+
+This arose from post-deploy UAT feedback on the Repo Automation scope selector.
+
+###### Assumptions
+
+- KDTIX is the default tenant for the first UAT pass.
+- Simulated customer tenant data must be sanitized and fixture-based.
+
+###### MoSCoW
+
+**Must Have**:
+- UAT steps for KDTIX Repo Automation and all-provider comparison.
+- Expected results for token, context, forensic, and export provenance labels.
+
+**Should Have**:
+- Simulated customer tenant fixture coverage.
+
+**Could Have**:
+- Screenshots for before/after comparison.
+
+**Won't Have**:
+- Real customer provider credentials in UAT artifacts.
+
+###### I Know I Am Done When
+
+- UAT steps cover KDTIX Repo Automation, all-provider traffic, and a simulated
+  customer tenant.
+- Expected results include provenance labels for token, context, forensic, and
+  export sections.
+
+###### Implementation Notes
+
+- Keep screenshots and exported files out of git unless intentionally added as
+  sanitized artifacts.
+
+###### Security/Compliance
+
+- Do not include real customer or provider secret data in UAT artifacts.

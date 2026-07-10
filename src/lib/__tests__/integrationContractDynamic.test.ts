@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   createDynamicIntegrationContractHandler,
+  type DynamicForensicExecutionResult,
+  type DynamicForensicReviewerArtifact,
   type DynamicProviderBudgetLimit
 } from "../integrationContractDynamic";
 import type { ProviderReportSummary, SpendProjection } from "../types";
@@ -286,6 +288,212 @@ describe("integrationContractDynamic", () => {
     });
   });
 
+  it("createDynamicIntegrationContractHandler_RefreshEndpoint_AsyncModeStoresRunningThenCompletedJob", async () => {
+    let resolveRefresh:
+      | ((result: {
+          providerResults: Array<{
+            accumulatedThrough: string;
+            completedAt: string;
+            providerId: string;
+            status: "completed";
+          }>;
+        }) => void)
+      | undefined;
+    const refreshExecutor = vi.fn(
+      () =>
+        new Promise<{
+          providerResults: Array<{
+            accumulatedThrough: string;
+            completedAt: string;
+            providerId: string;
+            status: "completed";
+          }>;
+        }>((resolve) => {
+          resolveRefresh = resolve;
+        })
+    );
+    const handler = createDynamicIntegrationContractHandler({
+      asyncRefresh: true,
+      loadSummaries: async () => summaries,
+      now: () => new Date("2026-06-07T16:45:00.000Z"),
+      refreshExecutor
+    });
+
+    const acceptedResponse = await handler({
+      body: {
+        providers: ["codex"]
+      },
+      method: "POST",
+      path: "/api/refresh"
+    });
+
+    expect(acceptedResponse.status).toBe(202);
+    expect(acceptedResponse.body).toMatchObject({
+      jobId: "dynamic-refresh-20260607T164500000Z",
+      providerResults: [expect.objectContaining({ providerId: "codex", status: "running" })],
+      status: "running"
+    });
+
+    const runningResponse = await handler({
+      method: "GET",
+      path: "/api/refresh/dynamic-refresh-20260607T164500000Z"
+    });
+    expect(runningResponse.body).toMatchObject({
+      jobId: "dynamic-refresh-20260607T164500000Z",
+      status: "running"
+    });
+
+    resolveRefresh?.({
+      providerResults: [
+        {
+          accumulatedThrough: "2026-06-07",
+          completedAt: "2026-06-07T16:45:08.000Z",
+          providerId: "codex",
+          status: "completed"
+        }
+      ]
+    });
+
+    await vi.waitFor(async () => {
+      const completedResponse = await handler({
+        method: "GET",
+        path: "/api/refresh/dynamic-refresh-20260607T164500000Z"
+      });
+      expect(completedResponse.body).toMatchObject({
+        completedAt: "2026-06-07T16:45:08.000Z",
+        jobId: "dynamic-refresh-20260607T164500000Z",
+        providerResults: [expect.objectContaining({ providerId: "codex", status: "completed" })],
+        status: "completed"
+      });
+    });
+  });
+
+  it("createDynamicIntegrationContractHandler_RefreshEndpoint_AsyncModePublishesProviderAndReviewerProgress", async () => {
+    let resolveRefresh:
+      | ((result: {
+          providerResults: Array<{ accumulatedThrough: string; providerId: string; status: "completed" }>;
+        }) => void)
+      | undefined;
+    let resolveForensics:
+      | ((result: DynamicForensicExecutionResult) => void)
+      | undefined;
+    let publishReviewerProgress: (() => Promise<void>) | undefined;
+    const sonnetArtifact: DynamicForensicReviewerArtifact = {
+      artifact: {
+        artifactKind: "local_model_forensic_review",
+        artifactSchemaVersion: "sdlca.bridge.forensic.v0",
+        recommendations: ["Keep tail-context work hosted."],
+        summary: "Sonnet completed."
+      },
+      artifactUri:
+        "local://token-reporting/forensics/dynamic-forensic-20260607T164500000Z/reviewers/sonnet.json",
+      bridgeProviderKind: "claude",
+      reviewerModel: "sonnet",
+      status: "completed" as const
+    };
+    const refreshExecutor = vi.fn(
+      () =>
+        new Promise<{
+          providerResults: Array<{ accumulatedThrough: string; providerId: string; status: "completed" }>;
+        }>((resolve) => {
+          resolveRefresh = resolve;
+        })
+    );
+    const forensicExecutor = vi.fn(
+      async (request) =>
+        new Promise<DynamicForensicExecutionResult>((resolve) => {
+          publishReviewerProgress = async () => {
+            await request.onReviewerArtifact?.(sonnetArtifact, [sonnetArtifact]);
+          };
+          resolveForensics = resolve;
+        })
+    );
+    const handler = createDynamicIntegrationContractHandler({
+      asyncRefresh: true,
+      forensicExecutor,
+      loadSummaries: async () => summaries,
+      now: () => new Date("2026-06-07T16:45:00.000Z"),
+      refreshExecutor
+    });
+
+    const acceptedResponse = await handler({
+      body: {
+        includeForensicModelProfiles: true,
+        providers: ["codex"],
+        reviewerModels: ["sonnet"]
+      },
+      method: "POST",
+      path: "/api/refresh"
+    });
+
+    expect(acceptedResponse.status).toBe(202);
+    resolveRefresh?.({
+      providerResults: [
+        {
+          accumulatedThrough: "2026-06-07",
+          providerId: "codex",
+          status: "completed"
+        }
+      ]
+    });
+
+    await vi.waitFor(async () => {
+      const progressResponse = await handler({
+        method: "GET",
+        path: "/api/refresh/dynamic-refresh-20260607T164500000Z"
+      });
+      expect(progressResponse.body).toMatchObject({
+        forensicRun: {
+          reviewerArtifacts: [expect.objectContaining({ reviewerModel: "sonnet", status: "queued" })],
+          status: "queued"
+        },
+        providerResults: [expect.objectContaining({ providerId: "codex", status: "completed" })],
+        status: "running"
+      });
+    });
+
+    await publishReviewerProgress?.();
+
+    await vi.waitFor(async () => {
+      const reviewerProgressResponse = await handler({
+        method: "GET",
+        path: "/api/refresh/dynamic-refresh-20260607T164500000Z"
+      });
+      expect(reviewerProgressResponse.body).toMatchObject({
+        forensicRun: {
+          reviewerArtifacts: [
+            expect.objectContaining({ reviewerModel: "sonnet", status: "completed" })
+          ],
+          status: "running"
+        },
+        providerResults: [expect.objectContaining({ providerId: "codex", status: "completed" })],
+        status: "running"
+      });
+    });
+
+    resolveForensics?.({
+      reviewerArtifacts: [sonnetArtifact],
+      status: "completed"
+    });
+
+    await vi.waitFor(async () => {
+      const completedResponse = await handler({
+        method: "GET",
+        path: "/api/refresh/dynamic-refresh-20260607T164500000Z"
+      });
+      expect(completedResponse.body).toMatchObject({
+        forensicRun: {
+          reviewerArtifacts: [
+            expect.objectContaining({ reviewerModel: "sonnet", status: "completed" })
+          ],
+          status: "completed"
+        },
+        providerResults: [expect.objectContaining({ providerId: "codex", status: "completed" })],
+        status: "completed"
+      });
+    });
+  });
+
   it("createDynamicIntegrationContractHandler_RefreshEndpoint_ReadOnlyModeBlocksMutation", async () => {
     const refreshExecutor = vi.fn();
     const handler = createDynamicIntegrationContractHandler({
@@ -342,6 +550,7 @@ describe("integrationContractDynamic", () => {
           artifactUri:
             "local://token-reporting/forensics/dynamic-forensic-20260607T172000000Z/reviewers/gpt.json",
           bridgeProviderKind: "codex",
+          completedAt: "2026-06-07T17:21:05.000Z",
           reviewerModel: "gpt",
           status: "completed"
         }
@@ -384,13 +593,15 @@ describe("integrationContractDynamic", () => {
       })
     );
     expect(response.body).toMatchObject({
+      completedAt: "2026-06-07T17:21:05.000Z",
       forensicRun: {
         parentSynthesis: {
           recommendation: "Refresh-triggered forensic review completed."
         },
         huggingFaceCandidateSetId: "hf-candidates-20260607T172000123Z",
         runId: "dynamic-forensic-20260607T172000000Z",
-        status: "completed"
+        status: "completed",
+        updatedAt: "2026-06-07T17:21:05.000Z"
       },
       status: "completed"
     });
@@ -442,13 +653,15 @@ describe("integrationContractDynamic", () => {
       reviewerArtifacts: [
         expect.objectContaining({
           artifactUri: "local://token-reporting/forensics/dynamic-forensic-20260607T170000000Z/reviewers/sonnet.json",
+          degradedReason: "bridge_forensic_executor_not_configured",
           reviewerModel: "sonnet",
-          status: "queued"
+          status: "failed"
         }),
         expect.objectContaining({
           artifactUri: "local://token-reporting/forensics/dynamic-forensic-20260607T170000000Z/reviewers/gpt.json",
+          degradedReason: "bridge_forensic_executor_not_configured",
           reviewerModel: "gpt",
-          status: "queued"
+          status: "failed"
         })
       ]
     });

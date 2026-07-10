@@ -101,10 +101,16 @@ describe("reportExports", () => {
     for (const text of [pdfText, docxText]) {
       expect(text).toContain("Spend projections");
       expect(text).toContain("Local model migration sizing");
+      expect(text).toContain("Tenant: KDTIX");
+      expect(text).toContain("Pipeline scope: All KDTIX provider traffic");
       expect(text).toContain("Server sizing heuristics");
       expect(text).toContain("On-prem model profiles");
       expect(text).toContain("Local AI Infrastructure Sizing");
       expect(text).toContain("Executive Hardware Decision Summary");
+      expect(text).toContain("Hardware Budget Required by Scope");
+      expect(text).toContain("$150K is enough for first-server shadow/canary");
+      expect(text).toContain("$150K is not enough for all-provider replacement");
+      expect(text).toContain("Copilot Dominance Warning");
       expect(text).toContain("Target first-server migration objective");
       expect(text).toContain("Estimated safe initial routing");
       expect(text).toContain("Estimated full-workload capacity");
@@ -144,16 +150,38 @@ describe("reportExports", () => {
           },
           contextConfidence: "high",
           huggingFaceCandidateSetId: "hf-candidates-test",
+          selectedWorkloadScope: {
+            id: "all_provider_traffic",
+            label: "All KDTIX provider traffic"
+          },
+          tenant: {
+            tenantId: "kdtix",
+            tenantName: "KDTIX"
+          },
           profiles: expect.arrayContaining([
             expect.objectContaining({
               hfRepoId: "Qwen/Qwen2.5-7B-Instruct-1M"
             })
           ])
         },
-        localInfrastructureSizing: {
-          executiveSummary: {
-            firstQuoteToRequest: expect.stringContaining("2U dual RTX PRO 6000"),
-            paybackFromCloudDisplacement: expect.stringContaining("Cloud spend alone")
+          localInfrastructureSizing: {
+            executiveSummary: {
+              firstQuoteToRequest: expect.stringContaining("2U dual RTX PRO 6000"),
+              paybackFromCloudDisplacement: expect.stringContaining("Cloud spend alone")
+            },
+          hardwareBudgetScenarios: expect.arrayContaining([
+            expect.objectContaining({
+              scope: "all_provider_traffic",
+              replacementGoal: "steady_state_replacement",
+              fullReplacementAllowed: false
+            })
+          ]),
+          hardwareBudgetSummary: {
+            cfoSummaryLines: expect.arrayContaining([
+              "$150K is not enough for all-provider replacement."
+            ]),
+            copilotDominanceWarning: expect.stringContaining("GitHub Copilot CLI dominates"),
+            selectedScope: "repo_automation_project"
           },
           financials: {
             notes: expect.arrayContaining([
@@ -212,6 +240,49 @@ describe("reportExports", () => {
     ).not.toBe(localInfra.localCoverageSummary.targetFirstServerCoveragePct);
   });
 
+  it("createReportExport_JsonFormat_PreservesSelectedTenantPipelineScope", () => {
+    const result = createReportExport(
+      {
+        ...richReportContext(),
+        localModelWorkloadScopeId: "repo_automation_project"
+      },
+      "json"
+    );
+    const parsed = JSON.parse(result.payload as string) as {
+      report: {
+        localModelMigration: {
+          requiredTokensPerSec: number;
+          selectedWorkloadScope: {
+            allocationMode: string;
+            id: string;
+            label: string;
+            providerWeights: Record<string, number>;
+          };
+          tenant: {
+            tenantId: string;
+            tenantName: string;
+          };
+        };
+      };
+    };
+
+    expect(parsed.report.localModelMigration.tenant).toEqual({
+      tenantId: "kdtix",
+      tenantName: "KDTIX"
+    });
+    expect(parsed.report.localModelMigration.selectedWorkloadScope).toMatchObject({
+      allocationMode: "estimated",
+      id: "repo_automation_project",
+      label: "Repo Automation",
+      providerWeights: {
+        claude: 0.45,
+        codex: 0.25,
+        cursor: 0.05
+      }
+    });
+    expect(parsed.report.localModelMigration.requiredTokensPerSec).toBeLessThan(100);
+  });
+
   it("createReportExport_CsvAndYamlFormats_IncludeInfrastructureDecisionBreakdowns", () => {
     const csv = createReportExport(richReportContext(), "csv").payload as string;
     const yaml = createReportExport(richReportContext(), "yaml").payload as string;
@@ -220,6 +291,10 @@ describe("reportExports", () => {
     expect(csv).toContain("local_infrastructure_coverage_summary");
     expect(csv).toContain("estimated_full_workload_capacity_pct");
     expect(csv).toContain("local_infrastructure_workload_scopes");
+    expect(csv).toContain("local_infrastructure_hardware_budget_summary");
+    expect(csv).toContain("local_infrastructure_hardware_budget_scenarios");
+    expect(csv).toContain("all_provider_compute_tps");
+    expect(csv).toContain("repo_automation_compute_tps");
     expect(csv).toContain("local_infrastructure_financials");
     expect(csv).toContain("local_infrastructure_benchmark_gates");
     expect(csv).toContain("context_stats_warning");
@@ -228,6 +303,10 @@ describe("reportExports", () => {
     expect(yaml).toContain("localCoverageSummary:");
     expect(yaml).toContain("estimatedFullWorkloadCapacityPct:");
     expect(yaml).toContain("workloadScopeSummaries:");
+    expect(yaml).toContain("hardwareBudgetSummary:");
+    expect(yaml).toContain("hardwareBudgetScenarios:");
+    expect(yaml).toContain("allProviderComputeTps:");
+    expect(yaml).toContain("repoAutomationComputeTps:");
     expect(yaml).toContain("financials:");
     expect(yaml).toContain("executiveSummary:");
     expect(yaml).toContain("benchmarkGates:");
@@ -246,6 +325,8 @@ describe("reportExports", () => {
     expect(workbookText).toContain("On-prem model profiles");
     expect(workbookText).toContain("Local AI Infrastructure Sizing");
     expect(workbookText).toContain("Executive Hardware Decision Summary");
+    expect(workbookText).toContain("Hardware Budget Required by Scope");
+    expect(workbookText).toContain("$150K is not enough for all-provider replacement");
     expect(workbookText).toContain("Target first-server migration objective");
     expect(workbookText).toContain("Estimated safe initial routing");
     expect(workbookText).toContain("Estimated full-workload capacity");
