@@ -294,6 +294,29 @@ describe("analyze-codegraph-token-usage", () => {
     expect(bodyFileIndex).toBeGreaterThan(0);
     await expect(pathExists(ghArgs[bodyFileIndex + 1] ?? "")).resolves.toBe(true);
   });
+
+  it("analyzeCodeGraphTokenUsage_MissingValueFlag_FailsFast", async () => {
+    const fixture = await createFixture();
+
+    await expect(
+      runAnalyzer(fixture, ["--repo-root", fixture.repoRoot, "--journal-issue"])
+    ).rejects.toMatchObject({
+      stderr: expect.stringContaining("Missing value for --journal-issue")
+    });
+    await expect(pathExists(fixture.outDir)).resolves.toBe(false);
+  });
+
+  it("analyzeCodeGraphTokenUsage_MissingSessionsRoot_FailsInsteadOfReportingZeroTurns", async () => {
+    const fixture = await createFixture();
+    const missingSessionsDir = path.join(fixture.root, "missing-sessions");
+
+    await expect(
+      runAnalyzer(fixture, ["--sessions-dir", missingSessionsDir, "--repo-root", fixture.repoRoot])
+    ).rejects.toMatchObject({
+      stderr: expect.stringContaining("Unable to read sessions directory")
+    });
+    await expect(pathExists(fixture.outDir)).resolves.toBe(false);
+  });
 });
 
 interface Fixture {

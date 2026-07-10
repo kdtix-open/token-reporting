@@ -107,17 +107,23 @@ function parseArgs(argv) {
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
     if (arg === "--sessions-dir") {
-      parsed.sessionsDir = argv[++index];
+      parsed.sessionsDir = readOptionValue(argv, index, arg);
+      index += 1;
     } else if (arg === "--repo-root") {
-      parsed.repoRoot = argv[++index];
+      parsed.repoRoot = readOptionValue(argv, index, arg);
+      index += 1;
     } else if (arg === "--agents-file") {
-      parsed.agentsFile = argv[++index];
+      parsed.agentsFile = readOptionValue(argv, index, arg);
+      index += 1;
     } else if (arg === "--instruction-updated-at") {
-      parsed.instructionUpdatedAt = argv[++index];
+      parsed.instructionUpdatedAt = readOptionValue(argv, index, arg);
+      index += 1;
     } else if (arg === "--out-dir") {
-      parsed.outDir = argv[++index];
+      parsed.outDir = readOptionValue(argv, index, arg);
+      index += 1;
     } else if (arg === "--journal-issue") {
-      parsed.journalIssue = argv[++index];
+      parsed.journalIssue = readOptionValue(argv, index, arg);
+      index += 1;
     } else if (arg === "--help" || arg === "-h") {
       printHelp();
       process.exit(0);
@@ -126,6 +132,14 @@ function parseArgs(argv) {
     }
   }
   return parsed;
+}
+
+function readOptionValue(argv, index, flag) {
+  const value = argv[index + 1];
+  if (!value || value.startsWith("--")) {
+    throw new Error(`Missing value for ${flag}. Run with --help for usage.`);
+  }
+  return value;
 }
 
 function printHelp() {
@@ -143,19 +157,23 @@ Options:
 
 function walkJsonl(root) {
   const results = [];
-  const stack = [root];
+  const stack = [{ directory: root, isRoot: true }];
   while (stack.length > 0) {
-    const current = stack.pop();
+    const { directory: current, isRoot } = stack.pop();
     let entries;
     try {
       entries = fs.readdirSync(current, { withFileTypes: true });
-    } catch {
+    } catch (error) {
+      if (isRoot) {
+        const message = error instanceof Error ? error.message : String(error);
+        throw new Error(`Unable to read sessions directory ${root}: ${message}`);
+      }
       continue;
     }
     for (const entry of entries) {
       const fullPath = path.join(current, entry.name);
       if (entry.isDirectory()) {
-        stack.push(fullPath);
+        stack.push({ directory: fullPath, isRoot: false });
       } else if (entry.isFile() && entry.name.endsWith(".jsonl")) {
         results.push(fullPath);
       }
