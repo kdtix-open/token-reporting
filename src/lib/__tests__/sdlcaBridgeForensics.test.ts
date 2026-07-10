@@ -281,6 +281,69 @@ describe("sdlcaBridgeForensics", () => {
     });
   });
 
+  it("createSdlcaBridgeForensicExecutor_DuplicateReviewerModels_ReplacesMatchingRunningSlot", async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse({
+          result: [
+            {
+              forensicCapabilities,
+              kind: "codex",
+              providerId: "codex-reviewer",
+              providerName: "Codex Reviewer",
+              resolvedExecutable: "/usr/bin/codex"
+            }
+          ]
+        })
+      )
+      .mockResolvedValueOnce(jsonResponse({ result: forensicArtifact("codex", "First GPT") }))
+      .mockResolvedValueOnce(jsonResponse({ result: forensicArtifact("codex", "Second GPT") }));
+    const progressArtifacts: Array<Array<{ reviewerModel: string; status: string; summary?: string }>> = [];
+    const executor = createSdlcaBridgeForensicExecutor({
+      bridgeToken: "bridge-token",
+      bridgeUrl: "http://127.0.0.1:4818",
+      fetcher,
+      workingDirectory: "/Users/ckreager/repos/kdtix/token_reporting"
+    });
+
+    const result = await executor({
+      createdAt: "2026-06-07T17:30:00.000Z",
+      evidencePacket,
+      huggingFaceCandidateSetId: "hf-candidates-test",
+      onReviewerArtifact: (_artifact, artifacts) => {
+        progressArtifacts.push(
+          artifacts.map((artifact) => ({
+            reviewerModel: artifact.reviewerModel,
+            status: artifact.status,
+            summary: artifact.artifact?.summary as string | undefined
+          }))
+        );
+      },
+      reviewerModels: ["gpt", "gpt"],
+      runId: "dynamic-forensic-20260607T173000000Z",
+      usageSnapshotId: "dynamic-usage-codex-2026-06-07"
+    });
+
+    expect(result.status).toBe("completed");
+    expect(result.reviewerArtifacts).toEqual([
+      expect.objectContaining({
+        artifact: expect.objectContaining({ summary: "First GPT" }),
+        reviewerModel: "gpt",
+        status: "completed"
+      }),
+      expect.objectContaining({
+        artifact: expect.objectContaining({ summary: "Second GPT" }),
+        reviewerModel: "gpt",
+        status: "completed"
+      })
+    ]);
+    expect(progressArtifacts.at(-1)).toEqual([
+      { reviewerModel: "gpt", status: "completed", summary: "First GPT" },
+      { reviewerModel: "gpt", status: "completed", summary: "Second GPT" }
+    ]);
+  });
+
   it("createSdlcaBridgeForensicExecutor_CallbackMutation_DoesNotCorruptReviewerArtifacts", async () => {
     const fetcher = vi
       .fn()
@@ -422,6 +485,81 @@ describe("sdlcaBridgeForensics", () => {
           status: "failed"
         })
       ]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("createSdlcaBridgeForensicExecutor_BridgeExecuteBodyTimeout_ReturnsFailedTimeoutArtifact", async () => {
+    vi.useFakeTimers();
+    let executeInit: RequestInit | undefined;
+    try {
+      const fetcher = vi
+        .fn()
+        .mockResolvedValueOnce(
+          jsonResponse({
+            result: [
+              {
+                forensicCapabilities,
+                kind: "codex",
+                providerId: "codex-reviewer",
+                providerName: "Codex Reviewer",
+                resolvedExecutable: "/usr/bin/codex"
+              }
+            ]
+          })
+        )
+        .mockImplementationOnce((_url: string, init?: RequestInit) => {
+          executeInit = init;
+          return Promise.resolve({
+            json: async () =>
+              new Promise((_resolve, reject) => {
+                init?.signal?.addEventListener("abort", () => {
+                  const error = new Error("The bridge execute body read was aborted.");
+                  error.name = "AbortError";
+                  reject(error);
+                });
+              }),
+            ok: true,
+            status: 200
+          } as unknown as Response);
+        });
+
+      const executor = createSdlcaBridgeForensicExecutor({
+        bridgeToken: "bridge-token",
+        bridgeUrl: "http://127.0.0.1:4818",
+        fetcher,
+        timeoutMs: 1_000,
+        workingDirectory: "/Users/ckreager/repos/kdtix/token_reporting"
+      });
+
+      const resultPromise = executor({
+        createdAt: "2026-06-07T17:30:00.000Z",
+        evidencePacket,
+        huggingFaceCandidateSetId: "hf-candidates-test",
+        reviewerModels: ["kimi"],
+        runId: "dynamic-forensic-20260607T173000000Z",
+        usageSnapshotId: "dynamic-usage-codex-2026-06-07"
+      });
+
+      await vi.waitFor(() => {
+        expect(executeInit?.signal).toBeDefined();
+      });
+      await vi.advanceTimersByTimeAsync(1_001);
+
+      await expect(resultPromise).resolves.toMatchObject({
+        reviewerArtifacts: [
+          expect.objectContaining({
+            degradedReason: "sdlca_bridge_forensic_execute_timeout",
+            diagnostics: expect.objectContaining({
+              timeoutMs: 1_000
+            }),
+            reviewerModel: "kimi",
+            status: "failed"
+          })
+        ],
+        status: "degraded"
+      });
     } finally {
       vi.useRealTimers();
     }
@@ -616,6 +754,14 @@ describe("sdlcaBridgeForensics", () => {
           result: {
             ...forensicArtifact("claude", "Sonnet perspective"),
             api_key: "sk-test_1234567890abcd",
+            metrics: {
+              inputTokens: 12_345,
+              outputTokens: 678,
+              requiredContextTokens: 1_000_000,
+              tokenUsage: {
+                inputTokens: 12_345
+              }
+            },
             findings: [
               {
                 details: "Observed token=super-secret in a valid bridge artifact.",
@@ -647,6 +793,16 @@ describe("sdlcaBridgeForensics", () => {
 
     expect(result.status).toBe("completed");
     const artifactText = JSON.stringify(result.reviewerArtifacts[0]?.artifact);
+    expect(result.reviewerArtifacts[0]?.artifact).toMatchObject({
+      metrics: {
+        inputTokens: 12_345,
+        outputTokens: 678,
+        requiredContextTokens: 1_000_000,
+        tokenUsage: {
+          inputTokens: 12_345
+        }
+      }
+    });
     expect(artifactText).toContain("[REDACTED]");
     expect(artifactText).not.toContain("super-secret");
     expect(artifactText).not.toContain("sk-test_1234567890abcd");

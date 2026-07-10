@@ -255,6 +255,15 @@ describe("persistCursorDailyUsageReport", () => {
     expect(written).toContain('"spend"');
     expect(written).toContain('"events"');
     expect(written).toContain('"composer-2-fast"');
+    expect(written).not.toContain("user_abc123");
+    expect(written).not.toContain("dev@example.com");
+    expect(written).not.toContain("Dev One");
+    expect(written).toContain("user_redacted_");
+    expect(written).toContain("@redacted.local");
+    const accumulated = await readFile(path.join(tempRoot, "accumulated-metadata.json"), "utf8");
+    expect(accumulated).not.toContain("user_def456");
+    expect(accumulated).not.toContain("dev2@example.com");
+    expect(accumulated).not.toContain("Dev Two");
   });
 
   it("blocks persistence in read-only mode", async () => {

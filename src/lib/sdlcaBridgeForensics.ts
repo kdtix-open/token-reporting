@@ -7,7 +7,7 @@ import { redactLogValue, type ObservabilityLogger } from "./observabilityLogger"
 
 type SdlcaBridgeProviderKind = "claude" | "codex" | "copilot" | "cursor";
 const bridgeSensitiveKeyPattern =
-  /(?:api[_-]?key|authorization|bearer|credential|password|secret|token)/i;
+  /(?:api[_-]?key|authorization|bearer|credential|password|secret|(?:access|auth|bridge|id|refresh|session)[_-]?token|token)$/i;
 
 interface SdlcaBridgeProvider {
   forensicCapabilities?: {
@@ -79,7 +79,7 @@ export function createSdlcaBridgeForensicExecutor(
         providerKind,
         startedAtIso
       );
-      reviewerArtifacts.push(runningArtifact);
+      const artifactIndex = reviewerArtifacts.push(runningArtifact) - 1;
       await notifyReviewerArtifact({
         artifact: runningArtifact,
         logger,
@@ -101,16 +101,7 @@ export function createSdlcaBridgeForensicExecutor(
         timeoutMs: options.timeoutMs,
         workingDirectory: options.workingDirectory
       });
-      const artifactIndex = reviewerArtifacts.findIndex(
-        (candidate) =>
-          candidate.artifactUri === runningArtifact.artifactUri &&
-          candidate.reviewerModel === reviewerModel
-      );
-      if (artifactIndex >= 0) {
-        reviewerArtifacts[artifactIndex] = artifact;
-      } else {
-        reviewerArtifacts.push(artifact);
-      }
+      reviewerArtifacts[artifactIndex] = artifact;
       await notifyReviewerArtifact({ artifact, logger, request, reviewerArtifacts, reviewerModel });
     }
 
@@ -260,6 +251,7 @@ async function executeReviewer(args: {
   try {
     response = await args.fetcher(`${args.bridgeUrl}/execute`, requestInit);
   } catch (error) {
+    abortController?.clear();
     const durationMs = Date.now() - args.startedAt;
     const timedOut = abortController?.timedOut() === true || isAbortError(error);
     const diagnostics = {
@@ -287,67 +279,79 @@ async function executeReviewer(args: {
       diagnostics,
       args.startedAtIso
     );
-  } finally {
-    abortController?.clear();
-  }
-  const durationMs = Date.now() - args.startedAt;
-
-  if (!response.ok) {
-    const bridgeErrorSummary = await readBridgeErrorSummary(response);
-    const diagnostics = {
-      bridgeErrorSummary,
-      bridgeHttpStatus: response.status,
-      bridgeProviderKind: args.providerKind,
-      durationMs
-    };
-    const degradedReason = isBridgeJsonParseFailure(bridgeErrorSummary)
-      ? "sdlca_bridge_forensic_output_parse_failed"
-      : `sdlca_bridge_forensic_execute_failed_${response.status}`;
-    args.logger?.error("SDLCA bridge reviewer dispatch failed", {
-      bridgeProviderKind: args.providerKind,
-      diagnostics,
-      durationMs,
-      reviewerModel: args.reviewerModel,
-      runId: args.request.runId,
-      status: response.status
-    });
-    return failedReviewerArtifact(
-      args.request.runId,
-      args.reviewerModel,
-      args.providerKind,
-      degradedReason,
-      diagnostics,
-      args.startedAtIso
-    );
   }
 
-  let payload: SdlcaBridgeExecuteResponse;
   try {
-    payload = (await response.json()) as SdlcaBridgeExecuteResponse;
-  } catch (error) {
-    const diagnostics = {
-      bridgeErrorSummary: sanitizeDiagnosticString(error instanceof Error ? error.message : String(error)),
-      bridgeHttpStatus: response.status,
-      bridgeProviderKind: args.providerKind,
-      durationMs
-    };
-    args.logger?.error("SDLCA bridge reviewer response JSON parse failed", {
-      bridgeProviderKind: args.providerKind,
-      diagnostics,
-      durationMs,
-      reviewerModel: args.reviewerModel,
-      runId: args.request.runId,
-      status: response.status
-    });
-    return failedReviewerArtifact(
-      args.request.runId,
-      args.reviewerModel,
-      args.providerKind,
-      "sdlca_bridge_forensic_output_parse_failed",
-      diagnostics,
-      args.startedAtIso
-    );
-  }
+    const durationMs = Date.now() - args.startedAt;
+
+    if (!response.ok) {
+      const bridgeErrorSummary = await readBridgeErrorSummary(response);
+      const timedOut = abortController?.timedOut() === true;
+      const diagnostics = {
+        bridgeErrorSummary,
+        bridgeHttpStatus: response.status,
+        bridgeProviderKind: args.providerKind,
+        durationMs,
+        timeoutMs: args.timeoutMs
+      };
+      const degradedReason = timedOut
+        ? "sdlca_bridge_forensic_execute_timeout"
+        : isBridgeJsonParseFailure(bridgeErrorSummary)
+          ? "sdlca_bridge_forensic_output_parse_failed"
+          : `sdlca_bridge_forensic_execute_failed_${response.status}`;
+      args.logger?.error("SDLCA bridge reviewer dispatch failed", {
+        bridgeProviderKind: args.providerKind,
+        diagnostics,
+        durationMs,
+        reviewerModel: args.reviewerModel,
+        runId: args.request.runId,
+        status: response.status,
+        timedOut
+      });
+      return failedReviewerArtifact(
+        args.request.runId,
+        args.reviewerModel,
+        args.providerKind,
+        degradedReason,
+        diagnostics,
+        args.startedAtIso
+      );
+    }
+
+    let payload: SdlcaBridgeExecuteResponse;
+    try {
+      payload = (await response.json()) as SdlcaBridgeExecuteResponse;
+    } catch (error) {
+      const timedOut = abortController?.timedOut() === true || isAbortError(error);
+      const diagnostics = {
+        bridgeErrorSummary: sanitizeDiagnosticString(
+          error instanceof Error ? error.message : String(error)
+        ),
+        bridgeHttpStatus: response.status,
+        bridgeProviderKind: args.providerKind,
+        durationMs: Date.now() - args.startedAt,
+        timeoutMs: args.timeoutMs
+      };
+      args.logger?.error("SDLCA bridge reviewer response JSON parse failed", {
+        bridgeProviderKind: args.providerKind,
+        diagnostics,
+        durationMs: diagnostics.durationMs,
+        reviewerModel: args.reviewerModel,
+        runId: args.request.runId,
+        status: response.status,
+        timedOut
+      });
+      return failedReviewerArtifact(
+        args.request.runId,
+        args.reviewerModel,
+        args.providerKind,
+        timedOut
+          ? "sdlca_bridge_forensic_execute_timeout"
+          : "sdlca_bridge_forensic_output_parse_failed",
+        diagnostics,
+        args.startedAtIso
+      );
+    }
   args.logger?.trace("SDLCA bridge reviewer response received", {
     bridgeProviderKind: args.providerKind,
     durationMs,
@@ -410,6 +414,9 @@ async function executeReviewer(args: {
     startedAt: args.startedAtIso,
     status: "completed"
   };
+  } finally {
+    abortController?.clear();
+  }
 }
 
 function runningReviewerArtifact(

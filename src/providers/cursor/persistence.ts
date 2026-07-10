@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -10,6 +11,7 @@ import {
 import type {
   CursorDailyUsageResponse,
   CursorFilteredUsageEventsResponse,
+  CursorSnapshot,
   CursorTeamSpendResponse
 } from "./types";
 
@@ -39,21 +41,85 @@ export async function persistCursorDailyUsageReport({
 }: PersistReportArgs): Promise<string> {
   assertWritableOperationAllowed("Persisting Cursor usage data", env);
 
-  const snapshot: { generatedAt: string; daily: CursorDailyUsageResponse; spend?: CursorTeamSpendResponse; events?: CursorFilteredUsageEventsResponse } = {
+  const snapshot: CursorSnapshot = {
     generatedAt: new Date().toISOString(),
     daily: report
   };
   if (spend) snapshot.spend = spend;
   if (events) snapshot.events = events;
+  const redactedSnapshot = redactCursorSnapshot(snapshot);
 
   const accumulatedPath = accumulatedPathForLatest(outputPath);
   const existing = await readJsonIfExists<typeof snapshot>(accumulatedPath);
-  const accumulated = existing ? mergeCursorSnapshots(existing, snapshot) : snapshot;
+  const accumulated = existing
+    ? mergeCursorSnapshots(redactCursorSnapshot(existing), redactedSnapshot)
+    : redactedSnapshot;
 
   await mkdir(path.dirname(outputPath), { recursive: true });
-  await writeFile(outputPath, `${JSON.stringify(snapshot, null, 2)}\n`, "utf8");
+  await writeFile(outputPath, `${JSON.stringify(redactedSnapshot, null, 2)}\n`, "utf8");
   await writeFile(accumulatedPath, `${JSON.stringify(accumulated, null, 2)}\n`, "utf8");
   return outputPath;
+}
+
+function redactCursorSnapshot(snapshot: CursorSnapshot): CursorSnapshot {
+  return {
+    ...snapshot,
+    daily: {
+      ...snapshot.daily,
+      data: snapshot.daily.data.map((item) => ({
+        ...item,
+        email: redactCursorEmail(item.email),
+        userId: redactCursorUserId(item.userId)
+      }))
+    },
+    ...(snapshot.spend
+      ? {
+          spend: {
+            ...snapshot.spend,
+            teamMemberSpend: snapshot.spend.teamMemberSpend.map((item) => ({
+              ...item,
+              email: redactCursorEmail(item.email),
+              name: redactCursorName(item.name),
+              userId: redactCursorUserId(item.userId)
+            }))
+          }
+        }
+      : {}),
+    ...(snapshot.events
+      ? {
+          events: {
+            ...snapshot.events,
+            usageEvents: snapshot.events.usageEvents.map((event) => ({
+              ...event,
+              userEmail: redactCursorEmail(event.userEmail)
+            }))
+          }
+        }
+      : {})
+  };
+}
+
+function redactCursorUserId(value: string): string {
+  return `user_redacted_${stableCursorHash(value)}`;
+}
+
+function redactCursorEmail(value: string): string;
+function redactCursorEmail(value: null): null;
+function redactCursorEmail(value: undefined): undefined;
+function redactCursorEmail(value: string | undefined): string | undefined;
+function redactCursorEmail(value: string | null | undefined): string | null | undefined;
+function redactCursorEmail(value: string | null | undefined): string | null | undefined {
+  if (value === null || value === undefined) return value;
+  return `redacted-${stableCursorHash(value)}@redacted.local`;
+}
+
+function redactCursorName(value: string | undefined): string | undefined {
+  if (value === undefined) return value;
+  return `Redacted user ${stableCursorHash(value)}`;
+}
+
+function stableCursorHash(value: string): string {
+  return createHash("sha256").update(value).digest("hex").slice(0, 12);
 }
 
 function mergeCursorSnapshots<T extends {

@@ -546,6 +546,16 @@ function createCsv(rows: ReportExportRow[], report?: ReportExportBreakdowns): st
     lines.push(
       [
         "local_model_migration",
+        "tenant",
+        "tenant_id",
+        report.localModelMigration.tenant.tenantId
+      ]
+        .map(csvCell)
+        .join(",")
+    );
+    lines.push(
+      [
+        "local_model_migration",
         "selected_scope",
         "scope_id",
         report.localModelMigration.selectedWorkloadScope.id

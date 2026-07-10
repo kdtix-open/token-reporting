@@ -309,6 +309,7 @@ describe("reportExports", () => {
     expect(csv).toContain("local_infrastructure_hardware_budget_scenarios");
     expect(csv).toContain("all_provider_compute_tps");
     expect(csv).toContain("repo_automation_compute_tps");
+    expect(csv).toContain("local_model_migration,tenant,tenant_id,kdtix");
     expect(csv).toContain("local_infrastructure_financials");
     expect(csv).toContain("local_infrastructure_benchmark_gates");
     expect(csv).toContain("context_stats_warning");
