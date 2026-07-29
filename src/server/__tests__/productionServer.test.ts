@@ -175,6 +175,33 @@ describe("productionServer", () => {
     });
   });
 
+  it("createTokenReportingProductionServer_OperationalStatus_ReadsBuildMetadataArtifact", async () => {
+    const roots = await createFixtureRoots();
+    await fs.writeFile(
+      path.join(roots.distRoot, "build-metadata.json"),
+      JSON.stringify({ sha: "b9949c5e34e50462c6b62d46ce1f4f5ec2b5f99a", version: "0.1.0" }),
+      "utf8"
+    );
+    const server = createTokenReportingProductionServer({
+      basePath: "/tools/token-reporting",
+      dataRoot: roots.dataRoot,
+      distRoot: roots.distRoot,
+      env: {
+        TOKEN_REPORTING_BUILD_SHA: "1111111111111111111111111111111111111111"
+      }
+    });
+    const baseUrl = await listen(server);
+
+    const response = await fetch(`${baseUrl}/tools/token-reporting/api/operational-status`);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      build: {
+        sha: "b9949c5e34e50462c6b62d46ce1f4f5ec2b5f99a",
+        version: "0.1.0"
+      }
+    });
+  });
+
   it("createTokenReportingProductionServer_OperationalStatus_RejectsUnsafeBuildIdentity", async () => {
     const roots = await createFixtureRoots();
     const server = createTokenReportingProductionServer({
