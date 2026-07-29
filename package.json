@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "tsc -p tsconfig.app.json --noEmit && vite build",
+    "build": "tsc -p tsconfig.app.json --noEmit && vite build && tsx scripts/write-build-metadata.ts",
     "build:projectit": "TOKEN_REPORTING_BASE_PATH=/tools/token-reporting npm run build",
     "verify:projectit-build": "bash scripts/verify-projectit-build.sh",
     "preview": "vite preview",
