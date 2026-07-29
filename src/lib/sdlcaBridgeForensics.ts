@@ -975,15 +975,15 @@ function buildReviewerPrompt(
 const forensicArtifactSchema = {
   additionalProperties: false,
   properties: {
-    artifactKind: { const: "local_model_forensic_review" },
-    artifactSchemaVersion: { const: "sdlca.bridge.forensic.v0" },
+    artifactKind: { const: "local_model_forensic_review", type: "string" },
+    artifactSchemaVersion: { const: "sdlca.bridge.forensic.v0", type: "string" },
     findings: {
       items: {
         additionalProperties: false,
         properties: {
           details: { type: "string" },
           evidenceRefs: { items: { type: "string" }, type: "array" },
-          severity: { enum: ["info", "low", "medium", "high"] },
+          severity: { enum: ["info", "low", "medium", "high"], type: "string" },
           title: { type: "string" }
         },
         required: ["details", "evidenceRefs", "severity", "title"],
@@ -992,12 +992,12 @@ const forensicArtifactSchema = {
       type: "array"
     },
     generatedAt: { type: "string" },
-    providerKind: { enum: ["claude", "codex", "copilot", "cursor", "opencode"] },
-    providerRole: { enum: ["reviewer"] },
+    providerKind: { enum: ["claude", "codex", "copilot", "cursor", "opencode"], type: "string" },
+    providerRole: { enum: ["reviewer"], type: "string" },
     provenance: {
       additionalProperties: false,
       properties: {
-        redacted: { const: true },
+        redacted: { const: true, type: "boolean" },
         snapshotId: { type: "string" },
         source: { type: "string" }
       },

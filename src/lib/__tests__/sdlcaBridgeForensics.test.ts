@@ -1591,6 +1591,15 @@ function textResponse(body: unknown, status = 200): Response {
 function expectStrictObjectSchemas(schema: unknown): void {
   if (!isRecord(schema)) return;
 
+  if ("const" in schema) {
+    expect(schema.type).toBe(jsonSchemaScalarType(schema.const));
+  }
+  if (Array.isArray(schema.enum)) {
+    const enumTypes = Array.from(new Set(schema.enum.map(jsonSchemaScalarType)));
+    expect(enumTypes).toHaveLength(1);
+    expect(schema.type).toBe(enumTypes[0]);
+  }
+
   if (schema.type === "object") {
     expect(schema.additionalProperties).toBe(false);
     const properties = isRecord(schema.properties) ? schema.properties : {};
@@ -1608,4 +1617,17 @@ function expectStrictObjectSchemas(schema: unknown): void {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function jsonSchemaScalarType(value: unknown): "boolean" | "number" | "string" {
+  switch (typeof value) {
+    case "boolean":
+      return "boolean";
+    case "number":
+      return "number";
+    case "string":
+      return "string";
+    default:
+      throw new Error(`Expected a scalar JSON Schema value, received ${typeof value}.`);
+  }
 }
