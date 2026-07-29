@@ -960,6 +960,8 @@ function buildReviewerPrompt(
     "Return exactly one JSON object and nothing else.",
     "Do not include markdown fences, prose, explanations, or text before or after the JSON object.",
     "Do not include raw provider Admin API snapshots or credentials.",
+    "Include findings[].evidenceRefs in every finding; use an empty array when no evidence reference applies.",
+    "Set provenance.snapshotId to the usage snapshot id supplied below.",
     `Reviewer model: ${reviewerModel}`,
     `Bridge provider kind: ${providerKind}`,
     `Run id: ${request.runId}`,
@@ -971,20 +973,20 @@ function buildReviewerPrompt(
 }
 
 const forensicArtifactSchema = {
-  additionalProperties: true,
+  additionalProperties: false,
   properties: {
     artifactKind: { const: "local_model_forensic_review" },
     artifactSchemaVersion: { const: "sdlca.bridge.forensic.v0" },
     findings: {
       items: {
-        additionalProperties: true,
+        additionalProperties: false,
         properties: {
           details: { type: "string" },
           evidenceRefs: { items: { type: "string" }, type: "array" },
           severity: { enum: ["info", "low", "medium", "high"] },
           title: { type: "string" }
         },
-        required: ["details", "severity", "title"],
+        required: ["details", "evidenceRefs", "severity", "title"],
         type: "object"
       },
       type: "array"
@@ -993,13 +995,13 @@ const forensicArtifactSchema = {
     providerKind: { enum: ["claude", "codex", "copilot", "cursor", "opencode"] },
     providerRole: { enum: ["reviewer"] },
     provenance: {
-      additionalProperties: true,
+      additionalProperties: false,
       properties: {
         redacted: { const: true },
         snapshotId: { type: "string" },
         source: { type: "string" }
       },
-      required: ["redacted", "source"],
+      required: ["redacted", "snapshotId", "source"],
       type: "object"
     },
     recommendations: { items: { type: "string" }, type: "array" },
