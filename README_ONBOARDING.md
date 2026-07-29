@@ -48,6 +48,8 @@ Use the devcontainer in `.devcontainer/devcontainer.json` for a reproducible Nod
 - `TOKEN_REPORTING_HOST`: bind address, normally `0.0.0.0` so Docker Desktop can reach the host service through `host.docker.internal`.
 - `TOKEN_REPORTING_BUILD_SHA`: optional reviewed source SHA embedded in `dist/build-metadata.json`; falls back to `GITHUB_SHA` or the local Git revision during builds.
 - `TOKEN_REPORTING_BUILD_VERSION`: optional safe build version embedded in `dist/build-metadata.json`; falls back to the package version.
+
+Docker builds accept the same values as build arguments. Set `TOKEN_REPORTING_BUILD_SHA` to the reviewed merge SHA before building the production image; the Dockerfile passes it to the build and the resulting operational-status response reports that artifact identity.
 - `TOKEN_REPORTING_SDLCA_BRIDGE_URL`: SDLCA local bridge URL for forensic reviewer execution.
 - `TOKEN_REPORTING_SDLCA_BRIDGE_TOKEN`: SDLCA bridge bearer token; store only in the admin env file or secret store and never print.
 - `TOKEN_REPORTING_SDLCA_BRIDGE_WORKING_DIRECTORY`: working directory sent to the local bridge for forensic reviewer execution.
