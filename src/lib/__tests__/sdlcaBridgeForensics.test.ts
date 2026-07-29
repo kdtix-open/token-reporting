@@ -128,6 +128,27 @@ describe("sdlcaBridgeForensics", () => {
     ]);
   });
 
+  it("createSdlcaBridgeForensicExecutor_CodexStructuredOutputSchema_UsesStrictObjectContracts", async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ result: [forensicProvider("codex")] }))
+      .mockResolvedValueOnce(jsonResponse({ result: forensicArtifact("codex", "Schema accepted") }));
+
+    const executor = createSdlcaBridgeForensicExecutor({
+      bridgeToken: "bridge-token",
+      bridgeUrl: "http://127.0.0.1:4818",
+      fetcher,
+      workingDirectory: "/Users/ckreager/repos/kdtix/token_reporting"
+    });
+
+    await executor(forensicRequest(["gpt"]));
+
+    const executeBody = JSON.parse(fetcher.mock.calls[1]![1]!.body as string);
+    expectStrictObjectSchemas(executeBody.schema);
+    expect(executeBody.prompt).toContain("findings[].evidenceRefs in every finding");
+    expect(executeBody.prompt).toContain("provenance.snapshotId to the usage snapshot id");
+  });
+
   it("createSdlcaBridgeForensicExecutor_ValidArtifact_RedactsTokenSecretsAndKeepsTokenTelemetry", async () => {
     const fetcher = vi
       .fn()
@@ -1564,4 +1585,26 @@ function textResponse(body: unknown, status = 200): Response {
     status,
     text: async () => JSON.stringify(body)
   } as Response;
+}
+
+function expectStrictObjectSchemas(schema: unknown): void {
+  if (!isRecord(schema)) return;
+
+  if (schema.type === "object") {
+    expect(schema.additionalProperties).toBe(false);
+    const properties = isRecord(schema.properties) ? schema.properties : {};
+    const required = Array.isArray(schema.required) ? schema.required : [];
+    expect(required).toEqual(expect.arrayContaining(Object.keys(properties)));
+  }
+
+  if (isRecord(schema.properties)) {
+    Object.values(schema.properties).forEach(expectStrictObjectSchemas);
+  }
+  if (isRecord(schema.items)) {
+    expectStrictObjectSchemas(schema.items);
+  }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
