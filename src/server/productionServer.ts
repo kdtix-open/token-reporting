@@ -42,6 +42,7 @@ export function createTokenReportingProductionServer(
   const basePath = normalizePublicBasePath(options.basePath ?? env.TOKEN_REPORTING_PUBLIC_BASE_PATH);
   const dataRoot = path.resolve(options.dataRoot ?? env.TOKEN_REPORTING_DATA_ROOT ?? "public/data");
   const distRoot = path.resolve(options.distRoot ?? env.TOKEN_REPORTING_DIST_ROOT ?? "dist");
+  const buildMetadata = readBuildMetadata(distRoot);
   const logger = options.logger ?? createProductionLogger(env);
   const handleApiRequest =
     options.handleApiRequest ?? createProductionApiHandler({ dataRoot, env, logger, options });
@@ -56,6 +57,7 @@ export function createTokenReportingProductionServer(
     try {
       await routeProductionRequest({
         basePath,
+        buildMetadata,
         dataRoot,
         distRoot,
         env,
@@ -103,6 +105,7 @@ function createProductionApiHandler(args: {
 
 async function routeProductionRequest(args: {
   basePath: string;
+  buildMetadata: BuildMetadata;
   dataRoot: string;
   distRoot: string;
   env: NodeJS.ProcessEnv;
@@ -137,6 +140,7 @@ async function routeProductionRequest(args: {
 
 async function routeApiRequest(
   args: {
+    buildMetadata: BuildMetadata;
     distRoot: string;
     env: NodeJS.ProcessEnv;
     handleApiRequest: (request: IntegrationContractRequest) => Promise<IntegrationContractResponse>;
@@ -147,7 +151,7 @@ async function routeApiRequest(
   apiPath: string
 ): Promise<void> {
   if (apiPath === "/api/operational-status" && args.request.method === "GET") {
-    writeJson(args.response, 200, buildOperationalStatus(args.env, args.distRoot), {
+    writeJson(args.response, 200, buildOperationalStatus(args.env, args.buildMetadata), {
       "Cache-Control": "no-store"
     });
     return;
@@ -322,7 +326,9 @@ function createConfiguredForensicExecutor(env: NodeJS.ProcessEnv, logger: Observ
   });
 }
 
-function buildOperationalStatus(env: NodeJS.ProcessEnv, distRoot: string): {
+type BuildMetadata = { sha: string | null; version: string | null };
+
+function buildOperationalStatus(env: NodeJS.ProcessEnv, buildMetadata: BuildMetadata): {
   build: {
     sha: string | null;
     version: string | null;
@@ -338,8 +344,6 @@ function buildOperationalStatus(env: NodeJS.ProcessEnv, distRoot: string): {
 } {
   const bridgeUrlConfigured = Boolean(env.TOKEN_REPORTING_SDLCA_BRIDGE_URL?.trim());
   const tokenConfigured = Boolean(env.TOKEN_REPORTING_SDLCA_BRIDGE_TOKEN?.trim());
-  const buildMetadata = readBuildMetadata(distRoot);
-
   return {
     build: {
       sha: buildMetadata.sha ?? readSafeBuildSha(env.TOKEN_REPORTING_BUILD_SHA),
