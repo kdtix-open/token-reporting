@@ -322,6 +322,10 @@ function createConfiguredForensicExecutor(env: NodeJS.ProcessEnv, logger: Observ
 }
 
 function buildOperationalStatus(env: NodeJS.ProcessEnv): {
+  build: {
+    sha: string | null;
+    version: string | null;
+  };
   forensics: {
     bridgeTimeoutMs: number;
     bridgeUrlConfigured: boolean;
@@ -335,6 +339,10 @@ function buildOperationalStatus(env: NodeJS.ProcessEnv): {
   const tokenConfigured = Boolean(env.TOKEN_REPORTING_SDLCA_BRIDGE_TOKEN?.trim());
 
   return {
+    build: {
+      sha: readSafeBuildSha(env.TOKEN_REPORTING_BUILD_SHA),
+      version: readSafeBuildVersion(env.TOKEN_REPORTING_BUILD_VERSION)
+    },
     forensics: {
       bridgeTimeoutMs: readPositiveInteger(env.TOKEN_REPORTING_SDLCA_BRIDGE_TIMEOUT_MS, 120_000),
       bridgeUrlConfigured,
@@ -346,6 +354,16 @@ function buildOperationalStatus(env: NodeJS.ProcessEnv): {
     },
     service: "token-reporting-production"
   };
+}
+
+function readSafeBuildSha(value: string | undefined): string | null {
+  const candidate = value?.trim() ?? "";
+  return /^[0-9a-f]{7,64}$/iu.test(candidate) ? candidate : null;
+}
+
+function readSafeBuildVersion(value: string | undefined): string | null {
+  const candidate = value?.trim() ?? "";
+  return /^[A-Za-z0-9][A-Za-z0-9._+-]{0,63}$/u.test(candidate) ? candidate : null;
 }
 
 function readPositiveInteger(value: string | undefined, fallback: number): number {
