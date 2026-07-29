@@ -9,6 +9,37 @@ import { describe, expect, it } from "vitest";
 const execFileAsync = promisify(execFile);
 
 describe("install-macos-launchagent", () => {
+  it("verifyProjectitBuild_RootBuiltArtifact_RejectsRecovery", async () => {
+    const distRoot = await fs.mkdtemp(path.join(os.tmpdir(), "token-reporting-dist-"));
+    await fs.writeFile(path.join(distRoot, "index.html"), '<script src="/assets/index.js"></script>');
+
+    await expect(
+      execFileAsync("bash", ["scripts/verify-projectit-build.sh"], {
+        env: {
+          ...process.env,
+          TOKEN_REPORTING_DIST_ROOT: distRoot
+        }
+      })
+    ).rejects.toMatchObject({ stderr: expect.stringContaining("npm run build:projectit") });
+  });
+
+  it("verifyProjectitBuild_MountedArtifact_AllowsRecovery", async () => {
+    const distRoot = await fs.mkdtemp(path.join(os.tmpdir(), "token-reporting-dist-"));
+    await fs.writeFile(
+      path.join(distRoot, "index.html"),
+      '<script src="/tools/token-reporting/assets/index.js"></script>'
+    );
+
+    await expect(
+      execFileAsync("bash", ["scripts/verify-projectit-build.sh"], {
+        env: {
+          ...process.env,
+          TOKEN_REPORTING_DIST_ROOT: distRoot
+        }
+      })
+    ).resolves.toMatchObject({ stdout: expect.stringContaining("verified") });
+  });
+
   it("installMacosLaunchAgent_DryRun_WritesPathAndAdminEnvFileToPlist", async () => {
     const plistDir = await fs.mkdtemp(path.join(os.tmpdir(), "token-reporting-launchagent-"));
 

@@ -12,6 +12,7 @@ Token Reporting is a React + TypeScript dashboard for tracking AI/code-assistant
 |------|---------|
 | Dev server | `npm run dev` (port 5173) |
 | Build | `npm run build` (typecheck + Vite) |
+| Projectit publish/recovery build | `npm run build:projectit && npm run verify:projectit-build` |
 | Preview prod build | `npm run preview` |
 | Run all tests | `npm test` (Vitest + v8 coverage) |
 | Watch tests | `npm run test:watch` |
@@ -75,3 +76,14 @@ Minimal React: `useState` + `useEffect` only. No Redux, Context, or external sta
 - Environment: jsdom via Vitest, setup in `src/test/setup.ts`
 - Coverage: v8 provider, HTML + text reporters, covers `src/**/*.{ts,tsx}` (excludes `src/main.tsx`)
 - Tests live in `__tests__/` directories adjacent to the code they test
+
+## Projectit production invariant (Codex, Claude, Copilot, and all recovery automation)
+
+`dev.projectit.ai` is mounted at `/tools/token-reporting`. Never use bare `npm run build`
+for a publish, recycle, reboot recovery, or LaunchAgent/systemd reinstall: it compiles a
+root-base browser bundle that appears to load but calls root `/api` and `/data` routes.
+Use `npm run build:projectit && npm run verify:projectit-build` before restarting the
+Token Reporting service. The startup scripts enforce this invariant. After recovery,
+verify the mounted operational-status endpoint and use browser automation to ensure data
+and refresh requests begin `/tools/token-reporting/`; include the Token Reporting
+LaunchAgent on port 8095 in any SDLCA recycle/re-publish plan.

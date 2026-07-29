@@ -10,11 +10,11 @@ Use the devcontainer in `.devcontainer/devcontainer.json` for a reproducible Nod
 2. Run `npm install`.
 3. Run `npm test` to confirm the local baseline.
 4. Run `npm run dev` to start the dashboard.
-5. For projectit.ai subpath testing, run `npm run build:projectit` and
-   `npm run serve:production`, then open
+5. For projectit.ai subpath testing, run `npm run build:projectit`,
+   `npm run verify:projectit-build`, and `npm run serve:production`, then open
    `http://127.0.0.1:8080/tools/token-reporting`.
-6. For the mac-local projectit.ai operator host, run
-   `TOKEN_REPORTING_NODE_BIN=/opt/homebrew/bin/node npm run startup:install:macos`.
+6. For the mac-local projectit.ai operator host, first run the projectit build and
+   verifier, then run `TOKEN_REPORTING_NODE_BIN=/opt/homebrew/bin/node npm run startup:install:macos`.
    The LaunchAgent listens on `8095`, which is the upstream used by the SDLCA
    Docker Caddy route. The installer writes a launchd-safe `PATH` so refresh
    scripts can find `npm` after a reboot.

@@ -36,11 +36,6 @@ if [[ "${SKIP_PRECHECKS}" != "true" && ! -f "${TSX_CLI}" ]]; then
   exit 2
 fi
 
-if [[ "${SKIP_PRECHECKS}" != "true" && ! -d "${REPO_ROOT}/dist" ]]; then
-  echo "install-macos-launchagent: dist is missing; run TOKEN_REPORTING_BASE_PATH=/tools/token-reporting npm run build first." >&2
-  exit 2
-fi
-
 LABEL="${TOKEN_REPORTING_LAUNCHD_LABEL:-com.kdtix.token-reporting}"
 HOST="${TOKEN_REPORTING_HOST:-0.0.0.0}"
 PORT="${TOKEN_REPORTING_PORT:-8095}"
@@ -53,6 +48,11 @@ ADMIN_ENV_FILE="${TOKEN_REPORTING_ADMIN_ENV_FILE:-${REPO_ROOT}/.env.admin.creden
 REFRESH_ASYNC="${TOKEN_REPORTING_REFRESH_ASYNC:-true}"
 READ_ONLY="${TOKEN_REPORTING_READ_ONLY:-false}"
 PID_FILE="${TOKEN_REPORTING_PID_FILE:-${REPO_ROOT}/tmp/projectit-token-reporting-production.pid}"
+
+if [[ "${SKIP_PRECHECKS}" != "true" ]]; then
+  TOKEN_REPORTING_DIST_ROOT="${DIST_ROOT}" TOKEN_REPORTING_BASE_PATH="${BASE_PATH}" \
+    bash "${REPO_ROOT}/scripts/verify-projectit-build.sh"
+fi
 DEFAULT_LAUNCHD_PATH="${NODE_BIN_DIR}:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:${HOME}/.local/bin"
 LAUNCHD_PATH="${TOKEN_REPORTING_LAUNCHD_PATH:-${DEFAULT_LAUNCHD_PATH}}"
 PLIST_DIR="${TOKEN_REPORTING_LAUNCHD_PLIST_DIR:-${HOME}/Library/LaunchAgents}"

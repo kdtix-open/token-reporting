@@ -60,6 +60,9 @@ REFRESH_ASYNC="${TOKEN_REPORTING_REFRESH_ASYNC:-true}"
 READ_ONLY="${TOKEN_REPORTING_READ_ONLY:-false}"
 PID_FILE="${TOKEN_REPORTING_PID_FILE:-${REPO_ROOT}/tmp/projectit-token-reporting-production.pid}"
 
+TOKEN_REPORTING_DIST_ROOT="${DIST_ROOT}" TOKEN_REPORTING_BASE_PATH="${BASE_PATH}" \
+  bash "${REPO_ROOT}/scripts/verify-projectit-build.sh"
+
 for value in \
   "${NODE_BIN}" \
   "${TSX_CLI}" \

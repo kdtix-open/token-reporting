@@ -185,3 +185,6 @@ npm run lint
 npm run typecheck
 npm run build
 ```
+
+For the published `dev.projectit.ai/tools/token-reporting` route, use
+`npm run build:projectit && npm run verify:projectit-build` instead of the generic build.

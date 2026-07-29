@@ -85,11 +85,12 @@ without enabling mutating refresh.
 Prerequisites:
 
 - Wrangler is authenticated.
-- The app is built with `TOKEN_REPORTING_BASE_PATH=/tools/token-reporting`.
+- The app is built with `npm run build:projectit` and verified with
+  `npm run verify:projectit-build`.
 
 Steps:
 
-1. Run `TOKEN_REPORTING_BASE_PATH=/tools/token-reporting npm run build`.
+1. Run `npm run build:projectit && npm run verify:projectit-build`.
 2. Run `npx wrangler dev --config deploy/cloudflare/wrangler.jsonc`.
 3. Open the local Wrangler URL at `/tools/token-reporting`.
 4. Request `/tools/token-reporting/api/integration/contract`.

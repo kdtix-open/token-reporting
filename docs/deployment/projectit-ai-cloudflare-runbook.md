@@ -24,7 +24,8 @@ docker compose -f deploy/local-docker/docker-compose.yml up --build
 mac-local LaunchAgent used by `dev.projectit.ai/tools/token-reporting`:
 
 ```bash
-TOKEN_REPORTING_BASE_PATH=/tools/token-reporting npm run build
+npm run build:projectit
+npm run verify:projectit-build
 npm run startup:repair-bridge-env
 TOKEN_REPORTING_NODE_BIN=/opt/homebrew/bin/node npm run startup:install:macos
 ```
@@ -45,7 +46,8 @@ CLOUDFLARE_TUNNEL_TOKEN=... \
 Cloudflare-native read-only scaffold:
 
 ```bash
-TOKEN_REPORTING_BASE_PATH=/tools/token-reporting npm run build
+npm run build:projectit
+npm run verify:projectit-build
 npx wrangler dev --config deploy/cloudflare/wrangler.jsonc
 ```
 
@@ -89,7 +91,8 @@ npx wrangler dev --config deploy/cloudflare/wrangler.jsonc
 | Symptom | Likely cause | Fix |
 |---|---|---|
 | `https://dev.projectit.ai/tools/token-reporting` returns `502` | Caddy is up but nothing is listening on host port `8095` | Run `lsof -nP -iTCP:8095 -sTCP:LISTEN`, then `TOKEN_REPORTING_NODE_BIN=/opt/homebrew/bin/node npm run startup:install:macos`. |
-| LaunchAgent is loaded but exits quickly | Node path moved or dependencies/dist are missing | Re-run `npm install`, `TOKEN_REPORTING_BASE_PATH=/tools/token-reporting npm run build`, then reinstall the LaunchAgent with a current absolute `TOKEN_REPORTING_NODE_BIN`. |
+| LaunchAgent is loaded but exits quickly | Node path moved or the mounted build is missing/invalid | Re-run `npm install`, `npm run build:projectit`, and `npm run verify:projectit-build`, then reinstall the LaunchAgent with a current absolute `TOKEN_REPORTING_NODE_BIN`. |
+| UI loads but requests root `/api` or `/data` paths | A bare build overwrote the mounted Vite bundle | Run the projectit build and verifier, then reinstall/restart the LaunchAgent. The service intentionally refuses this invalid artifact during recovery. |
 | Refresh shows all provider scripts failed with `npm_not_found_or_path_missing` | launchd started the service without a useful `PATH` | Re-run `TOKEN_REPORTING_NODE_BIN=/opt/homebrew/bin/node npm run startup:install:macos`; the installer persists `/opt/homebrew/bin`, `/usr/local/bin`, and system paths into the LaunchAgent. |
 | Forensic reviewers are not dispatched and operational status says `not_configured` | Token Reporting is up but the SDLCA bridge URL/token are absent from `TOKEN_REPORTING_ADMIN_ENV_FILE` | Run `npm run startup:repair-bridge-env`, restart the LaunchAgent, and confirm `/api/operational-status` reports `configured`. |
 | UI loads but refresh is blocked | Read-only mode or missing Admin/API credential file | Confirm `TOKEN_REPORTING_READ_ONLY=false` for the operator host and that `TOKEN_REPORTING_ADMIN_ENV_FILE` points to the local credential file. Do not print credential values. |
@@ -101,6 +104,7 @@ npx wrangler dev --config deploy/cloudflare/wrangler.jsonc
 - `npm run typecheck`
 - `npm run lint`
 - `npm run build:projectit`
+- `npm run verify:projectit-build`
 - `npm run startup:repair-bridge-env`
 - `TOKEN_REPORTING_NODE_BIN=/opt/homebrew/bin/node npm run startup:install:macos`
 - `curl http://127.0.0.1:8095/tools/token-reporting/api/integration/contract`

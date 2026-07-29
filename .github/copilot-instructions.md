@@ -17,3 +17,11 @@
 - Follow Red → Green → Refactor for new behavior and bug fixes.
 - Add or update regression tests before modifying provider behavior.
 - Keep tests deterministic by using fixtures or mocked fetch implementations instead of live provider calls.
+
+## Projectit publish and recovery
+
+`dev.projectit.ai` is mounted at `/tools/token-reporting`. For a publish, recycle, reboot
+recovery, or LaunchAgent/systemd reinstall, never use bare `npm run build`. Use
+`npm run build:projectit && npm run verify:projectit-build` before restarting Token
+Reporting. Verify mounted API/data/refresh paths and preserve the Token Reporting
+LaunchAgent upstream on port 8095 in SDLCA recovery work.
