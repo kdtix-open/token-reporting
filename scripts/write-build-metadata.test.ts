@@ -42,17 +42,65 @@ describe("write-build-metadata", () => {
       code: "ENOENT"
     });
   });
+
+  it("uses HEAD only for a clean worktree and omits it for dirty sources", async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), "token-reporting-git-metadata-"));
+    temporaryRoots.push(root);
+    await fs.writeFile(path.join(root, "package.json"), JSON.stringify({ version: "9.9.9" }));
+    await fs.writeFile(path.join(root, "tracked.txt"), "clean\n");
+    await runGit(root, ["init"]);
+    await runGit(root, ["config", "user.email", "uat@example.invalid"]);
+    await runGit(root, ["config", "user.name", "UAT"]);
+    await runGit(root, ["add", "package.json", "tracked.txt"]);
+    await runGit(root, ["commit", "-m", "fixture"]);
+
+    const head = (await runGit(root, ["rev-parse", "HEAD"])).trim();
+    await runScript(
+      {
+        TOKEN_REPORTING_BUILD_SHA: "",
+        GITHUB_SHA: "",
+        TOKEN_REPORTING_BUILD_VERSION: "",
+        TOKEN_REPORTING_DIST_ROOT: path.join(root, "clean-dist")
+      },
+      root
+    );
+    await expectMetadataAt(path.join(root, "clean-dist"), { sha: head, version: "9.9.9" });
+
+    await fs.writeFile(path.join(root, "untracked.txt"), "dirty\n");
+    await runScript(
+      { TOKEN_REPORTING_DIST_ROOT: path.join(root, "dirty-dist") },
+      root
+    );
+    await expectMetadataAt(path.join(root, "dirty-dist"), { sha: null, version: "9.9.9" });
+  });
 });
 
-async function runScript(env: NodeJS.ProcessEnv): Promise<void> {
-  await execFileAsync(process.execPath, ["node_modules/tsx/dist/cli.mjs", "scripts/write-build-metadata.ts"], {
-    cwd: process.cwd(),
+async function runScript(env: NodeJS.ProcessEnv, cwd = process.cwd()): Promise<void> {
+  const repoRoot = process.cwd();
+  await execFileAsync(
+    process.execPath,
+    [path.join(repoRoot, "node_modules/tsx/dist/cli.mjs"), path.join(repoRoot, "scripts/write-build-metadata.ts")],
+    {
+    cwd,
     env: { ...process.env, ...env }
-  });
+    }
+  );
 }
 
 async function expectMetadata(root: string, expected: { sha: string | null; version: string | null }) {
+  await expectMetadataAt(root, expected);
+}
+
+async function expectMetadataAt(
+  root: string,
+  expected: { sha: string | null; version: string | null }
+) {
   await expect(
     JSON.parse(await fs.readFile(path.join(root, "build-metadata.json"), "utf8"))
   ).toEqual(expected);
+}
+
+async function runGit(cwd: string, args: string[]): Promise<string> {
+  const result = await execFileAsync("git", args, { cwd });
+  return result.stdout;
 }
