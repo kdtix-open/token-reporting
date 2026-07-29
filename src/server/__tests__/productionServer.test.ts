@@ -122,6 +122,10 @@ describe("productionServer", () => {
     const response = await fetch(`${baseUrl}/tools/token-reporting/api/operational-status`);
     expect(response.headers.get("cache-control")).toBe("no-store");
     await expectJson(response, 200, {
+      build: {
+        sha: null,
+        version: null
+      },
       forensics: {
         bridgeTimeoutMs: 120000,
         bridgeUrlConfigured: false,
@@ -140,6 +144,8 @@ describe("productionServer", () => {
       dataRoot: roots.dataRoot,
       distRoot: roots.distRoot,
       env: {
+        TOKEN_REPORTING_BUILD_SHA: "b9949c5e34e50462c6b62d46ce1f4f5ec2b5f99a",
+        TOKEN_REPORTING_BUILD_VERSION: "0.1.0",
         TOKEN_REPORTING_SDLCA_BRIDGE_TIMEOUT_MS: "45000",
         TOKEN_REPORTING_SDLCA_BRIDGE_TOKEN: "secret-token-value",
         TOKEN_REPORTING_SDLCA_BRIDGE_URL: "http://127.0.0.1:4318",
@@ -154,6 +160,10 @@ describe("productionServer", () => {
     const body = await response.text();
     expect(body).not.toContain("secret-token-value");
     expect(JSON.parse(body)).toEqual({
+      build: {
+        sha: "b9949c5e34e50462c6b62d46ce1f4f5ec2b5f99a",
+        version: "0.1.0"
+      },
       forensics: {
         bridgeTimeoutMs: 45000,
         bridgeUrlConfigured: true,
@@ -163,6 +173,31 @@ describe("productionServer", () => {
       },
       service: "token-reporting-production"
     });
+  });
+
+  it("createTokenReportingProductionServer_OperationalStatus_RejectsUnsafeBuildIdentity", async () => {
+    const roots = await createFixtureRoots();
+    const server = createTokenReportingProductionServer({
+      basePath: "/tools/token-reporting",
+      dataRoot: roots.dataRoot,
+      distRoot: roots.distRoot,
+      env: {
+        TOKEN_REPORTING_BUILD_SHA: "token=must-not-leak",
+        TOKEN_REPORTING_BUILD_VERSION: "version with spaces"
+      }
+    });
+    const baseUrl = await listen(server);
+
+    const response = await fetch(`${baseUrl}/tools/token-reporting/api/operational-status`);
+    expect(response.status).toBe(200);
+    const body = await response.text();
+    expect(JSON.parse(body)).toMatchObject({
+      build: {
+        sha: null,
+        version: null
+      }
+    });
+    expect(body).not.toContain("must-not-leak");
   });
 });
 
