@@ -5,7 +5,7 @@ import type {
 } from "./integrationContractDynamic";
 import { redactLogValue, type ObservabilityLogger } from "./observabilityLogger";
 
-type SdlcaBridgeProviderKind = "claude" | "codex" | "copilot" | "cursor";
+type SdlcaBridgeProviderKind = "claude" | "codex" | "copilot" | "cursor" | "opencode";
 const bridgeSensitiveKeyPattern =
   /(?:api[_-]?key|authorization|bearer|credential|password|secret|token)/i;
 const bridgeTokenTelemetryKeyPattern =
@@ -287,10 +287,11 @@ async function executeReviewer(args: {
     const durationMs = Date.now() - args.startedAt;
 
     if (!response.ok) {
-      const bridgeErrorSummary = await readBridgeErrorSummary(response);
+      const bridgeError = await readBridgeError(response);
       const timedOut = abortController?.timedOut() === true;
       const diagnostics = {
-        bridgeErrorSummary,
+        bridgeErrorCode: bridgeError.errorCode,
+        bridgeErrorSummary: bridgeError.summary,
         bridgeHttpStatus: response.status,
         bridgeProviderKind: args.providerKind,
         durationMs,
@@ -298,9 +299,9 @@ async function executeReviewer(args: {
       };
       const degradedReason = timedOut
         ? "sdlca_bridge_forensic_execute_timeout"
-        : isBridgeJsonParseFailure(bridgeErrorSummary)
+        : isBridgeJsonParseFailure(bridgeError.summary)
           ? "sdlca_bridge_forensic_output_parse_failed"
-          : `sdlca_bridge_forensic_execute_failed_${response.status}`;
+          : bridgeDegradedReason(response.status, bridgeError.errorCode);
       args.logger?.error("SDLCA bridge reviewer dispatch failed", {
         bridgeProviderKind: args.providerKind,
         diagnostics,
@@ -804,16 +805,44 @@ function removeUndefinedFields(value: Record<string, unknown>): Record<string, u
   );
 }
 
-async function readBridgeErrorSummary(response: Response): Promise<string | undefined> {
+async function readBridgeError(
+  response: Response
+): Promise<{ errorCode?: string; summary?: string }> {
   try {
     const raw =
       typeof response.text === "function"
         ? await response.text()
         : JSON.stringify(await response.json());
-    return sanitizeDiagnosticString(extractBridgeErrorMessage(raw));
+    return {
+      errorCode: extractBridgeErrorCode(raw),
+      summary: sanitizeDiagnosticString(extractBridgeErrorMessage(raw))
+    };
+  } catch {
+    return {};
+  }
+}
+
+function extractBridgeErrorCode(raw: string): string | undefined {
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!isRecord(parsed)) return undefined;
+    if (typeof parsed.errorCode === "string") return parsed.errorCode;
+    return isRecord(parsed.error) && typeof parsed.error.errorCode === "string"
+      ? parsed.error.errorCode
+      : undefined;
   } catch {
     return undefined;
   }
+}
+
+function bridgeDegradedReason(status: number, errorCode: string | undefined): string {
+  if (status === 409 && errorCode === "preflight_blocked") {
+    return "sdlca_bridge_forensic_preflight_blocked";
+  }
+  if (status === 403 && errorCode === "working_directory_not_allowed") {
+    return "sdlca_bridge_forensic_working_directory_not_allowed";
+  }
+  return `sdlca_bridge_forensic_execute_failed_${status}`;
 }
 
 function extractBridgeErrorMessage(raw: string): string {
@@ -897,12 +926,15 @@ function providerKindForReviewerModel(reviewerModel: string): SdlcaBridgeProvide
   if (normalized.includes("sonnet") || normalized.includes("opus")) return "claude";
   if (normalized.includes("composer")) return "cursor";
   if (normalized.includes("copilot")) return "copilot";
+  if (normalized.includes("grok") || normalized.includes("kimi")) return "opencode";
   return "codex";
 }
 
 function bridgeModelOverrideForReviewerModel(reviewerModel: string): string | undefined {
   const normalized = reviewerModel.trim();
   const lower = normalized.toLowerCase();
+  if (lower === "grok") return "xai/grok-4.5";
+  if (lower === "kimi") return "kimi-for-coding/k3";
   const genericReviewerLabels = new Set([
     "composer",
     "copilot",
@@ -958,7 +990,7 @@ const forensicArtifactSchema = {
       type: "array"
     },
     generatedAt: { type: "string" },
-    providerKind: { enum: ["claude", "codex", "copilot", "cursor"] },
+    providerKind: { enum: ["claude", "codex", "copilot", "cursor", "opencode"] },
     providerRole: { enum: ["reviewer"] },
     provenance: {
       additionalProperties: true,
@@ -1005,7 +1037,13 @@ function trimTrailingSlash(value: string): string {
 }
 
 function isProviderKind(value: unknown): value is SdlcaBridgeProviderKind {
-  return value === "claude" || value === "codex" || value === "copilot" || value === "cursor";
+  return (
+    value === "claude" ||
+    value === "codex" ||
+    value === "copilot" ||
+    value === "cursor" ||
+    value === "opencode"
+  );
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
