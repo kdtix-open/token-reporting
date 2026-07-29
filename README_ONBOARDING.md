@@ -46,6 +46,12 @@ Use the devcontainer in `.devcontainer/devcontainer.json` for a reproducible Nod
 - `TOKEN_REPORTING_NODE_BIN`: absolute Node executable pinned into macOS launchd or WSL systemd-user startup units.
 - `TOKEN_REPORTING_PORT`: local production port, `8095` for the SDLCA Caddy route.
 - `TOKEN_REPORTING_HOST`: bind address, normally `0.0.0.0` so Docker Desktop can reach the host service through `host.docker.internal`.
+- `TOKEN_REPORTING_BUILD_SHA`: optional reviewed source SHA embedded in `dist/build-metadata.json`; falls back to `GITHUB_SHA` or the local Git revision during builds.
+- `TOKEN_REPORTING_BUILD_VERSION`: optional safe build version embedded in `dist/build-metadata.json`; falls back to the package version.
+
+Docker builds accept the same values as build arguments. Set `TOKEN_REPORTING_BUILD_SHA` to the reviewed merge SHA before building the production image; the Dockerfile passes it to the build and the resulting operational-status response reports that artifact identity.
+
+Builds fail before generating output when `TOKEN_REPORTING_READ_ONLY=true` or `1`. A source Git SHA is used only when the worktree is clean; production and CI builds should pass the reviewed SHA explicitly.
 - `TOKEN_REPORTING_SDLCA_BRIDGE_URL`: SDLCA local bridge URL for forensic reviewer execution.
 - `TOKEN_REPORTING_SDLCA_BRIDGE_TOKEN`: SDLCA bridge bearer token; store only in the admin env file or secret store and never print.
 - `TOKEN_REPORTING_SDLCA_BRIDGE_WORKING_DIRECTORY`: working directory sent to the local bridge for forensic reviewer execution.

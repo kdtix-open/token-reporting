@@ -2,11 +2,15 @@ import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 
 const tokenReportingBasePath = normalizeBasePath(process.env.TOKEN_REPORTING_BASE_PATH ?? "/");
+const tokenReportingDistRoot = process.env.TOKEN_REPORTING_DIST_ROOT?.trim() || "dist";
 const apiProxyTarget =
   process.env.TOKEN_REPORTING_INTEGRATION_API_PROXY ?? "http://127.0.0.1:8788";
 
 export default defineConfig({
   base: tokenReportingBasePath === "" ? "/" : `${tokenReportingBasePath}/`,
+  build: {
+    outDir: tokenReportingDistRoot
+  },
   plugins: [react()],
   server: {
     proxy: {

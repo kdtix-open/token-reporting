@@ -3,6 +3,9 @@ services:
     build:
       context: ../..
       dockerfile: deploy/local-docker/Dockerfile
+      args:
+        TOKEN_REPORTING_BUILD_SHA: ${TOKEN_REPORTING_BUILD_SHA:-}
+        TOKEN_REPORTING_BUILD_VERSION: ${TOKEN_REPORTING_BUILD_VERSION:-}
     image: kdtix/token-reporting:hybrid
     environment:
       DEBUG: "3"

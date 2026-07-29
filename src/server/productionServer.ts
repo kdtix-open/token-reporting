@@ -1,4 +1,4 @@
-import { createReadStream } from "node:fs";
+import { createReadStream, readFileSync } from "node:fs";
 import fs from "node:fs/promises";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import path from "node:path";
@@ -42,6 +42,7 @@ export function createTokenReportingProductionServer(
   const basePath = normalizePublicBasePath(options.basePath ?? env.TOKEN_REPORTING_PUBLIC_BASE_PATH);
   const dataRoot = path.resolve(options.dataRoot ?? env.TOKEN_REPORTING_DATA_ROOT ?? "public/data");
   const distRoot = path.resolve(options.distRoot ?? env.TOKEN_REPORTING_DIST_ROOT ?? "dist");
+  const buildMetadata = readBuildMetadata(distRoot);
   const logger = options.logger ?? createProductionLogger(env);
   const handleApiRequest =
     options.handleApiRequest ?? createProductionApiHandler({ dataRoot, env, logger, options });
@@ -56,6 +57,7 @@ export function createTokenReportingProductionServer(
     try {
       await routeProductionRequest({
         basePath,
+        buildMetadata,
         dataRoot,
         distRoot,
         env,
@@ -103,6 +105,7 @@ function createProductionApiHandler(args: {
 
 async function routeProductionRequest(args: {
   basePath: string;
+  buildMetadata: BuildMetadata;
   dataRoot: string;
   distRoot: string;
   env: NodeJS.ProcessEnv;
@@ -137,6 +140,8 @@ async function routeProductionRequest(args: {
 
 async function routeApiRequest(
   args: {
+    buildMetadata: BuildMetadata;
+    distRoot: string;
     env: NodeJS.ProcessEnv;
     handleApiRequest: (request: IntegrationContractRequest) => Promise<IntegrationContractResponse>;
     logger: ObservabilityLogger;
@@ -146,7 +151,7 @@ async function routeApiRequest(
   apiPath: string
 ): Promise<void> {
   if (apiPath === "/api/operational-status" && args.request.method === "GET") {
-    writeJson(args.response, 200, buildOperationalStatus(args.env), {
+    writeJson(args.response, 200, buildOperationalStatus(args.env, args.buildMetadata), {
       "Cache-Control": "no-store"
     });
     return;
@@ -321,7 +326,13 @@ function createConfiguredForensicExecutor(env: NodeJS.ProcessEnv, logger: Observ
   });
 }
 
-function buildOperationalStatus(env: NodeJS.ProcessEnv): {
+type BuildMetadata = { sha: string | null; version: string | null };
+
+function buildOperationalStatus(env: NodeJS.ProcessEnv, buildMetadata: BuildMetadata): {
+  build: {
+    sha: string | null;
+    version: string | null;
+  };
   forensics: {
     bridgeTimeoutMs: number;
     bridgeUrlConfigured: boolean;
@@ -333,8 +344,11 @@ function buildOperationalStatus(env: NodeJS.ProcessEnv): {
 } {
   const bridgeUrlConfigured = Boolean(env.TOKEN_REPORTING_SDLCA_BRIDGE_URL?.trim());
   const tokenConfigured = Boolean(env.TOKEN_REPORTING_SDLCA_BRIDGE_TOKEN?.trim());
-
   return {
+    build: {
+      sha: buildMetadata.sha ?? readSafeBuildSha(env.TOKEN_REPORTING_BUILD_SHA),
+      version: buildMetadata.version ?? readSafeBuildVersion(env.TOKEN_REPORTING_BUILD_VERSION)
+    },
     forensics: {
       bridgeTimeoutMs: readPositiveInteger(env.TOKEN_REPORTING_SDLCA_BRIDGE_TIMEOUT_MS, 120_000),
       bridgeUrlConfigured,
@@ -346,6 +360,30 @@ function buildOperationalStatus(env: NodeJS.ProcessEnv): {
     },
     service: "token-reporting-production"
   };
+}
+
+function readBuildMetadata(distRoot: string): { sha: string | null; version: string | null } {
+  try {
+    const parsed = JSON.parse(
+      readFileSync(path.join(distRoot, "build-metadata.json"), "utf8")
+    ) as Record<string, unknown>;
+    return {
+      sha: readSafeBuildSha(typeof parsed.sha === "string" ? parsed.sha : undefined),
+      version: readSafeBuildVersion(typeof parsed.version === "string" ? parsed.version : undefined)
+    };
+  } catch {
+    return { sha: null, version: null };
+  }
+}
+
+function readSafeBuildSha(value: string | undefined): string | null {
+  const candidate = value?.trim() ?? "";
+  return /^[0-9a-f]{7,64}$/iu.test(candidate) ? candidate : null;
+}
+
+function readSafeBuildVersion(value: string | undefined): string | null {
+  const candidate = value?.trim() ?? "";
+  return /^[A-Za-z0-9][A-Za-z0-9._+-]{0,63}$/u.test(candidate) ? candidate : null;
 }
 
 function readPositiveInteger(value: string | undefined, fallback: number): number {
