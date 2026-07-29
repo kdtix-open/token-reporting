@@ -1591,6 +1591,10 @@ function textResponse(body: unknown, status = 200): Response {
 function expectStrictObjectSchemas(schema: unknown): void {
   if (!isRecord(schema)) return;
 
+  if ("const" in schema || "enum" in schema) {
+    expect(typeof schema.type).toBe("string");
+  }
+
   if (schema.type === "object") {
     expect(schema.additionalProperties).toBe(false);
     const properties = isRecord(schema.properties) ? schema.properties : {};
