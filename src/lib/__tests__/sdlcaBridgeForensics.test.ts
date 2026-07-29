@@ -901,6 +901,31 @@ describe("sdlcaBridgeForensics", () => {
     });
   });
 
+  it("createSdlcaBridgeForensicExecutor_ModelUnavailable409_KeysOnErrorCode", async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ result: [forensicProvider("opencode")] }))
+      .mockResolvedValueOnce(
+        textResponse(
+          { errorCode: "model_unavailable", message: "The requested model is not available." },
+          409
+        )
+      );
+    const executor = createSdlcaBridgeForensicExecutor({
+      bridgeToken: "bridge-token",
+      bridgeUrl: "http://127.0.0.1:4818",
+      fetcher,
+      workingDirectory: "/Users/ckreager/repos/kdtix/token_reporting"
+    });
+
+    const result = await executor(forensicRequest(["grok"]));
+
+    expect(result.reviewerArtifacts[0]).toMatchObject({
+      degradedReason: "sdlca_bridge_forensic_model_unavailable",
+      diagnostics: { bridgeErrorCode: "model_unavailable", bridgeHttpStatus: 409 }
+    });
+  });
+
   it("createSdlcaBridgeForensicExecutor_WorkingDirectoryNotAllowed403_KeysOnErrorCode", async () => {
     const fetcher = vi
       .fn()

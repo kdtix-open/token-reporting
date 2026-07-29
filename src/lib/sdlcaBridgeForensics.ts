@@ -839,6 +839,9 @@ function bridgeDegradedReason(status: number, errorCode: string | undefined): st
   if (status === 409 && errorCode === "preflight_blocked") {
     return "sdlca_bridge_forensic_preflight_blocked";
   }
+  if (status === 409 && errorCode === "model_unavailable") {
+    return "sdlca_bridge_forensic_model_unavailable";
+  }
   if (status === 403 && errorCode === "working_directory_not_allowed") {
     return "sdlca_bridge_forensic_working_directory_not_allowed";
   }
