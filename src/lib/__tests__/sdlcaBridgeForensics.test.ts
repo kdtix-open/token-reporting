@@ -339,10 +339,10 @@ describe("sdlcaBridgeForensics", () => {
           result: [
             {
               forensicCapabilities,
-              kind: "codex",
-              providerId: "codex-reviewer",
-              providerName: "Codex Reviewer",
-              resolvedExecutable: "/usr/bin/codex"
+              kind: "opencode",
+              providerId: "opencode-reviewer",
+              providerName: "OpenCode Reviewer",
+              resolvedExecutable: "/usr/bin/opencode"
             }
           ]
         })
@@ -384,7 +384,7 @@ describe("sdlcaBridgeForensics", () => {
 
     resolveExecute?.(
       jsonResponse({
-        result: forensicArtifact("codex", "Kimi perspective")
+        result: forensicArtifact("opencode", "Kimi perspective")
       })
     );
     await expect(resultPromise).resolves.toMatchObject({
@@ -539,10 +539,10 @@ describe("sdlcaBridgeForensics", () => {
             result: [
               {
                 forensicCapabilities,
-                kind: "codex",
-                providerId: "codex-reviewer",
-                providerName: "Codex Reviewer",
-                resolvedExecutable: "/usr/bin/codex"
+                kind: "opencode",
+                providerId: "opencode-reviewer",
+                providerName: "OpenCode Reviewer",
+                resolvedExecutable: "/usr/bin/opencode"
               }
             ]
           })
@@ -587,10 +587,10 @@ describe("sdlcaBridgeForensics", () => {
       expect(result.status).toBe("degraded");
       expect(result.reviewerArtifacts).toEqual([
         expect.objectContaining({
-          bridgeProviderKind: "codex",
+          bridgeProviderKind: "opencode",
           degradedReason: "sdlca_bridge_forensic_execute_timeout",
           diagnostics: expect.objectContaining({
-            bridgeProviderKind: "codex",
+            bridgeProviderKind: "opencode",
             timeoutMs: 1_000
           }),
           reviewerModel: "kimi",
@@ -613,10 +613,10 @@ describe("sdlcaBridgeForensics", () => {
             result: [
               {
                 forensicCapabilities,
-                kind: "codex",
-                providerId: "codex-reviewer",
-                providerName: "Codex Reviewer",
-                resolvedExecutable: "/usr/bin/codex"
+                kind: "opencode",
+                providerId: "opencode-reviewer",
+                providerName: "OpenCode Reviewer",
+                resolvedExecutable: "/usr/bin/opencode"
               }
             ]
           })
@@ -729,6 +729,76 @@ describe("sdlcaBridgeForensics", () => {
     });
   });
 
+  it("createSdlcaBridgeForensicExecutor_OpenCodeReviewers_SendExactSupportedModels", async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse({
+          result: [
+            {
+              forensicCapabilities,
+              kind: "opencode",
+              providerId: "opencode-reviewer",
+              providerName: "OpenCode Reviewer",
+              resolvedExecutable: "/opt/homebrew/bin/opencode"
+            }
+          ]
+        })
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({ result: forensicArtifact("opencode", "Grok perspective") })
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({ result: forensicArtifact("opencode", "Kimi perspective") })
+      );
+
+    const executor = createSdlcaBridgeForensicExecutor({
+      bridgeToken: "bridge-token",
+      bridgeUrl: "http://127.0.0.1:4818",
+      fetcher,
+      workingDirectory: "/Users/ckreager/repos/kdtix/token_reporting"
+    });
+
+    const result = await executor({
+      createdAt: "2026-07-23T18:30:00.000Z",
+      evidencePacket,
+      huggingFaceCandidateSetId: "hf-candidates-test",
+      reviewerModels: ["grok", "kimi"],
+      runId: "dynamic-forensic-20260723T183000000Z",
+      usageSnapshotId: "dynamic-usage-codex-2026-07-23"
+    });
+
+    const grokBody = JSON.parse(fetcher.mock.calls[1]![1]!.body as string);
+    const kimiBody = JSON.parse(fetcher.mock.calls[2]![1]!.body as string);
+    expect(grokBody).toMatchObject({
+      executionKind: "forensic",
+      model: "xai/grok-4.5",
+      providerKind: "opencode",
+      providerRole: "reviewer"
+    });
+    expect(kimiBody).toMatchObject({
+      executionKind: "forensic",
+      model: "kimi-for-coding/k3",
+      providerKind: "opencode",
+      providerRole: "reviewer"
+    });
+    expect(result).toMatchObject({
+      reviewerArtifacts: [
+        expect.objectContaining({
+          bridgeProviderKind: "opencode",
+          reviewerModel: "grok",
+          status: "completed"
+        }),
+        expect.objectContaining({
+          bridgeProviderKind: "opencode",
+          reviewerModel: "kimi",
+          status: "completed"
+        })
+      ],
+      status: "completed"
+    });
+  });
+
   it("createSdlcaBridgeForensicExecutor_BridgeExecuteFailure_PersistsRedactedDiagnostics", async () => {
     const fetcher = vi
       .fn()
@@ -786,6 +856,53 @@ describe("sdlcaBridgeForensics", () => {
       })
     ]);
     expect(JSON.stringify(result.reviewerArtifacts[0]?.diagnostics)).not.toContain("super-secret");
+  });
+
+  it("createSdlcaBridgeForensicExecutor_PreflightBlocked409_KeysOnErrorCode", async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ result: [forensicProvider("claude")] }))
+      .mockResolvedValueOnce(
+        textResponse({ errorCode: "preflight_blocked", message: "Re-authenticate Claude." }, 409)
+      );
+    const executor = createSdlcaBridgeForensicExecutor({
+      bridgeToken: "bridge-token",
+      bridgeUrl: "http://127.0.0.1:4818",
+      fetcher,
+      workingDirectory: "/Users/ckreager/repos/kdtix/token_reporting"
+    });
+
+    const result = await executor(forensicRequest(["sonnet"]));
+
+    expect(result.reviewerArtifacts[0]).toMatchObject({
+      degradedReason: "sdlca_bridge_forensic_preflight_blocked",
+      diagnostics: { bridgeErrorCode: "preflight_blocked", bridgeHttpStatus: 409 }
+    });
+  });
+
+  it("createSdlcaBridgeForensicExecutor_WorkingDirectoryNotAllowed403_KeysOnErrorCode", async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ result: [forensicProvider("claude")] }))
+      .mockResolvedValueOnce(
+        textResponse(
+          { errorCode: "working_directory_not_allowed", message: "Directory is not approved." },
+          403
+        )
+      );
+    const executor = createSdlcaBridgeForensicExecutor({
+      bridgeToken: "bridge-token",
+      bridgeUrl: "http://127.0.0.1:4818",
+      fetcher,
+      workingDirectory: "/Users/ckreager/repos/kdtix/token_reporting"
+    });
+
+    const result = await executor(forensicRequest(["sonnet"]));
+
+    expect(result.reviewerArtifacts[0]).toMatchObject({
+      degradedReason: "sdlca_bridge_forensic_working_directory_not_allowed",
+      diagnostics: { bridgeErrorCode: "working_directory_not_allowed", bridgeHttpStatus: 403 }
+    });
   });
 
   it("createSdlcaBridgeForensicExecutor_NormalizedReviewerText_RedactsSecrets", async () => {
@@ -1385,7 +1502,10 @@ describe("sdlcaBridgeForensics", () => {
   });
 });
 
-function forensicArtifact(providerKind: "claude" | "codex" | "copilot", summary: string) {
+function forensicArtifact(
+  providerKind: "claude" | "codex" | "copilot" | "opencode",
+  summary: string
+) {
   return {
     artifactKind: "local_model_forensic_review",
     artifactSchemaVersion: "sdlca.bridge.forensic.v0",
@@ -1406,6 +1526,27 @@ function forensicArtifact(providerKind: "claude" | "codex" | "copilot", summary:
     },
     recommendations: [`${summary} recommendation`],
     summary
+  };
+}
+
+function forensicProvider(kind: "claude" | "codex" | "copilot" | "cursor" | "opencode") {
+  return {
+    forensicCapabilities,
+    kind,
+    providerId: `${kind}-reviewer`,
+    providerName: `${kind} Reviewer`,
+    resolvedExecutable: `/usr/bin/${kind}`
+  };
+}
+
+function forensicRequest(reviewerModels: string[]) {
+  return {
+    createdAt: "2026-06-07T17:30:00.000Z",
+    evidencePacket,
+    huggingFaceCandidateSetId: "hf-candidates-test",
+    reviewerModels,
+    runId: "dynamic-forensic-20260607T173000000Z",
+    usageSnapshotId: "dynamic-usage-codex-2026-06-07"
   };
 }
 
