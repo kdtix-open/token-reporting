@@ -1533,6 +1533,7 @@ function forensicArtifact(
     findings: [
       {
         details: `${providerKind} reviewed the local model evidence packet.`,
+        evidenceRefs: [],
         severity: "info",
         title: "Evidence reviewed"
       }
@@ -1594,7 +1595,7 @@ function expectStrictObjectSchemas(schema: unknown): void {
     expect(schema.additionalProperties).toBe(false);
     const properties = isRecord(schema.properties) ? schema.properties : {};
     const required = Array.isArray(schema.required) ? schema.required : [];
-    expect(required).toEqual(expect.arrayContaining(Object.keys(properties)));
+    expect([...required].sort()).toEqual(Object.keys(properties).sort());
   }
 
   if (isRecord(schema.properties)) {
