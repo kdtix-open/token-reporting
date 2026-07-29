@@ -1,4 +1,4 @@
-import { createReadStream } from "node:fs";
+import { createReadStream, readFileSync } from "node:fs";
 import fs from "node:fs/promises";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import path from "node:path";
@@ -137,6 +137,7 @@ async function routeProductionRequest(args: {
 
 async function routeApiRequest(
   args: {
+    distRoot: string;
     env: NodeJS.ProcessEnv;
     handleApiRequest: (request: IntegrationContractRequest) => Promise<IntegrationContractResponse>;
     logger: ObservabilityLogger;
@@ -146,7 +147,7 @@ async function routeApiRequest(
   apiPath: string
 ): Promise<void> {
   if (apiPath === "/api/operational-status" && args.request.method === "GET") {
-    writeJson(args.response, 200, buildOperationalStatus(args.env), {
+    writeJson(args.response, 200, buildOperationalStatus(args.env, args.distRoot), {
       "Cache-Control": "no-store"
     });
     return;
@@ -321,7 +322,7 @@ function createConfiguredForensicExecutor(env: NodeJS.ProcessEnv, logger: Observ
   });
 }
 
-function buildOperationalStatus(env: NodeJS.ProcessEnv): {
+function buildOperationalStatus(env: NodeJS.ProcessEnv, distRoot: string): {
   build: {
     sha: string | null;
     version: string | null;
@@ -337,11 +338,12 @@ function buildOperationalStatus(env: NodeJS.ProcessEnv): {
 } {
   const bridgeUrlConfigured = Boolean(env.TOKEN_REPORTING_SDLCA_BRIDGE_URL?.trim());
   const tokenConfigured = Boolean(env.TOKEN_REPORTING_SDLCA_BRIDGE_TOKEN?.trim());
+  const buildMetadata = readBuildMetadata(distRoot);
 
   return {
     build: {
-      sha: readSafeBuildSha(env.TOKEN_REPORTING_BUILD_SHA),
-      version: readSafeBuildVersion(env.TOKEN_REPORTING_BUILD_VERSION)
+      sha: buildMetadata.sha ?? readSafeBuildSha(env.TOKEN_REPORTING_BUILD_SHA),
+      version: buildMetadata.version ?? readSafeBuildVersion(env.TOKEN_REPORTING_BUILD_VERSION)
     },
     forensics: {
       bridgeTimeoutMs: readPositiveInteger(env.TOKEN_REPORTING_SDLCA_BRIDGE_TIMEOUT_MS, 120_000),
@@ -354,6 +356,20 @@ function buildOperationalStatus(env: NodeJS.ProcessEnv): {
     },
     service: "token-reporting-production"
   };
+}
+
+function readBuildMetadata(distRoot: string): { sha: string | null; version: string | null } {
+  try {
+    const parsed = JSON.parse(
+      readFileSync(path.join(distRoot, "build-metadata.json"), "utf8")
+    ) as Record<string, unknown>;
+    return {
+      sha: readSafeBuildSha(typeof parsed.sha === "string" ? parsed.sha : undefined),
+      version: readSafeBuildVersion(typeof parsed.version === "string" ? parsed.version : undefined)
+    };
+  } catch {
+    return { sha: null, version: null };
+  }
 }
 
 function readSafeBuildSha(value: string | undefined): string | null {
