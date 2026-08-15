@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: MIT
+# Production install: prefer a durable deploy worktree under
+#   ~/.local/share/kdtix/token-reporting/deploy-<sha>
+# Do NOT leave long-lived deploy/PR trees as ~/repos/kdtix/token_reporting-* siblings.
+# Keep TOKEN_REPORTING_DATA_ROOT / LOG_ROOT / ADMIN_ENV_FILE on the canonical checkout.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

@@ -56,11 +56,20 @@ docker compose -f deploy/hybrid-cloudflare/docker-compose.yml up --build
 npm run build:projectit
 
 # macOS LaunchAgent on the port SDLCA Caddy already proxies
+# Prefer installing from a durable deploy worktree (not a repos/kdtix sibling):
+#   git worktree add ~/.local/share/kdtix/token-reporting/deploy-<sha> <sha>
+#   cd that tree && npm ci && npm run build:projectit && npm run startup:install:macos
+# Keep DATA/LOG/ADMIN on the canonical checkout via env overrides if needed.
 npm run startup:install:macos
 
 # WSL/systemd-user service on the port SDLCA Caddy already proxies
 npm run startup:install:wsl
 ```
+
+**Path hygiene:** never park agent/PR worktrees as `~/repos/kdtix/token_reporting-*`.
+Use `/tmp/token_reporting-worktrees/` and always `git worktree remove --force` when done.
+Production code may live under `~/.local/share/kdtix/token-reporting/deploy-*` (durable);
+data/logs/credentials stay on the canonical `token_reporting` checkout. See `AGENTS.md`.
 
 The macOS and WSL startup installers pin the exact `node` binary resolved on the
 local machine and run Token Reporting on `TOKEN_REPORTING_PORT=8095` by default,
