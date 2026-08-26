@@ -64,6 +64,28 @@ describe("productionServer", () => {
     expect(await spaResponse.text()).toContain("Token Reporting shell");
   });
 
+  it("createTokenReportingProductionServer_MissingMountedDataFile_ReturnsPromptSanitizedNotFound", async () => {
+    const roots = await createFixtureRoots();
+    const server = createTokenReportingProductionServer({
+      basePath: "/tools/token-reporting",
+      dataRoot: roots.dataRoot,
+      distRoot: roots.distRoot,
+      handleApiRequest: async () => ({ body: {}, headers: {}, status: 200 })
+    });
+    const baseUrl = await listen(server);
+
+    const response = await fetch(
+      `${baseUrl}/tools/token-reporting/data/integration/sdlca-contract.json`,
+      { signal: AbortSignal.timeout(500) }
+    );
+
+    expect(response.headers.get("cache-control")).toBe("no-store");
+    await expectJson(response, 404, {
+      code: "not_found",
+      message: "Requested data file was not found."
+    });
+  });
+
   it("createTokenReportingProductionServer_RootRequest_RedirectsToConfiguredBasePath", async () => {
     const roots = await createFixtureRoots();
     const server = createTokenReportingProductionServer({
