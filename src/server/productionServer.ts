@@ -131,7 +131,23 @@ async function routeProductionRequest(args: {
   }
 
   if (normalizedRequest.path.startsWith("/data/")) {
-    await routeStaticFile(args.response, args.dataRoot, normalizedRequest.path.slice(6), false);
+    const served = await routeStaticFile(
+      args.response,
+      args.dataRoot,
+      normalizedRequest.path.slice(6),
+      false
+    );
+    if (!served) {
+      writeJson(
+        args.response,
+        404,
+        {
+          code: "not_found",
+          message: "Requested data file was not found."
+        },
+        { "Cache-Control": "no-store" }
+      );
+    }
     return;
   }
 
