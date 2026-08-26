@@ -84,3 +84,40 @@ recovery, or a LaunchAgent/systemd reinstall. Use
 `npm run build:projectit && npm run verify:projectit-build`, then verify mounted API,
 data, and refresh routes under `/tools/token-reporting`. SDLCA recovery plans must retain
 the Token Reporting LaunchAgent upstream on port 8095.
+
+## Worktree / deploy path hygiene (mandatory)
+
+Do **not** create disposable checkouts as siblings under
+`/Users/ckreager/repos/kdtix/token_reporting-*`. That path littered multi‑hundred‑MB
+worktrees historically.
+
+| Purpose | Path |
+|---------|------|
+| Canonical git checkout | `~/repos/kdtix/token_reporting` only |
+| Disposable agent/PR worktrees | `/tmp/token_reporting-worktrees/<slug>` |
+| Production LaunchAgent code tree | `~/.local/share/kdtix/token-reporting/deploy-<sha>` (durable; **not** `/tmp`) |
+| Data / logs / admin env | stay on canonical: `public/data`, `logs`, `.env.admin.credentials` |
+| Patch/report archives | `/tmp/token_reporting-worktrees/archive/` |
+
+### Create disposable worktree
+
+```bash
+ROOT=/tmp/token_reporting-worktrees
+mkdir -p "$ROOT"
+WT="$ROOT/token_reporting-<slug>-$(date +%Y%m%dT%H%M%S)"
+git -C ~/repos/kdtix/token_reporting worktree add -b codex/<slug> "$WT" origin/main
+```
+
+### Self-cleanup (always — success, failure, or abort)
+
+1. `git -C ~/repos/kdtix/token_reporting worktree remove --force "$WT"`
+2. `git worktree prune`
+3. Optional: write `git diff` / `git diff --cached` under
+   `/tmp/token_reporting-worktrees/archive/` **before** remove
+
+### Production deploy
+
+Install LaunchAgent **from** the durable deploy worktree (or set `REPO_ROOT` to it),
+not from a sibling under `repos/kdtix/`. Keep `TOKEN_REPORTING_DATA_ROOT`,
+`TOKEN_REPORTING_LOG_ROOT`, and `TOKEN_REPORTING_ADMIN_ENV_FILE` pointed at the
+canonical checkout so data survives redeploys.
