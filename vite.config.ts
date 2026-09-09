@@ -9,7 +9,15 @@ const apiProxyTarget =
 export default defineConfig({
   base: tokenReportingBasePath === "" ? "/" : `${tokenReportingBasePath}/`,
   build: {
-    outDir: tokenReportingDistRoot
+    outDir: tokenReportingDistRoot,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          react: ["react", "react-dom"],
+          validation: ["zod"]
+        }
+      }
+    }
   },
   plugins: [react()],
   server: {
