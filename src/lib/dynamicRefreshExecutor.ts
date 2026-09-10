@@ -1,6 +1,7 @@
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 
+import { resolveDataRoot } from "./dataRoot";
 import type {
   DynamicProviderRefreshResult,
   DynamicRefreshExecutionResult,
@@ -23,6 +24,7 @@ export type ProviderScriptRunner = (
 ) => Promise<ProviderScriptRunResult>;
 
 export interface ProviderScriptRefreshExecutorOptions {
+  dataRoot?: string;
   env?: NodeJS.ProcessEnv;
   logger?: ObservabilityLogger;
   now?: () => Date;
@@ -50,7 +52,11 @@ const providerScripts: ProviderRefreshScript[] = [
 export function createProviderScriptRefreshExecutor(
   options: ProviderScriptRefreshExecutorOptions = {}
 ): DynamicRefreshExecutor {
-  const env = options.env ?? process.env;
+  const configuredEnv = options.env ?? process.env;
+  const env = options.dataRoot === undefined ? configuredEnv : {
+    ...configuredEnv,
+    TOKEN_REPORTING_DATA_ROOT: resolveDataRoot({ dataRoot: options.dataRoot, env: configuredEnv })
+  };
   const logger = options.logger?.withContext({ component: "dynamicRefreshExecutor" });
   const now = options.now ?? (() => new Date());
   const runScript = options.runScript ?? runNpmScript;

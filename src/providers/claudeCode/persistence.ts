@@ -1,6 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
+import { resolveDataRoot } from "../../lib/dataRoot";
 import { assertWritableOperationAllowed } from "../../lib/permissions";
 import {
   accumulatedPathForLatest,
@@ -12,19 +13,15 @@ import type { ClaudeCodeSnapshot } from "./types";
 interface PersistSnapshotArgs {
   snapshot: ClaudeCodeSnapshot;
   outputPath?: string;
+  dataRoot?: string;
   env?: NodeJS.ProcessEnv;
 }
 
 export async function persistClaudeCodeSnapshot({
   snapshot,
-  outputPath = path.join(
-    process.cwd(),
-    "public",
-    "data",
-    "claude-code",
-    "latest-metadata.json"
-  ),
-  env = process.env
+  env = process.env,
+  dataRoot,
+  outputPath = path.join(resolveDataRoot({ dataRoot, env }), "claude-code", "latest-metadata.json")
 }: PersistSnapshotArgs): Promise<string> {
   assertWritableOperationAllowed("Persisting Claude Code usage data", env);
 

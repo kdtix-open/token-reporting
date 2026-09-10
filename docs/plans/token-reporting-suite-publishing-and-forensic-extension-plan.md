@@ -192,7 +192,14 @@ These endpoints are static and redacted. They expose dispatch-guard evidence
 for proactive provider exhaustion prediction without exposing provider admin
 tokens, signed URLs, raw user identifiers, or raw admin snapshots.
 
-Dynamic v0.1 is now represented in code by
+Historical v0.1 design below: its numeric fallback, provenance, and time semantics
+are superseded by the [v0.2 actuals contract](../integration/actuals-contract-v0.2.md)
+under [issue #38](https://github.com/kdtix-open/token-reporting/issues/38).
+Source implementation and currently deployed behavior require separate readback.
+In v0.2, seed data cannot authorize dispatch, absent limits stay unknown, and
+response time is not reported as collection time.
+
+Dynamic v0.1 was represented in code by
 `src/lib/integrationContractDynamic.ts` and can be served locally with:
 
 ```bash

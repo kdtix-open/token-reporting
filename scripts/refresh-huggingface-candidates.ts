@@ -1,17 +1,11 @@
-import fs from "node:fs/promises";
-import path from "node:path";
-
 import { refreshHuggingFaceCandidates } from "../src/lib/huggingFaceCandidates";
-
-const outputPath =
-  process.env.TOKEN_REPORTING_HF_CANDIDATES_PATH ??
-  path.resolve("public/data/huggingface/local-model-candidates.json");
+import { persistHuggingFaceCandidates } from "../src/lib/huggingFaceCandidatePersistence";
+import { assertWritableOperationAllowed } from "../src/lib/permissions";
 
 async function main(): Promise<void> {
+  assertWritableOperationAllowed("Refreshing Hugging Face candidates");
   const candidateSet = await refreshHuggingFaceCandidates();
-
-  await fs.mkdir(path.dirname(outputPath), { recursive: true });
-  await fs.writeFile(outputPath, `${JSON.stringify(candidateSet, null, 2)}\n`, "utf8");
+  const outputPath = await persistHuggingFaceCandidates(candidateSet);
 
   process.stdout.write(
     `Wrote ${candidateSet.candidates.length} Hugging Face candidates to ${outputPath}\n`

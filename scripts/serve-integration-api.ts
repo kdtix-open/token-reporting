@@ -1,6 +1,7 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import path from "node:path";
 
+import { resolveDataRoot } from "../src/lib/dataRoot";
 import {
   createDynamicIntegrationContractHandler,
   type DynamicProviderBudgetLimit
@@ -19,7 +20,7 @@ const loggingConfig = resolveLoggingConfig({
 });
 const logger = createObservabilityLogger(loggingConfig);
 const port = Number.parseInt(process.env.TOKEN_REPORTING_INTEGRATION_API_PORT ?? "8788", 10);
-const dataRoot = process.env.TOKEN_REPORTING_DATA_ROOT ?? path.resolve("public/data");
+const dataRoot = resolveDataRoot();
 const refreshJobStorePath =
   process.env.TOKEN_REPORTING_REFRESH_JOB_STORE_PATH ??
   path.join(dataRoot, "integration", "refresh-jobs.json");
@@ -31,7 +32,7 @@ const handleRequest = createDynamicIntegrationContractHandler({
   dataRoot,
   forensicExecutor: createConfiguredForensicExecutor(),
   forensicRunStore: createFileForensicRunStore(forensicRunStorePath),
-  refreshExecutor: createProviderScriptRefreshExecutor({ logger }),
+  refreshExecutor: createProviderScriptRefreshExecutor({ dataRoot, logger }),
   refreshJobStore: createFileRefreshJobStore(refreshJobStorePath)
 });
 

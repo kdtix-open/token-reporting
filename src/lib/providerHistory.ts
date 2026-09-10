@@ -1,5 +1,6 @@
 import path from "node:path";
 
+import { resolveDataRoot, type DataRootOptions } from "./dataRoot";
 import {
   addDays,
   defaultHistoricalStartDay,
@@ -16,11 +17,9 @@ export interface FetchDayWindow {
   endDay: string;
 }
 
-export function accumulatedSnapshotPath(providerId: string): string {
+export function accumulatedSnapshotPath(providerId: string, options: DataRootOptions = {}): string {
   return path.join(
-    process.cwd(),
-    "public",
-    "data",
+    resolveDataRoot(options),
     providerId,
     "accumulated-metadata.json"
   );
@@ -30,7 +29,7 @@ export async function resolveFetchDayWindow(
   providerId: HistoryProviderId,
   env: NodeJS.ProcessEnv = process.env
 ): Promise<FetchDayWindow> {
-  const lastDay = await readLastStoredDay(providerId);
+  const lastDay = await readLastStoredDay(providerId, env);
   const startDay = incrementalStartDay(lastDay, env);
   const endDay = new Date().toISOString().slice(0, 10);
   return { startDay, endDay };
@@ -64,9 +63,9 @@ export function historicalStartDay(env: NodeJS.ProcessEnv = process.env): string
   return defaultHistoricalStartDay(env);
 }
 
-async function readLastStoredDay(providerId: HistoryProviderId): Promise<string | null> {
+async function readLastStoredDay(providerId: HistoryProviderId, env: NodeJS.ProcessEnv): Promise<string | null> {
   const raw = await readJsonIfExists<Record<string, unknown>>(
-    accumulatedSnapshotPath(providerId)
+    accumulatedSnapshotPath(providerId, { env })
   );
   if (!raw) return null;
 

@@ -120,6 +120,8 @@ export type GitHubCopilotUsageSummary = z.infer<
 
 export const gitHubCopilotLatestUsersReportSchema = z.object({
   download_links: z.array(z.url()),
+  /** Safe persisted metadata when preauthenticated download URLs have been removed. */
+  download_link_count: z.number().int().nonnegative().optional(),
   report_start_day: isoDaySchema,
   report_end_day: isoDaySchema,
   generatedAt: z.string().optional(),
