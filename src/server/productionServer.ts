@@ -3,6 +3,7 @@ import fs from "node:fs/promises";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import path from "node:path";
 
+import { resolveDataRoot } from "../lib/dataRoot";
 import {
   createDynamicIntegrationContractHandler,
   type DynamicProviderBudgetLimit
@@ -40,7 +41,7 @@ export function createTokenReportingProductionServer(
 ): Server {
   const env = options.env ?? process.env;
   const basePath = normalizePublicBasePath(options.basePath ?? env.TOKEN_REPORTING_PUBLIC_BASE_PATH);
-  const dataRoot = path.resolve(options.dataRoot ?? env.TOKEN_REPORTING_DATA_ROOT ?? "public/data");
+  const dataRoot = resolveDataRoot({ dataRoot: options.dataRoot, env });
   const distRoot = path.resolve(options.distRoot ?? env.TOKEN_REPORTING_DIST_ROOT ?? "dist");
   const buildMetadata = readBuildMetadata(distRoot);
   const logger = options.logger ?? createProductionLogger(env);
@@ -96,6 +97,7 @@ function createProductionApiHandler(args: {
     forensicExecutor: createConfiguredForensicExecutor(args.env, args.logger),
     forensicRunStore: createFileForensicRunStore(forensicRunStorePath),
     refreshExecutor: createProviderScriptRefreshExecutor({
+      dataRoot: args.dataRoot,
       env: args.env,
       logger: args.logger
     }),

@@ -9,8 +9,29 @@ import {
   aggregateGitHubCopilotUsageRecords,
   createGitHubCopilotReportSummary
 } from "../service";
+import { gitHubCopilotLatestUsersReportSchema } from "../types";
 
 describe("createGitHubCopilotReportSummary", () => {
+  it.each([0, 3])("CreateSummary_SanitizedDownloadCount%s_PreservesCountWithoutUrls", (count) => {
+    const report = gitHubCopilotLatestUsersReportSchema.parse({
+      download_links: [], download_link_count: count,
+      report_start_day: "2026-09-01", report_end_day: "2026-09-09"
+    });
+    const summary = createGitHubCopilotReportSummary({ organization: "fixture-org", report });
+
+    expect(summary.downloadCount).toBe(count);
+    expect(summary.totalInteractions).toBeNull();
+  });
+
+  it("CreateSummary_ExplicitZeroCount_TakesPrecedenceOverLegacyUrlLength", () => {
+    const report = gitHubCopilotLatestUsersReportSchema.parse({
+      download_links: ["https://example.test/legacy.json"], download_link_count: 0,
+      report_start_day: "2026-09-01", report_end_day: "2026-09-09"
+    });
+
+    expect(createGitHubCopilotReportSummary({ organization: "fixture-org", report }).downloadCount).toBe(0);
+  });
+
   it("maps the latest report metadata into a dashboard summary", () => {
     const summary = createGitHubCopilotReportSummary({
       organization: "kdtix-open",

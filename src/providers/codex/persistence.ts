@@ -1,6 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
+import { resolveDataRoot } from "../../lib/dataRoot";
 import { assertWritableOperationAllowed } from "../../lib/permissions";
 import {
   accumulatedPathForLatest,
@@ -13,20 +14,16 @@ interface PersistReportArgs {
   usage: CodexUsageReport;
   costs?: CodexCostsReport;
   outputPath?: string;
+  dataRoot?: string;
   env?: NodeJS.ProcessEnv;
 }
 
 export async function persistCodexUsageReport({
   usage,
   costs,
-  outputPath = path.join(
-    process.cwd(),
-    "public",
-    "data",
-    "codex",
-    "latest-metadata.json"
-  ),
-  env = process.env
+  env = process.env,
+  dataRoot,
+  outputPath = path.join(resolveDataRoot({ dataRoot, env }), "codex", "latest-metadata.json")
 }: PersistReportArgs): Promise<string> {
   assertWritableOperationAllowed("Persisting OpenAI Codex usage data", env);
 

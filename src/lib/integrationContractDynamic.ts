@@ -1,8 +1,12 @@
-import fs from "node:fs/promises";
-import path from "node:path";
 import { randomUUID } from "node:crypto";
 
 import { providerRegistry } from "../providers/registry";
+import { resolveDataRoot } from "./dataRoot";
+import {
+  buildProviderActualsBudgetStatus,
+  buildProviderActualsUsage,
+  loadProviderActualsSummaries
+} from "./providerActuals";
 import { createMemoryForensicRunStore, type ForensicRunStore } from "./forensicRunStore";
 import { assertWritableOperationAllowed } from "./permissions";
 import {
@@ -99,7 +103,7 @@ export interface DynamicIntegrationContractOptions {
   refreshJobStore?: RefreshJobStore;
 }
 
-const dynamicContractVersion = "sdlca-token-reporting-dynamic-v0.1";
+const dynamicContractVersion = "sdlca-token-reporting-dynamic-v0.2";
 const activeDynamicRefreshJobIds = new Set<string>();
 const terminalRefreshJobCacheLimit = 50;
 const terminalRefreshJobCacheTtlMs = 30 * 60 * 1000;
@@ -119,7 +123,7 @@ export function createDynamicIntegrationContractHandler(
   const env = options.env ?? process.env;
   const loadSummaries =
     options.loadSummaries ??
-    (() => loadProviderSummariesFromDataRoot(options.dataRoot ?? path.resolve("public/data")));
+    (() => loadProviderSummariesFromDataRoot(resolveDataRoot({ dataRoot: options.dataRoot, env })));
   const forensicRunStore = options.forensicRunStore ?? createMemoryForensicRunStore();
   const refreshJobStore = options.refreshJobStore ?? createMemoryRefreshJobStore();
   const terminalRefreshJobs: TerminalRefreshJobCache = new Map();
@@ -188,7 +192,7 @@ export function createDynamicIntegrationContractHandler(
       );
       if (budgetResponse) return budgetResponse;
 
-      const usageResponse = await dynamicUsageResponse(requestPath, loadSummaries);
+      const usageResponse = await dynamicUsageResponse(requestPath, loadSummaries, now());
       if (usageResponse) return usageResponse;
     }
 
@@ -206,16 +210,7 @@ export function createDynamicIntegrationContractHandler(
 export async function loadProviderSummariesFromDataRoot(
   dataRoot: string
 ): Promise<ProviderReportSummary[]> {
-  const summaries: ProviderReportSummary[] = [];
-
-  for (const adapter of providerRegistry) {
-    const raw = await readFirstJson(
-      snapshotPaths(adapter.dataPath).map((snapshotPath) => path.join(dataRoot, snapshotPath))
-    );
-    summaries.push(raw === undefined ? adapter.seedSummary : adapter.transformSnapshot(raw));
-  }
-
-  return summaries;
+  return loadProviderActualsSummaries(dataRoot);
 }
 
 function buildDynamicBudgetsResponse(
@@ -224,57 +219,16 @@ function buildDynamicBudgetsResponse(
   generatedAt: Date
 ): Record<string, unknown> {
   const budgets = summaries.map((summary) =>
-    buildProviderBudgetStatus(summary, budgetLimits[summary.providerId], generatedAt)
+    buildProviderActualsBudgetStatus(summary, budgetLimits[summary.providerId], generatedAt)
   );
 
   return {
     budgets,
     contractVersion: dynamicContractVersion,
     generatedAt: generatedAt.toISOString(),
-    status: budgets.some((budget) => budget.threshold === "exhausted") ? "degraded" : "healthy"
-  };
-}
-
-function buildProviderBudgetStatus(
-  summary: ProviderReportSummary,
-  budgetLimit: DynamicProviderBudgetLimit | undefined,
-  generatedAt: Date
-): Record<string, unknown> {
-  const budgetKind = budgetLimit?.budgetKind ?? inferredBudgetKind(summary);
-  const used = Math.max(0, budgetUsageForKind(summary, budgetKind));
-  const limit = Math.max(0, budgetLimit?.limit ?? used * 1.25);
-  const remaining = Math.max(0, limit - used);
-  const threshold = classifyThreshold(used, limit);
-  const dispatchGuard = dispatchGuardForThreshold(threshold);
-  const avgObservedUnits =
-    summary.spendProjection.windowDays > 0 ? used / summary.spendProjection.windowDays : used;
-  const reviewerEstimate = Math.floor(remaining / Math.max(1, avgObservedUnits));
-  const workerEstimate = Math.floor(remaining / Math.max(1, avgObservedUnits * 2));
-
-  return {
-    budgetKind,
-    confidence: budgetLimit ? 0.78 : 0.48,
-    dispatchGuard,
-    estimatedDispatchesRemaining: {
-      reviewer: reviewerEstimate,
-      worker: workerEstimate
-    },
-    forecastWindowMinutes: summary.spendProjection.windowDays * 24 * 60,
-    lastFetchedAt: generatedAt.toISOString(),
-    limit,
-    provenance: {
-      redacted: true,
-      source: "accumulated_provider_snapshot",
-      snapshotId: `dynamic-budget-${summary.providerId}-${summary.reportEndDay}`
-    },
-    providerId: summary.providerId,
-    providerLabel: summary.providerLabel,
-    remaining,
-    resetAt: budgetLimit?.resetAt,
-    scopeId: budgetLimit?.scopeId ?? `provider:${summary.providerId}`,
-    scopeLabel: budgetLimit?.scopeLabel ?? summary.providerLabel,
-    threshold,
-    used
+    observedAt: generatedAt.toISOString(),
+    status: budgets.some((budget) => ["exhausted", "unknown"].includes(budget.threshold))
+      ? "degraded" : "healthy"
   };
 }
 
@@ -1224,47 +1178,6 @@ async function defaultRefreshExecutor(
   };
 }
 
-function inferredBudgetKind(summary: ProviderReportSummary): string {
-  return summary.comparisonMetric.unit === "requests" ? "requests_per_window" : "tokens_per_window";
-}
-
-function budgetUsageForKind(summary: ProviderReportSummary, budgetKind: string): number {
-  const normalizedKind = budgetKind.toLowerCase();
-
-  if (normalizedKind.includes("request")) {
-    return (
-      readNumberField(summary, "requestCount") ??
-      readNumberField(summary, "requestsCount") ??
-      (summary.comparisonMetric.unit === "requests" ? summary.comparisonMetric.value ?? 0 : 0)
-    );
-  }
-
-  if (normalizedKind.includes("token")) {
-    const tokenTotal =
-      (readNumberField(summary, "inputTokens") ?? 0) +
-      (readNumberField(summary, "outputTokens") ?? 0) +
-      (readNumberField(summary, "cacheReadTokens") ?? 0) +
-      (readNumberField(summary, "cacheCreationTokens") ?? 0);
-
-    return tokenTotal > 0 || summary.comparisonMetric.unit !== "tokens"
-      ? tokenTotal
-      : summary.comparisonMetric.value ?? 0;
-  }
-
-  return summary.comparisonMetric.value ?? 0;
-}
-
-function classifyThreshold(
-  used: number,
-  limit: number
-): "green" | "amber" | "red" | "exhausted" {
-  if (limit <= 0 || used >= limit) return "exhausted";
-  const ratio = used / limit;
-  if (ratio >= 0.9) return "red";
-  if (ratio >= 0.7) return "amber";
-  return "green";
-}
-
 function compactTimestamp(date: Date): string {
   return date.toISOString().replace(/[-:.]/g, "");
 }
@@ -1352,36 +1265,6 @@ function validateRefreshProviders(providers: string[]): IntegrationContractRespo
   });
 }
 
-function dispatchGuardForThreshold(threshold: "green" | "amber" | "red" | "exhausted") {
-  if (threshold === "exhausted") {
-    return {
-      allowDispatch: false,
-      decision: "block",
-      reasonCodes: ["budget_exhausted", "cooldown_required"]
-    };
-  }
-  if (threshold === "red") {
-    return {
-      allowDispatch: true,
-      decision: "prefer_alternate",
-      reasonCodes: ["near_budget_exhaustion", "high_worker_completion_risk"]
-    };
-  }
-  if (threshold === "amber") {
-    return {
-      allowDispatch: true,
-      decision: "allow_with_warning",
-      reasonCodes: ["budget_warning"]
-    };
-  }
-
-  return {
-    allowDispatch: true,
-    decision: "allow",
-    reasonCodes: ["healthy_budget"]
-  };
-}
-
 async function dynamicBudgetStatusResponse(
   requestPath: string,
   loadSummaries: () => Promise<ProviderReportSummary[]>,
@@ -1400,12 +1283,13 @@ async function dynamicBudgetStatusResponse(
     });
   }
 
-  return jsonResponse(200, buildProviderBudgetStatus(summary, budgetLimits[providerId], generatedAt));
+  return jsonResponse(200, buildProviderActualsBudgetStatus(summary, budgetLimits[providerId], generatedAt));
 }
 
 async function dynamicUsageResponse(
   requestPath: string,
-  loadSummaries: () => Promise<ProviderReportSummary[]>
+  loadSummaries: () => Promise<ProviderReportSummary[]>,
+  observedAt: Date
 ): Promise<IntegrationContractResponse | undefined> {
   const match = /^\/api\/providers\/([^/]+)\/usage$/.exec(requestPath);
   if (!match) return undefined;
@@ -1419,7 +1303,7 @@ async function dynamicUsageResponse(
     });
   }
 
-  return jsonResponse(200, usageFromSummary(summary));
+  return jsonResponse(200, buildProviderActualsUsage(summary, observedAt));
 }
 
 function jsonResponse(status: number, body: unknown): IntegrationContractResponse {
@@ -1440,48 +1324,8 @@ function normalizePath(requestPath: string): string {
     : withoutQuery;
 }
 
-async function readFirstJson(paths: string[]): Promise<unknown | undefined> {
-  for (const candidate of paths) {
-    try {
-      return JSON.parse(await fs.readFile(candidate, "utf8")) as unknown;
-    } catch {
-      // Continue to the next candidate. The caller falls back to seed data.
-    }
-  }
-
-  return undefined;
-}
-
 function readNumberField(value: unknown, field: string): number | null {
   if (typeof value !== "object" || value === null || Array.isArray(value)) return null;
   const raw = (value as Record<string, unknown>)[field];
   return typeof raw === "number" && Number.isFinite(raw) ? raw : null;
-}
-
-function snapshotPaths(dataPath: string): string[] {
-  const slash = dataPath.lastIndexOf("/");
-  if (slash === -1) return [dataPath];
-  return [`${dataPath.slice(0, slash + 1)}accumulated-metadata.json`, dataPath];
-}
-
-function usageFromSummary(summary: ProviderReportSummary): Record<string, unknown> {
-  return {
-    providerId: summary.providerId,
-    providerLabel: summary.providerLabel,
-    reportEndDay: summary.reportEndDay,
-    reportStartDay: summary.reportStartDay,
-    snapshotId: `dynamic-usage-${summary.providerId}-${summary.reportEndDay}`,
-    totals: {
-      cacheCreationTokens: readNumberField(summary, "cacheCreationTokens") ?? 0,
-      cacheReadTokens: readNumberField(summary, "cacheReadTokens") ?? 0,
-      inputTokens: readNumberField(summary, "inputTokens") ?? 0,
-      observedMetricUnit: summary.comparisonMetric.unit,
-      observedMetricValue: summary.comparisonMetric.value ?? 0,
-      outputTokens: readNumberField(summary, "outputTokens") ?? 0,
-      requestsCount:
-        readNumberField(summary, "requestCount") ??
-        (summary.comparisonMetric.unit === "requests" ? summary.comparisonMetric.value ?? 0 : 0),
-      totalCostUsd: summary.spendProjection.totalUsd
-    }
-  };
 }

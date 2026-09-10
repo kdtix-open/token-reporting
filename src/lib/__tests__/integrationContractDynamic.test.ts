@@ -44,8 +44,15 @@ function summary(
     reportAgeLabel: "fresh",
     reportEndDay: "2026-06-07",
     reportStartDay: "2026-06-01",
+    snapshotGeneratedAt: "2026-06-07T12:00:00.000Z",
+    actualsProvenance: { origin: "accumulated", snapshotId: null, fetchedAt: null },
+    inputTokens: metricValue,
+    outputTokens: 0,
+    cacheReadTokens: 0,
+    cacheCreationTokens: 0,
+    cacheWriteTokens: 0,
     spendProjection: spendProjection(totalUsd)
-  };
+  } as ProviderReportSummary;
 }
 
 const summaries = [
@@ -91,7 +98,7 @@ describe("integrationContractDynamic", () => {
     expect(response.status).toBe(200);
     expect(response.body).toMatchObject({
       contractId: "kdtix.token-reporting.integration",
-      contractVersion: "sdlca-token-reporting-dynamic-v0.1",
+      contractVersion: "sdlca-token-reporting-dynamic-v0.2",
       mode: "dynamic",
       serviceId: "kdtix.token-reporting"
     });
@@ -133,7 +140,7 @@ describe("integrationContractDynamic", () => {
 
     expect(response.status).toBe(200);
     expect(response.body).toMatchObject({
-      contractVersion: "sdlca-token-reporting-dynamic-v0.1",
+      contractVersion: "sdlca-token-reporting-dynamic-v0.2",
       generatedAt: "2026-06-07T16:00:00.000Z",
       status: "degraded"
     });
@@ -191,7 +198,7 @@ describe("integrationContractDynamic", () => {
     });
   });
 
-  it("createDynamicIntegrationContractHandler_TokenBudgetWithRequestMetric_UsesTokenTotals", async () => {
+  it("createDynamicIntegrationContractHandler_CodexBudgetWithCachedInput_CountsInputOnce", async () => {
     const handler = createDynamicIntegrationContractHandler({
       budgetLimits: {
         codex: {
@@ -219,9 +226,9 @@ describe("integrationContractDynamic", () => {
     expect(response.body).toMatchObject({
       budgetKind: "tokens_per_window",
       providerId: "codex",
-      remaining: 50_000,
+      remaining: 100_000,
       threshold: "red",
-      used: 950_000
+      used: 900_000
     });
   });
 
@@ -266,7 +273,7 @@ describe("integrationContractDynamic", () => {
     expect(refreshResponse.status).toBe(202);
     expect(refreshResponse.body).toMatchObject({
       completedAt: "2026-06-07T16:45:00.000Z",
-      contractVersion: "sdlca-token-reporting-dynamic-v0.1",
+      contractVersion: "sdlca-token-reporting-dynamic-v0.2",
       jobId: "dynamic-refresh-20260607T164500000Z",
       mode: "historical",
       status: "degraded"
@@ -1096,7 +1103,7 @@ describe("integrationContractDynamic", () => {
 
     expect(response.status).toBe(202);
     expect(response.body).toMatchObject({
-      contractVersion: "sdlca-token-reporting-dynamic-v0.1",
+      contractVersion: "sdlca-token-reporting-dynamic-v0.2",
       degradedReason: "bridge_forensic_executor_not_configured",
       huggingFaceCandidateSetId: "hf-candidates-20260607T164524201Z",
       runId: "dynamic-forensic-20260607T170000000Z",

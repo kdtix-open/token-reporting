@@ -16,6 +16,7 @@ interface CreateSummaryArgs {
   organization: string;
   report: {
     download_links: string[];
+    download_link_count?: number;
     report_start_day: string;
     report_end_day: string;
     generatedAt?: string;
@@ -74,7 +75,7 @@ export function createGitHubCopilotReportSummary({
     reportStartDay: report.report_start_day,
     reportEndDay: report.report_end_day,
     snapshotGeneratedAt: report.generatedAt,
-    downloadCount: report.download_links.length,
+    downloadCount: report.download_link_count ?? report.download_links.length,
     reportAgeLabel: "28-day window",
     comparisonMetric: {
       value: usage?.totalInteractions ?? null,

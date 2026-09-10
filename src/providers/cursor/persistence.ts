@@ -2,6 +2,7 @@ import { createHmac } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
+import { resolveDataRoot } from "../../lib/dataRoot";
 import { assertWritableOperationAllowed } from "../../lib/permissions";
 import {
   accumulatedPathForLatest,
@@ -25,6 +26,7 @@ interface PersistReportArgs {
   /** Optional per-event usage feed. */
   events?: CursorFilteredUsageEventsResponse;
   outputPath?: string;
+  dataRoot?: string;
   env?: NodeJS.ProcessEnv;
 }
 
@@ -32,14 +34,9 @@ export async function persistCursorDailyUsageReport({
   report,
   spend,
   events,
-  outputPath = path.join(
-    process.cwd(),
-    "public",
-    "data",
-    "cursor",
-    "latest-metadata.json"
-  ),
-  env = process.env
+  env = process.env,
+  dataRoot,
+  outputPath = path.join(resolveDataRoot({ dataRoot, env }), "cursor", "latest-metadata.json")
 }: PersistReportArgs): Promise<string> {
   assertWritableOperationAllowed("Persisting Cursor usage data", env);
 

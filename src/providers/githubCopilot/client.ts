@@ -59,7 +59,8 @@ export async function fetchGitHubCopilotLatestUsersReportMetadata(
 
 /**
  * Fetches the number of billed Copilot seats for the organization.
- * Returns null if the endpoint is unavailable or the token lacks permission.
+ * Returns null when unavailable or the response lacks a valid observed count;
+ * missing billing metadata is not a zero-seat observation.
  */
 export async function fetchGitHubCopilotBillingSeats(
   { organization, token }: GitHubCopilotClientOptions,
@@ -82,8 +83,10 @@ export async function fetchGitHubCopilotBillingSeats(
     return null;
   }
 
-  const payload = await response.json();
-  const total = typeof payload.total_seats === "number" ? payload.total_seats : 0;
+  const payload: unknown = await response.json();
+  const total = typeof payload === "object" && payload !== null && !Array.isArray(payload)
+    && "total_seats" in payload ? payload.total_seats : undefined;
+  if (typeof total !== "number" || !Number.isSafeInteger(total) || total < 0) return null;
   return { total_seats: total, plan: "business" };
 }
 
@@ -102,7 +105,8 @@ export function parseGitHubCopilotNdjson(text: string): GitHubCopilotUsageRecord
 /**
  * Downloads each signed URL from a GitHub Copilot usage report and returns
  * the concatenated list of per-user per-day usage records. The signed URLs
- * are pre-authenticated and require no additional headers.
+ * are pre-authenticated and require no additional headers. Download failures
+ * expose only stage and HTTP status, never signed URLs or upstream error text.
  */
 export async function fetchGitHubCopilotUsageFiles(
   downloadLinks: string[],
@@ -111,16 +115,27 @@ export async function fetchGitHubCopilotUsageFiles(
   const allRecords: GitHubCopilotUsageRecord[] = [];
 
   for (const link of downloadLinks) {
-    const response = await fetchImpl(link);
+    let response: Response;
+    try {
+      response = await fetchImpl(link);
+    } catch {
+      throw new Error("GitHub Copilot usage file download failed before receiving a response.");
+    }
 
     if (!response.ok) {
       throw new Error(
-        `GitHub Copilot usage file download failed with ${response.status} ${response.statusText}: ${link}`
+        `GitHub Copilot usage file download failed with HTTP ${response.status}.`
       );
     }
 
-    const text = await response.text();
-    allRecords.push(...parseGitHubCopilotNdjson(text));
+    try {
+      const text = await response.text();
+      allRecords.push(...parseGitHubCopilotNdjson(text));
+    } catch {
+      throw new Error(
+        `GitHub Copilot usage file contents could not be read or parsed (HTTP ${response.status}).`
+      );
+    }
   }
 
   return allRecords;

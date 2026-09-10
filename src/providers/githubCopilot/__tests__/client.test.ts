@@ -2,10 +2,50 @@ import { describe, expect, it, vi } from "vitest";
 
 import {
   buildGitHubCopilotLatestUsersReportRequest,
+  fetchGitHubCopilotBillingSeats,
   fetchGitHubCopilotLatestUsersReportMetadata,
   fetchGitHubCopilotUsageFiles,
   parseGitHubCopilotNdjson
 } from "../client";
+
+describe("fetchGitHubCopilotBillingSeats", () => {
+  const options = { organization: "fixture-org", token: "fixture-only" };
+
+  it.each([
+    { label: "missing", payload: {} },
+    { label: "string", payload: { total_seats: "4" } },
+    { label: "null count", payload: { total_seats: null } },
+    { label: "negative", payload: { total_seats: -1 } },
+    { label: "fraction", payload: { total_seats: 1.5 } },
+    { label: "NaN", payload: { total_seats: NaN } },
+    { label: "infinite", payload: { total_seats: Infinity } },
+    { label: "unsafe integer", payload: { total_seats: Number.MAX_SAFE_INTEGER + 1 } },
+    { label: "null payload", payload: null },
+    { label: "array payload", payload: [] },
+    { label: "scalar payload", payload: 4 }
+  ])("fetchGitHubCopilotBillingSeats_InvalidCount_RemainsUnavailable ($label)", async ({ payload }) => {
+    const fetchStub = vi.fn().mockResolvedValue({ ok: true, json: async () => payload });
+
+    await expect(fetchGitHubCopilotBillingSeats(options, fetchStub)).resolves.toBeNull();
+    expect(fetchStub).toHaveBeenCalledOnce();
+  });
+
+  it.each([0, 4])("fetchGitHubCopilotBillingSeats_ObservedSeats=%i_PreservesCount", async (total_seats) => {
+    const fetchStub = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ total_seats }) });
+
+    await expect(fetchGitHubCopilotBillingSeats(options, fetchStub)).resolves.toEqual({
+      total_seats, plan: "business"
+    });
+  });
+
+  it("fetchGitHubCopilotBillingSeats_UnavailableEndpoint_ReturnsNullWithoutReadingBody", async () => {
+    const json = vi.fn();
+    const fetchStub = vi.fn().mockResolvedValue({ ok: false, status: 403, json });
+
+    await expect(fetchGitHubCopilotBillingSeats(options, fetchStub)).resolves.toBeNull();
+    expect(json).not.toHaveBeenCalled();
+  });
+});
 
 describe("buildGitHubCopilotLatestUsersReportRequest", () => {
   it("uses the organization users 28 day latest endpoint and current api version", () => {
@@ -91,6 +131,57 @@ describe("parseGitHubCopilotNdjson", () => {
 });
 
 describe("fetchGitHubCopilotUsageFiles", () => {
+  const signedLink = "https://usage.example.test/fixture.ndjson?signature=fixture-only&credential=fixture-identity";
+
+  it("fetchGitHubCopilotUsageFiles_SignedDownload_UsesUnmodifiedUrlWithoutExtraHeaders", async () => {
+    const fetchStub = vi.fn().mockResolvedValue(new Response(
+      JSON.stringify({ day: "2026-09-09", user_login: "fixture-user" })
+    ));
+
+    expect(await fetchGitHubCopilotUsageFiles([signedLink], fetchStub)).toHaveLength(1);
+    expect(fetchStub).toHaveBeenCalledExactlyOnceWith(signedLink);
+  });
+
+  it("fetchGitHubCopilotUsageFiles_NonOkSignedDownload_ReportsOnlySafeStatusContext", async () => {
+    const fetchStub = vi.fn().mockResolvedValue(new Response(null, {
+      status: 403, statusText: `Forbidden ${signedLink}`
+    }));
+
+    await expect(fetchGitHubCopilotUsageFiles([signedLink], fetchStub)).rejects.toThrow(
+      /^GitHub Copilot usage file download failed with HTTP 403\.$/
+    );
+    expect(fetchStub).toHaveBeenCalledExactlyOnceWith(signedLink);
+  });
+
+  it("fetchGitHubCopilotUsageFiles_TransportError_DiscardsUnsafeMessageAndCause", async () => {
+    const fetchStub = vi.fn().mockRejectedValue(new Error(`Unable to fetch ${signedLink}`));
+    const error = await fetchGitHubCopilotUsageFiles([signedLink], fetchStub).catch(error => error);
+
+    expect(error).toBeInstanceOf(Error);
+    expect(error.message).toBe("GitHub Copilot usage file download failed before receiving a response.");
+    expect(error.cause).toBeUndefined();
+    expect(error.stack).not.toContain(signedLink);
+  });
+
+  it("fetchGitHubCopilotUsageFiles_BodyReadError_DiscardsUnsafeMessage", async () => {
+    const fetchStub = vi.fn().mockResolvedValue({
+      ok: true, status: 200,
+      text: async () => { throw new Error(`Unable to read ${signedLink}`); }
+    });
+
+    await expect(fetchGitHubCopilotUsageFiles([signedLink], fetchStub)).rejects.toThrow(
+      /^GitHub Copilot usage file contents could not be read or parsed \(HTTP 200\)\.$/
+    );
+  });
+
+  it("fetchGitHubCopilotUsageFiles_InvalidBody_DiscardsRawContentFromParseError", async () => {
+    const fetchStub = vi.fn().mockResolvedValue(new Response(signedLink));
+
+    await expect(fetchGitHubCopilotUsageFiles([signedLink], fetchStub)).rejects.toThrow(
+      /^GitHub Copilot usage file contents could not be read or parsed \(HTTP 200\)\.$/
+    );
+  });
+
   it("downloads each signed url and concatenates records", async () => {
     const line1 = JSON.stringify({
       day: "2026-03-01",
